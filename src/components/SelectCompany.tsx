@@ -1,7 +1,8 @@
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select"
 import {useCompany} from "../context/CompanyProvider.tsx";
+import {cn} from "@/lib/utils.ts";
 
-export default function SelectCompany() {
+export default function SelectCompany(props: {className?: string}) {
     const {company, setCompany, allCompanies} = useCompany()
     return (
         <Select
@@ -11,9 +12,9 @@ export default function SelectCompany() {
                     setCompany(selectedCompany);
                 }
             }}
-            value={company?.name}
+            value={company?.name || ""}
         >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className={cn("w-full", props.className)}>
                 <SelectValue placeholder="Select Company"/>
             </SelectTrigger>
             <SelectContent>
