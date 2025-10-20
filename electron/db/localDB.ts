@@ -331,7 +331,7 @@ export function read<K extends TableNames>(
     const stmt = db.prepare(
         `SELECT ${String(fields)}
          FROM ${table}
-         WHERE ${whereClauses}`
+         ${whereClauses.length ? `WHERE ${whereClauses}` : ''}`
     );
 
     return stmt.all(...whereValues) as LocalTables<K>[];

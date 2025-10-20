@@ -29,6 +29,6 @@ export function getDBMethods<K extends TableNames>(table: K) {
 }
 
 export const query =
-    async (query: string, params?: unknown[]): Promise<ElectronToReactResponse<unknown | null>> =>
+    async <T>(query: string, params?: unknown[]): Promise<ElectronToReactResponse<T | null>> =>
         window.api.db.query(query, params)
 

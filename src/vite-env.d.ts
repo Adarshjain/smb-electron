@@ -19,7 +19,7 @@ declare global {
                     table: K,
                     record: Tables[K]['Delete']
                 )=> Promise<ElectronToReactResponse<null>>;
-                query: (query: string, params?: unknown[])=> Promise<ElectronToReactResponse<unknown | null>>;
+                query: <T>(query: string, params?: unknown[])=> Promise<ElectronToReactResponse<T | null>>;
             },
             supabase: {
                 sync: () => Promise<ElectronToReactResponse<void>>;
