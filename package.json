@@ -10,11 +10,13 @@
     "dev:electron:tsc": "tsc -p electron/tsconfig.json --watch --preserveWatchOutput",
     "dev:electron:run": "wait-on dist-electron/main.js && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 nodemon --watch dist-electron --exec electron dist-electron/main.js",
     "build": "vite build && tsc -p electron/tsconfig.json",
-    "build:app": "npm run build && electron-builder"
+    "build:app": "npm run build && electron-builder",
+    "postinstall": "electron-rebuild -f -w better-sqlite3",
+    "rebuild": "electron-rebuild -f -w better-sqlite3"
   },
   "build": {
-    "appId": "com.yourcompany.electronvite",
-    "productName": "ElectronViteApp",
+    "appId": "sri.mahaveer.bankers",
+    "productName": "Sri Mahaveer Bankers",
     "directories": {
       "output": "release"
     },
@@ -22,6 +24,9 @@
       "dist/**/*",
       "dist-electron/**/*",
       "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**/*"
     ],
     "win": {
       "target": "nsis"
@@ -34,6 +39,9 @@
     }
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.75.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.4.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.4"

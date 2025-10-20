@@ -1,7 +1,22 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import {app, BrowserWindow, ipcMain} from 'electron';
 import path from 'path';
+import {closeDatabase, initDatabase,} from './db/database';
+import {createClient} from '@supabase/supabase-js';
+import {BackupEndResponse, SyncManager} from "./db/SyncManager";
+import {create, deleteRecord, executeSql, migrateSchema, read, tables, update} from "./db/localDB";
+import {LocalTables, TableNames, Tables} from "../tables";
+import IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
 
 let win: BrowserWindow | null = null;
+let syncManager: SyncManager | null;
+
+export type ElectronToReactResponse<T> = {
+    success: true;
+    data?: T;
+} | {
+    success: false;
+    error: string;
+}
 
 const createWindow = () => {
     win = new BrowserWindow({
@@ -26,10 +41,135 @@ const createWindow = () => {
     });
 };
 
-app.whenReady().then(createWindow);
+const initSupabase = async () => {
+    const supabase = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_KEY!
+    );
+    syncManager = SyncManager.getInstance({
+        supabase,
+        tables,
+        interval: 30 * 60 * 1000, // 30 minutes
+        onBackupStart: () => {
+            win?.webContents.send('sync-status', {state: 'started'});
+        },
+        onBackupEnd: (summary: BackupEndResponse) => {
+            win?.webContents.send('sync-status', {
+                state: 'ended',
+                lastSync: Date.now(),
+                errors: summary.status ? [] : JSON.stringify(summary.error)
+            });
+        }
+    });
+
+    await syncManager.start();
+}
+
+// Initialize database before creating window
+app.whenReady().then(async () => {
+    initDatabase();
+    await migrateSchema();
+    createWindow();
+    await initSupabase();
+});
+
 
 app.on('window-all-closed', () => {
+    closeDatabase();
     if (process.platform !== 'darwin') app.quit();
 });
 
-ipcMain.handle('ping', () => 'pong');
+app.on('before-quit', () => {
+    closeDatabase();
+});
+
+
+// IPC Handlers
+
+// Sync
+ipcMain.handle('sync-now', async (): Promise<ElectronToReactResponse<void>> => {
+    try {
+        return {success: true, data: await syncManager?.pushAll()};
+    } catch (error) {
+        return {success: false, error: error instanceof Error ? error.message : String(error)};
+    }
+});
+
+ipcMain.handle('is-syncing-now', async (): Promise<ElectronToReactResponse<boolean | undefined>> => {
+    try {
+        return {success: true, data: syncManager?.isRunning};
+    } catch (error) {
+        return {success: false, error: error instanceof Error ? error.message : String(error)};
+    }
+});
+
+ipcMain.handle('initial-pull', async (): Promise<ElectronToReactResponse<void | undefined>> => {
+    try {
+        return {success: true, data: await syncManager?.initialPull()};
+    } catch (error) {
+        return {success: false, error: error instanceof Error ? error.message : String(error)};
+    }
+});
+
+ipcMain.handle('db:create', async <K extends TableNames>(
+    _event: IpcMainInvokeEvent,
+    table: K,
+    record: Tables[K]['Row']
+): Promise<ElectronToReactResponse<null>> => {
+    try {
+        return {success: true, data: create(table, record)};
+    } catch (error) {
+        return {success: false, error: error instanceof Error ? error.message : String(error)};
+    }
+});
+
+ipcMain.handle('db:read', async <K extends TableNames>(
+    _event: IpcMainInvokeEvent,
+    table: K,
+    conditions: Partial<LocalTables<K>>,
+    fields: keyof LocalTables<K> | '*' = '*'
+): Promise<ElectronToReactResponse<LocalTables<K>[] | null>> => {
+    try {
+        return {success: true, data: read(table, conditions, fields)};
+    } catch (error) {
+        return {success: false, error: error instanceof Error ? error.message : String(error)};
+    }
+});
+
+ipcMain.handle('db:update', async <K extends TableNames>(
+    _event: IpcMainInvokeEvent,
+    table: K,
+    record: Tables[K]['Update']
+): Promise<ElectronToReactResponse<null>> => {
+    try {
+        const result = update(table, record);
+        return {success: true, data: result};
+    } catch (error) {
+        return {success: false, error: error instanceof Error ? error.message : String(error)};
+    }
+});
+
+ipcMain.handle('db:delete', async <K extends TableNames>(
+    _event: IpcMainInvokeEvent,
+    table: K,
+    record: Tables[K]['Delete']
+): Promise<ElectronToReactResponse<null>> => {
+    try {
+        deleteRecord(table, record);
+        return {success: true};
+    } catch (error) {
+        return {success: false, error: error instanceof Error ? error.message : String(error)};
+    }
+});
+
+ipcMain.handle('db:query', async (
+    _event: IpcMainInvokeEvent,
+    query: string,
+    params?: unknown[]
+): Promise<ElectronToReactResponse<unknown | null>> => {
+    try {
+        return {success: true, data: executeSql(query, params)};
+    } catch (error) {
+        return {success: false, error: error instanceof Error ? error.message : String(error)};
+    }
+});

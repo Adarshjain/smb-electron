@@ -7,12 +7,25 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build output
 dist
 dist-ssr
 dist-electron
 !dist-electron/package.json
 *.local
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
 
 # Editor directories and files
 .vscode/*
@@ -24,3 +37,16 @@ dist-electron
 *.njsproj
 *.sln
 *.sw?
+
+# OS files
+Thumbs.db
+
+# Testing
+coverage
+*.coverage
+.nyc_output
+
+# Electron
+out
+release
+app/dist
