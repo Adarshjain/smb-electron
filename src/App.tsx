@@ -4,7 +4,7 @@ function App() {
     return (
         <BrowserRouter>
             <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-                skjbgs
+                <button onClick={async () => console.log(await window.api.supabase.initialPull())}>trigger sync</button>
                 <Routes>
                     {/*<Route path="/settings" element={<Settings />} />*/}
                 </Routes>

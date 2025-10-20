@@ -17,6 +17,7 @@ export type ElectronToReactResponse<T> = {
 } | {
     success: false;
     error: string;
+    stack: string | undefined;
 }
 
 const getIconPath = () => {
@@ -126,7 +127,7 @@ ipcMain.handle('sync-now', async (): Promise<ElectronToReactResponse<void>> => {
     try {
         return {success: true, data: await syncManager?.pushAll()};
     } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : String(error)};
+        return {success: false, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined};
     }
 });
 
@@ -134,7 +135,7 @@ ipcMain.handle('is-syncing-now', async (): Promise<ElectronToReactResponse<boole
     try {
         return {success: true, data: syncManager?.isRunning};
     } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : String(error)};
+        return {success: false, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined};
     }
 });
 
@@ -142,7 +143,7 @@ ipcMain.handle('initial-pull', async (): Promise<ElectronToReactResponse<void | 
     try {
         return {success: true, data: await syncManager?.initialPull()};
     } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : String(error)};
+        return {success: false, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined};
     }
 });
 
@@ -154,7 +155,7 @@ ipcMain.handle('db:create', async <K extends TableNames>(
     try {
         return {success: true, data: create(table, record)};
     } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : String(error)};
+        return {success: false, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined};
     }
 });
 
@@ -167,7 +168,7 @@ ipcMain.handle('db:read', async <K extends TableNames>(
     try {
         return {success: true, data: read(table, conditions, fields)};
     } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : String(error)};
+        return {success: false, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined};
     }
 });
 
@@ -180,7 +181,7 @@ ipcMain.handle('db:update', async <K extends TableNames>(
         const result = update(table, record);
         return {success: true, data: result};
     } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : String(error)};
+        return {success: false, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined};
     }
 });
 
@@ -193,7 +194,7 @@ ipcMain.handle('db:delete', async <K extends TableNames>(
         deleteRecord(table, record);
         return {success: true};
     } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : String(error)};
+        return {success: false, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined};
     }
 });
 
@@ -205,6 +206,6 @@ ipcMain.handle('db:query', async (
     try {
         return {success: true, data: executeSql(query, params)};
     } catch (error) {
-        return {success: false, error: error instanceof Error ? error.message : String(error)};
+        return {success: false, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined};
     }
 });

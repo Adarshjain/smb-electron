@@ -38,9 +38,10 @@ export const TablesSQliteSchema: Record<TableNames, {
         name: "companies",
         columns: {
             name: "TEXT PRIMARY KEY UNIQUE",
+            current_date: "TEXT NOT NULL",
             synced: "BOOLEAN NOT NULL DEFAULT 0",
         },
-        requiredFields: ["name"],
+        requiredFields: ["name", "current_date"],
         primary: ["name"],
     },
 
@@ -200,7 +201,7 @@ export const TablesSQliteSchema: Record<TableNames, {
 } as const;
 
 export function fetchUnsynced<K extends TableNames>(table: K): LocalTables<K>[] | null {
-    return read<K>(table, {synced: false} as Partial<LocalTables<K>>);
+    return read<K>(table, {synced: 0} as Partial<LocalTables<K>>);
 }
 
 export function validate<K extends TableNames>(table: K, record: RowOrDeleteOrUpdate<K>, byPrimaryKey = false) {

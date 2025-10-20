@@ -150,5 +150,5 @@ export interface Tables {
     };
 }
 
-export type LocalTables<K extends TableNames> = Tables[K]['Row'] & { synced: boolean };
+export type LocalTables<K extends TableNames> = Tables[K]['Row'] & { synced: 0 | 1 };
 export type RowOrDeleteOrUpdate<K extends TableNames> = Tables[K]['Row'] | Tables[K]['Delete'] | Tables[K]['Update'];

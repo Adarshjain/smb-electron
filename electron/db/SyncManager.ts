@@ -113,17 +113,18 @@ export class SyncManager {
     }
 
     async initialPull() {
-        console.log('⬇️ Performing initial pull from Supabase...')
+        console.log('⬇️ Performing initial pull from Supabase...');
         for (const tableName of this.tables) {
             const {data, error} = await this.supabase.from(tableName).select('*')
             if (error) throw error
 
-            if (data == null) {
+            if (data == null || !data.length) {
                 console.warn(`No data fetched for table ${tableName}`);
                 continue;
             }
-
-            create(tableName, {...data, synced: true} as unknown as LocalTables<TableNames>);
+            data.forEach(
+                record => create(tableName, {...record, synced: 1} as unknown as LocalTables<TableNames>)
+            )
         }
         console.log('✅ Initial data pull complete.')
     }
