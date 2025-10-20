@@ -287,7 +287,7 @@ export function create<K extends TableNames>(table: K, record: Tables[K]['Row'])
 
     const stmt = db.prepare(
         `INSERT INTO ${table} (${keys.join(', ')}, synced)
-         VALUES (${placeholders}, false)`
+         VALUES (${placeholders}, 0)`
     );
 
     stmt.run(...values);
@@ -308,7 +308,7 @@ export function markAsSynced<K extends TableNames>(table: K, record: Tables[K]['
 
     const stmt = db.prepare(
         `UPDATE ${table}
-         SET synced = true
+         SET synced = 1
          WHERE ${whereClauses}`
     );
 
@@ -323,8 +323,10 @@ export function read<K extends TableNames>(
 ): LocalTables<K>[] | null {
     if (!db) return null;
     const whereClauses = Object.keys(conditions).map(field => `${field} = ?`).join(' AND ');
-    const whereValues = Object.values(conditions);
-
+    // Convert boolean values to integers for SQLite
+    const whereValues = Object.values(conditions).map(value => 
+        typeof value === 'boolean' ? (value ? 1 : 0) : value
+    );
     const stmt = db.prepare(
         `SELECT ${String(fields)}
          FROM ${table}
@@ -368,7 +370,7 @@ export function upsert<K extends TableNames>(table: K, record: Tables[K]['Row'])
         const updateStmt = db.prepare(
             `UPDATE ${table}
              SET ${updateFields},
-                 synced = false
+                 synced = 0
              WHERE ${whereClauses}`
         );
 
@@ -381,7 +383,7 @@ export function upsert<K extends TableNames>(table: K, record: Tables[K]['Row'])
 
         const insertStmt = db.prepare(
             `INSERT INTO ${table} (${keys.join(', ')}, synced)
-             VALUES (${placeholders}, false)`
+             VALUES (${placeholders}, 0)`
         );
 
         insertStmt.run(...values);
@@ -436,7 +438,7 @@ export function update<K extends TableNames>(table: K, record: Tables[K]['Update
     const stmt = db.prepare(
         `UPDATE ${table}
          SET ${updateFields},
-             synced = false
+             synced = 0
          WHERE ${whereClauses}`
     );
 

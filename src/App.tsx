@@ -4,6 +4,7 @@ function App() {
     return (
         <BrowserRouter>
             <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+                skjbgs
                 <Routes>
                     {/*<Route path="/settings" element={<Settings />} />*/}
                 </Routes>

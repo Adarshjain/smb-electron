@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import {app, BrowserWindow, ipcMain} from 'electron';
 import path from 'path';
 import {closeDatabase, initDatabase,} from './db/database';
@@ -18,11 +19,33 @@ export type ElectronToReactResponse<T> = {
     error: string;
 }
 
+const getIconPath = () => {
+    // For BrowserWindow, always use PNG as it's most compatible
+    // .icns and .ico are for app packaging only
+    const iconName = 'logo.png';
+    
+    // In development, icons are in electron/build
+    // In production, they'll be in the resources folder
+    let iconPath;
+    if (process.env.VITE_DEV_SERVER_URL) {
+        // Development mode - use project root path
+        iconPath = path.join(process.cwd(), 'electron', 'build', iconName);
+    } else {
+        // Production mode - use app path
+        iconPath = path.join(process.resourcesPath, 'electron', 'build', iconName);
+    }
+    return iconPath;
+};
+
 const createWindow = () => {
+    const iconPath = getIconPath();
+    
     win = new BrowserWindow({
+        title: 'Sri Mahaveer Bankers',
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
         },
+        icon: iconPath,
     });
 
     // Maximize window to use full available space
@@ -65,8 +88,20 @@ const initSupabase = async () => {
     await syncManager.start();
 }
 
+// Set app name before app is ready (important for macOS)
+app.name = 'Sri Mahaveer Bankers';
+
 // Initialize database before creating window
 app.whenReady().then(async () => {
+    // Set dock icon on macOS (use PNG as icns can be problematic)
+    if (process.platform === 'darwin' && app.dock) {
+        const dockIconPath = path.join(process.cwd(), 'electron', 'build', 'logo.png');
+        try {
+            app.dock.setIcon(dockIconPath);
+        } catch (error) {
+            console.error('❌ Failed to set dock icon:', error);
+        }
+    }
     initDatabase();
     await migrateSchema();
     createWindow();

@@ -28,6 +28,21 @@ npm install
 # If you encounter issues, manually rebuild with: npm run rebuild
 ```
 
+### Environment Setup
+
+The app requires Supabase configuration for cloud sync functionality.
+
+1. **Create a `.env` file** in the project root (already created with empty values)
+2. **Get your Supabase credentials** from [Supabase Dashboard](https://app.supabase.com/project/_/settings/api)
+3. **Fill in the `.env` file** with your credentials:
+
+```env
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-supabase-anon-key
+```
+
+> **Note:** A `.env.example` file is provided as a template. The `.env` file is gitignored for security.
+
 ### Development
 
 ```bash
