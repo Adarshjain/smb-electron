@@ -25,12 +25,15 @@ export interface Tables {
     companies: {
         Row: {
             name: string;
+            current_date: string;
         };
         Insert: {
             name: string;
+            current_date: string;
         };
         Update: {
             name?: string;
+            current_date?: string;
         };
         Delete: { name: string }
     };

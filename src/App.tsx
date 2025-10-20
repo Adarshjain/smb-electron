@@ -1,14 +1,12 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {BrowserRouter, Route, Routes} from "react-router-dom";
+import {Home} from "./pages/Home.tsx";
 
 function App() {
     return (
         <BrowserRouter>
-            <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-                <button onClick={async () => console.log(await window.api.supabase.initialPull())}>trigger sync</button>
-                <Routes>
-                    {/*<Route path="/settings" element={<Settings />} />*/}
-                </Routes>
-            </div>
+            <Routes>
+                <Route path="/" element={<Home/>}/>
+            </Routes>
         </BrowserRouter>
     );
 }
