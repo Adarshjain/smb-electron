@@ -6,6 +6,7 @@ interface CompanyContextType {
     company: Tables['companies']['Row'] | null;
     allCompanies: Tables['companies']['Row'][];
     setCompany: (company: Tables['companies']['Row']) => void;
+    setCurrentDate: (date: string) => Promise<void>;
 }
 
 const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
@@ -13,6 +14,21 @@ const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 export function CompanyProvider({ children }: { children: ReactNode }) {
     const [company, setCompany] = useState<Tables['companies']['Row'] | null>(null);
     const [allCompanies, setAllCompanies] = useState<Tables['companies']['Row'][]>([]);
+
+    const setCurrentDate = async (current_date: string) => {
+        if (company) {
+            try {
+                await getDBMethods('companies').update({
+                    current_date,
+                    name: company.name
+                });
+                setCompany({ ...company, current_date });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    }
+
     useEffect(() => {
         getDBMethods('companies').read({}).then((response) => {
             if (response.success && response.data && response.data.length > 0) {
@@ -24,7 +40,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <CompanyContext.Provider value={{ company, setCompany, allCompanies }}>
+        <CompanyContext.Provider value={{ company, setCompany, allCompanies, setCurrentDate }}>
             {children}
         </CompanyContext.Provider>
     );

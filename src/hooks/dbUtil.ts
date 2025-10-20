@@ -12,11 +12,11 @@ export function getDBMethods<K extends TableNames>(table: K) {
         ): Promise<ElectronToReactResponse<LocalTables<K>[] | null>> => window.api.db.read(table, conditions, fields)
 
     const update =
-        async (record: Tables[K]['Update']): Promise<ElectronToReactResponse<LocalTables<K>[] | null>> =>
+        async (record: Tables[K]['Update']): Promise<ElectronToReactResponse<null>> =>
             window.api.db.update(table, record)
 
     const deleteRecord =
-        async (record: Tables[K]['Delete']): Promise<ElectronToReactResponse<LocalTables<K>[] | null>> =>
+        async (record: Tables[K]['Delete']): Promise<ElectronToReactResponse<null>> =>
             window.api.db.delete(table, record)
 
     return {
