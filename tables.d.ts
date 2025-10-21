@@ -26,14 +26,20 @@ export interface Tables {
         Row: {
             name: string;
             current_date: string;
+            next_serial: string;
+            is_default: 0 | 1;
         };
         Insert: {
             name: string;
             current_date: string;
+            next_serial: string;
+            is_default: 0 | 1;
         };
         Update: {
-            name?: string;
+            name: string;
             current_date?: string;
+            next_serial?: string;
+            is_default?: 0 | 1;
         };
         Delete: { name: string }
     };

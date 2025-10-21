@@ -7,6 +7,7 @@ interface CompanyContextType {
     allCompanies: Tables['companies']['Row'][];
     setCompany: (company: Tables['companies']['Row']) => void;
     setCurrentDate: (date: string) => Promise<void>;
+    setNextSerial: (date: string) => Promise<void>;
 }
 
 const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
@@ -17,15 +18,21 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
     const setCurrentDate = async (current_date: string) => {
         if (company) {
-            try {
-                await getDBMethods('companies').update({
-                    current_date,
-                    name: company.name
-                });
-                setCompany({ ...company, current_date });
-            } catch (e) {
-                console.error(e);
-            }
+            await getDBMethods('companies').update({
+                current_date,
+                name: company.name
+            });
+            setCompany({ ...company, current_date });
+        }
+    }
+
+    const setNextSerial = async (next_serial: string) => {
+        if (company) {
+            await getDBMethods('companies').update({
+                next_serial,
+                name: company.name
+            });
+            setCompany({ ...company, next_serial });
         }
     }
 
@@ -33,14 +40,14 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         getDBMethods('companies').read({}).then((response) => {
             if (response.success && response.data && response.data.length > 0) {
                 setAllCompanies(response.data as Tables['companies']['Row'][]);
-                const companyMatch = (response.data as Tables['companies']['Row'][]).find(comp => comp.name === "Sri Mahaveer Bankers") || null
+                const companyMatch = (response.data as Tables['companies']['Row'][]).find(comp => comp.is_default === 1) || response.data[0]
                 setCompany(companyMatch);
             }
         })
     }, []);
 
     return (
-        <CompanyContext.Provider value={{ company, setCompany, allCompanies, setCurrentDate }}>
+        <CompanyContext.Provider value={{ company, setCompany, allCompanies, setCurrentDate, setNextSerial }}>
             {children}
         </CompanyContext.Provider>
     );
