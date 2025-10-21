@@ -4,6 +4,7 @@ import DatePicker from "@/components/DatePicker.tsx";
 import {useState} from "react";
 import {Button} from "@/components/ui/button.tsx"
 import { Input } from "@/components/ui/input"
+import {CompanySetting} from "@/components/CompanySetting.tsx";
 
 export function Home() {
     const {company, setCurrentDate, setNextSerial} = useCompany();
@@ -31,14 +32,15 @@ export function Home() {
     }
 
     return <div>
-        <SelectCompany/>
-        <DatePicker defaultValue={company?.current_date} onInput={setDateString}/>
-        <h1 className="text-2xl">Company: {company?.name}</h1>
-        <div>{company?.current_date}</div>
-        <div>{company?.next_serial}</div>
-        <Input onChange={(e) => setSerialString(e.target.value)} value={serialString} />
-        <div className="text-xl">{dateString}</div>
-        <Button onClick={setDate}>Set Date</Button>
-        <Button onClick={setSerial}>Set Serial</Button>
+        <CompanySetting />
+        {/*<SelectCompany/>*/}
+        {/*<DatePicker defaultValue={company?.current_date} onInput={setDateString}/>*/}
+        {/*<h1 className="text-2xl">Company: {company?.name}</h1>*/}
+        {/*<div>{company?.current_date}</div>*/}
+        {/*<div>{company?.next_serial}</div>*/}
+        {/*<Input onChange={(e) => setSerialString(e.target.value)} value={serialString} />*/}
+        {/*<div className="text-xl">{dateString}</div>*/}
+        {/*<Button onClick={setDate}>Set Date</Button>*/}
+        {/*<Button onClick={setSerial}>Set Serial</Button>*/}
     </div>
 }
