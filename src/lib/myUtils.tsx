@@ -1,3 +1,5 @@
+import {toast} from "sonner";
+
 export const mapToRegex = (map: Record<string, string>) => {
     return new RegExp(
         Object.keys(map)
@@ -20,4 +22,13 @@ export function log(...args: any[]) {
     const first = args.shift();
 
     console.log(`%c${first}%c`, blueLabel, resetStyle, ...args);
+}
+
+export const rpcError = (response: { success: false; error: string; stack: string | undefined }) => {
+    toast.error(`Error: ${response.error}`, {
+        description: <pre
+            className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4"><code>{response.stack}</code></pre>,
+        classNames: {content: "flex flex-col gap-2"},
+        style: {"--border-radius": "calc(var(--radius) + 4px)"} as React.CSSProperties,
+    })
 }
