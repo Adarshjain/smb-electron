@@ -24,6 +24,6 @@ export function Home() {
         <h1 className="text-2xl">Company: {company?.name}</h1>
         <div>{company?.current_date}</div>
         <div className="text-xl">{dateString}</div>
-        <Button onClick={setDate}>Button</Button>
+        <Button onClick={setDate}>Set Date</Button>
     </div>
 }

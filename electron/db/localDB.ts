@@ -39,9 +39,11 @@ export const TablesSQliteSchema: Record<TableNames, {
         columns: {
             name: "TEXT PRIMARY KEY UNIQUE",
             current_date: "TEXT NOT NULL",
+            next_serial: "TEXT NOT NULL DEFAULT \"\"",
+            is_default: "BOOLEAN NOT NULL DEFAULT 0",
             synced: "BOOLEAN NOT NULL DEFAULT 0",
         },
-        requiredFields: ["name", "current_date"],
+        requiredFields: ["name", "current_date", "next_serial"],
         primary: ["name"],
     },
 

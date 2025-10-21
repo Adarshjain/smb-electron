@@ -7,6 +7,7 @@ import {BackupEndResponse, SyncManager} from "./db/SyncManager";
 import {create, deleteRecord, executeSql, migrateSchema, read, tables, update} from "./db/localDB";
 import {LocalTables, TableNames, Tables} from "../tables";
 import IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
+import {initAreas} from "./seed";
 
 let win: BrowserWindow | null = null;
 let syncManager: SyncManager | null;
@@ -121,6 +122,17 @@ app.on('before-quit', () => {
 
 
 // IPC Handlers
+
+// Testing
+ipcMain.handle('init-seed', async (): Promise<ElectronToReactResponse<void>> => {
+    try {
+        initAreas();
+        return {success: true};
+    } catch (error) {
+        return {success: false, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined};
+    }
+});
+
 
 // Sync
 ipcMain.handle('sync-now', async (): Promise<ElectronToReactResponse<void>> => {

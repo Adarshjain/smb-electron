@@ -50,3 +50,5 @@ coverage
 out
 release
 app/dist
+
+electron/seed/smb.mdb
