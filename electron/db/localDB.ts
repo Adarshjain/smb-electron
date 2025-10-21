@@ -1,4 +1,4 @@
-import {LocalTables, RowOrDeleteOrUpdate, TableNames, Tables} from "../../tables";
+import type {LocalTables, RowOrDeleteOrUpdate, TableName, Tables} from "../../tables";
 import {db} from "./database";
 import {TablesSQliteSchema} from "../../tableSchema";
 
@@ -15,11 +15,11 @@ export const tables: (keyof Tables)[] = [
     'address_lines',
 ];
 
-export function fetchUnsynced<K extends TableNames>(table: K): LocalTables<K>[] | null {
+export function fetchUnsynced<K extends TableName>(table: K): LocalTables<K>[] | null {
     return read<K>(table, {synced: 0} as Partial<LocalTables<K>>);
 }
 
-export function validate<K extends TableNames>(table: K, record: RowOrDeleteOrUpdate<K>, byPrimaryKey = false) {
+export function validate<K extends TableName>(table: K, record: RowOrDeleteOrUpdate<K>, byPrimaryKey = false) {
     const required = TablesSQliteSchema[table][byPrimaryKey ? 'primary' : 'requiredFields'];
     if (!required) return;
     for (const field of required) {
@@ -35,7 +35,7 @@ export async function migrateSchema() {
     }
     for (const table of Object.values(TablesSQliteSchema)) {
         const {name, columns, unique} = table;
-        const columnDefs = Object.entries(columns)
+        const columnDefs = Object.entries(columns.schema)
             .map(([col, def]) => `${col} ${def}`)
             .join(", ");
 
@@ -65,7 +65,7 @@ export async function migrateSchema() {
         }[];
         const existingCols = pragma.map((row) => row.name);
 
-        for (const [colName, colDef] of Object.entries(columns)) {
+        for (const [colName, colDef] of Object.entries(columns.schema)) {
             if (!existingCols.includes(colName)) {
                 db.exec(`ALTER TABLE ${name}
                     ADD COLUMN ${colName} ${colDef}`);
@@ -92,7 +92,7 @@ export async function migrateSchema() {
     }
 }
 
-export function create<K extends TableNames>(table: K, record: Tables[K]['Row']): null {
+export function create<K extends TableName>(table: K, record: Tables[K]['Row']): null {
     if (!db) return null;
 
     validate(table, record);
@@ -111,7 +111,7 @@ export function create<K extends TableNames>(table: K, record: Tables[K]['Row'])
     return null;
 }
 
-export function markAsSynced<K extends TableNames>(table: K, record: Tables[K]['Row']): null {
+export function markAsSynced<K extends TableName>(table: K, record: Tables[K]['Row']): null {
     if (!db) return null;
 
     const pkFields = TablesSQliteSchema[table].primary;
@@ -132,7 +132,7 @@ export function markAsSynced<K extends TableNames>(table: K, record: Tables[K]['
     return null;
 }
 
-export function read<K extends TableNames>(
+export function read<K extends TableName>(
     table: K,
     conditions: Partial<LocalTables<K>>,
     fields: keyof LocalTables<K> | '*' = '*' // TODO: update return type based on the requested fields
@@ -152,7 +152,7 @@ export function read<K extends TableNames>(
     return stmt.all(...whereValues) as LocalTables<K>[];
 }
 
-export function upsert<K extends TableNames>(table: K, record: Tables[K]['Row']): null {
+export function upsert<K extends TableName>(table: K, record: Tables[K]['Row']): null {
     if (!db) return null;
 
     validate(table, record, true);
@@ -207,7 +207,7 @@ export function upsert<K extends TableNames>(table: K, record: Tables[K]['Row'])
     return null;
 }
 
-export function deleteRecord<K extends TableNames>(table: K, record: Tables[K]['Delete']): null {
+export function deleteRecord<K extends TableName>(table: K, record: Tables[K]['Delete']): null {
     if (!db) return null;
 
     validate(table, record, true);
@@ -230,7 +230,7 @@ export function deleteRecord<K extends TableNames>(table: K, record: Tables[K]['
     return null;
 }
 
-export function update<K extends TableNames>(table: K, record: Tables[K]['Update']): null {
+export function update<K extends TableName>(table: K, record: Tables[K]['Update']): null {
     if (!db) return null;
 
     validate(table, record, true);

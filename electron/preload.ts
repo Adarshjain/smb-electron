@@ -1,26 +1,26 @@
 import {contextBridge, ipcRenderer} from 'electron';
-import {LocalTables, TableNames, Tables} from "../tables";
-import {ElectronToReactResponse} from "./main";
+import {LocalTables, TableName, Tables} from "../tables";
+import {ElectronToReactResponse} from "../shared-types";
 
 contextBridge.exposeInMainWorld('api', {
     db: {
-        create: <K extends TableNames>(
+        create: <K extends TableName>(
             table: K,
             record: Tables[K]['Row']
         ): Promise<ElectronToReactResponse<null>> =>
             ipcRenderer.invoke('db:create', table, record),
-        read: <K extends TableNames>(
+        read: <K extends TableName>(
             table: K,
             conditions: Partial<LocalTables<K>>,
             fields: keyof LocalTables<K> | '*' = '*'
         ): Promise<ElectronToReactResponse<LocalTables<K>[] | null>> =>
             ipcRenderer.invoke('db:read', table, conditions, fields),
-        update: <K extends TableNames>(
+        update: <K extends TableName>(
             table: K,
             record: Tables[K]['Update']
         ): Promise<ElectronToReactResponse<null>> =>
             ipcRenderer.invoke('db:update', table, record),
-        delete: <K extends TableNames>(
+        delete: <K extends TableName>(
             table: K,
             record: Tables[K]['Delete']
         ): Promise<ElectronToReactResponse<null>> =>

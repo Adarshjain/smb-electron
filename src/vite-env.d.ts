@@ -1,21 +1,21 @@
-import {LocalTables, TableNames, Tables} from "../tables";
-import {ElectronToReactResponse} from "../electron/main.ts";
+import {LocalTables, TableName, Tables} from "../tables";
+import {ElectronToReactResponse} from "../shared-types";
 
 declare global {
     interface Window {
         api: {
             db: {
-                create: <K extends TableNames>(table: K, record: Tables[K]['Row']) => Promise<ElectronToReactResponse<null>>;
-                read: <K extends TableNames>(
+                create: <K extends TableName>(table: K, record: Tables[K]['Row']) => Promise<ElectronToReactResponse<null>>;
+                read: <K extends TableName>(
                     table: K,
                     conditions: Partial<LocalTables<K>>,
                     fields: keyof LocalTables<K> | '*' = '*'
                 )=> Promise<ElectronToReactResponse<LocalTables<K>[] | null>>;
-                update: <K extends TableNames>(
+                update: <K extends TableName>(
                     table: K,
                     record: Tables[K]['Update']
                 )=> Promise<ElectronToReactResponse<null>>;
-                delete: <K extends TableNames>(
+                delete: <K extends TableName>(
                     table: K,
                     record: Tables[K]['Delete']
                 )=> Promise<ElectronToReactResponse<null>>;

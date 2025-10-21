@@ -1,4 +1,4 @@
-export type TableNames = keyof Tables;
+export type TableName = keyof Tables;
 
 export type MetalType = 'Gold' | 'Silver' | 'Other';
 export type DocChargesType = 'Fixed' | 'Percentage';
@@ -159,5 +159,5 @@ export interface Tables {
     };
 }
 
-export type LocalTables<K extends TableNames> = Tables[K]['Row'] & { synced: 0 | 1 };
-export type RowOrDeleteOrUpdate<K extends TableNames> = Tables[K]['Row'] | Tables[K]['Delete'] | Tables[K]['Update'];
+export type LocalTables<K extends TableName> = Tables[K]['Row'] & { synced: 0 | 1 };
+export type RowOrDeleteOrUpdate<K extends TableName> = Tables[K]['Row'] | Tables[K]['Delete'] | Tables[K]['Update'];

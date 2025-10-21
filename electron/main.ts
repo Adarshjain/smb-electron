@@ -3,23 +3,19 @@ import {app, BrowserWindow, ipcMain} from 'electron';
 import path from 'path';
 import {closeDatabase, initDatabase,} from './db/database';
 import {createClient} from '@supabase/supabase-js';
-import {BackupEndResponse, SyncManager} from "./db/SyncManager";
+import type {BackupEndResponse} from "./db/SyncManager";
+import {SyncManager} from "./db/SyncManager";
 import {create, deleteRecord, executeSql, migrateSchema, read, tables, update} from "./db/localDB";
-import {LocalTables, TableNames, Tables} from "../tables";
-import IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
+import type {LocalTables, TableName, Tables} from "../tables";
+import type {ElectronToReactResponse} from "../shared-types";
 import {initAreas} from "./seed";
+
+type IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
 
 let win: BrowserWindow | null = null;
 let syncManager: SyncManager | null;
 
-export type ElectronToReactResponse<T> = {
-    success: true;
-    data?: T;
-} | {
-    success: false;
-    error: string;
-    stack: string | undefined;
-}
+export type { ElectronToReactResponse };
 
 const getIconPath = () => {
     // For BrowserWindow, always use PNG as it's most compatible
@@ -159,7 +155,7 @@ ipcMain.handle('initial-pull', async (): Promise<ElectronToReactResponse<void | 
     }
 });
 
-ipcMain.handle('db:create', async <K extends TableNames>(
+ipcMain.handle('db:create', async <K extends TableName>(
     _event: IpcMainInvokeEvent,
     table: K,
     record: Tables[K]['Row']
@@ -171,7 +167,7 @@ ipcMain.handle('db:create', async <K extends TableNames>(
     }
 });
 
-ipcMain.handle('db:read', async <K extends TableNames>(
+ipcMain.handle('db:read', async <K extends TableName>(
     _event: IpcMainInvokeEvent,
     table: K,
     conditions: Partial<LocalTables<K>>,
@@ -184,7 +180,7 @@ ipcMain.handle('db:read', async <K extends TableNames>(
     }
 });
 
-ipcMain.handle('db:update', async <K extends TableNames>(
+ipcMain.handle('db:update', async <K extends TableName>(
     _event: IpcMainInvokeEvent,
     table: K,
     record: Tables[K]['Update']
@@ -197,7 +193,7 @@ ipcMain.handle('db:update', async <K extends TableNames>(
     }
 });
 
-ipcMain.handle('db:delete', async <K extends TableNames>(
+ipcMain.handle('db:delete', async <K extends TableName>(
     _event: IpcMainInvokeEvent,
     table: K,
     record: Tables[K]['Delete']

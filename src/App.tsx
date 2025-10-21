@@ -1,14 +1,14 @@
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import {Home} from "./pages/Home.tsx";
 import { Toaster } from "@/components/ui/sonner"
-import AreaView from "@/components/AreaView.tsx";
+import {TableView} from "@/components/TableView.tsx";
 
 function App() {
     return (
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<Home/>}/>
-                <Route path="/areas" element={<AreaView />}/>
+                <Route path="/table-view" element={<TableView />}/>
             </Routes>
             <Toaster position="bottom-left" richColors theme="light" />
         </BrowserRouter>

@@ -15,7 +15,7 @@ export function Home() {
         <Input value={value} onInput={(e) => setValue(convert((e.target as HTMLInputElement).value))} placeholder="Type here..." />
         <CompanySelector />
         <CompanySettings />
-        <Link to="/areas">
+        <Link to="/table-view">
             <Button variant="ghost">Areas</Button>
         </Link>
     </div>

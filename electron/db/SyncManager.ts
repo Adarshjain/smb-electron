@@ -1,6 +1,6 @@
 import {SupabaseClient} from '@supabase/supabase-js'
 import {create, fetchUnsynced, markAsSynced} from './localDB'
-import {LocalTables, TableNames} from "../../tables";
+import type {LocalTables, TableName} from "../../tables";
 
 export type BackupEndResponse = {
     status: true;
@@ -12,7 +12,7 @@ export type BackupEndResponse = {
 
 interface SyncConfig {
     supabase: SupabaseClient
-    tables: TableNames[]
+    tables: TableName[]
     interval?: number // milliseconds
     onBackupStart?: () => void
     onBackupEnd?: (response: BackupEndResponse) => void
@@ -21,7 +21,7 @@ interface SyncConfig {
 export class SyncManager {
     private static instance: SyncManager | null = null
     private supabase: SupabaseClient
-    private readonly tables: TableNames[]
+    private readonly tables: TableName[]
     private readonly interval: number
     private timer?: NodeJS.Timeout
     private running = false
@@ -85,7 +85,7 @@ export class SyncManager {
         }
     }
 
-    private async pushChanges<K extends TableNames>(tableName: K): Promise<void> {
+    private async pushChanges<K extends TableName>(tableName: K): Promise<void> {
         try {
             const unsynced: LocalTables<K>[] | null = fetchUnsynced(tableName);
 
@@ -123,7 +123,7 @@ export class SyncManager {
                 continue;
             }
             data.forEach(
-                record => create(tableName, {...record, synced: 1} as unknown as LocalTables<TableNames>)
+                record => create(tableName, {...record, synced: 1} as unknown as LocalTables<TableName>)
             )
         }
         console.log('✅ Initial data pull complete.')

@@ -1,7 +1,7 @@
 import MDBReader from "mdb-reader";
 import fs from "fs";
 import path from "path";
-import {create} from "../db/localDB";
+// import {create} from "../db/localDB";
 
 export const initAreas = () => {
     // In development: project root, In production: app path
