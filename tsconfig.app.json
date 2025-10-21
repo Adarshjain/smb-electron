@@ -36,5 +36,10 @@
   },
   "include": [
     "src"
+  ],
+  "exclude": [
+    "electron",
+    "dist-electron",
+    "tableSchema.ts"
   ]
 }

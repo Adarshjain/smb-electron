@@ -1,8 +1,11 @@
-import {TableNames} from "./tables";
+import type {TableName} from "./tables";
 
-export const TablesSQliteSchema: Record<TableNames, {
-    name: TableNames,
-    columns: Record<string, string>,
+export const TablesSQliteSchema: Record<TableName, {
+    name: TableName,
+    columns: Record<string, {
+        schema: string;
+        encoded: boolean;
+    }>,
     requiredFields: string[],
     unique?: string[],
     primary: string[],
@@ -10,11 +13,26 @@ export const TablesSQliteSchema: Record<TableNames, {
     areas: {
         name: "areas",
         columns: {
-            name: "TEXT PRIMARY KEY UNIQUE",
-            post: "TEXT",
-            town: "TEXT",
-            pincode: "TEXT",
-            synced: "BOOLEAN NOT NULL DEFAULT 0",
+            name: {
+                schema: "TEXT PRIMARY KEY UNIQUE",
+                encoded: true
+            },
+            post: {
+                schema: "TEXT",
+                encoded: true
+            },
+            town: {
+                schema: "TEXT",
+                encoded: true
+            },
+            pincode: {
+                schema: "TEXT",
+                encoded: false
+            },
+            synced: {
+                schema: "BOOLEAN NOT NULL DEFAULT 0",
+                encoded: false
+            },
         },
         requiredFields: ["name"],
         primary: ["name"],
@@ -23,11 +41,26 @@ export const TablesSQliteSchema: Record<TableNames, {
     companies: {
         name: "companies",
         columns: {
-            name: "TEXT PRIMARY KEY UNIQUE",
-            current_date: "TEXT NOT NULL",
-            next_serial: "TEXT NOT NULL DEFAULT \"\"",
-            is_default: "BOOLEAN NOT NULL DEFAULT 0",
-            synced: "BOOLEAN NOT NULL DEFAULT 0",
+            name: {
+                schema: "TEXT PRIMARY KEY UNIQUE",
+                encoded: false,
+            },
+            current_date: {
+                schema: "TEXT NOT NULL",
+                encoded: false,
+            },
+            next_serial: {
+                schema: "TEXT NOT NULL DEFAULT \"\"",
+                encoded: false,
+            },
+            is_default: {
+                schema: "BOOLEAN NOT NULL DEFAULT 0",
+                encoded: false,
+            },
+            synced: {
+                schema: "BOOLEAN NOT NULL DEFAULT 0",
+                encoded: false,
+            },
         },
         requiredFields: ["name", "current_date", "next_serial"],
         primary: ["name"],
@@ -36,10 +69,22 @@ export const TablesSQliteSchema: Record<TableNames, {
     products: {
         name: "products",
         columns: {
-            name: "TEXT PRIMARY KEY",
-            metal_type: "TEXT NOT NULL CHECK(metal_type IN ('Gold', 'Silver', 'Other'))",
-            product_type: "TEXT NOT NULL CHECK(product_type IN ('product', 'quality', 'seal'))",
-            synced: "BOOLEAN NOT NULL DEFAULT 0",
+            name: {
+                schema: "TEXT PRIMARY KEY",
+                encoded: true,
+            },
+            metal_type: {
+                schema: "TEXT NOT NULL CHECK(metal_type IN ('Gold', 'Silver', 'Other'))",
+                encoded: false,
+            },
+            product_type: {
+                schema: "TEXT NOT NULL CHECK(product_type IN ('product', 'quality', 'seal'))",
+                encoded: false,
+            },
+            synced: {
+                schema: "BOOLEAN NOT NULL DEFAULT 0",
+                encoded: false,
+            },
         },
         requiredFields: ["name", "metal_type", "product_type"],
         primary: ["name"],
@@ -48,18 +93,54 @@ export const TablesSQliteSchema: Record<TableNames, {
     customers: {
         name: "customers",
         columns: {
-            id: "TEXT PRIMARY KEY",
-            address1: "TEXT",
-            address2: "TEXT",
-            area: "TEXT REFERENCES areas(name)",
-            phone_no: "TEXT",
-            fhtitle: "TEXT NOT NULL",
-            fhname: "TEXT NOT NULL",
-            name: "TEXT NOT NULL",
-            id_proof: "TEXT",
-            id_proof_value: "TEXT",
-            door_no: "TEXT",
-            synced: "BOOLEAN NOT NULL DEFAULT 0",
+            id: {
+                schema: "TEXT PRIMARY KEY",
+                encoded: false,
+            },
+            address1: {
+                schema: "TEXT",
+                encoded: true,
+            },
+            address2: {
+                schema: "TEXT",
+                encoded: true,
+            },
+            area: {
+                schema: "TEXT REFERENCES areas(name)",
+                encoded: true,
+            },
+            phone_no: {
+                schema: "TEXT",
+                encoded: false,
+            },
+            fhtitle: {
+                schema: "TEXT NOT NULL",
+                encoded: false,
+            },
+            fhname: {
+                schema: "TEXT NOT NULL",
+                encoded: true,
+            },
+            name: {
+                schema: "TEXT NOT NULL",
+                encoded: true,
+            },
+            id_proof: {
+                schema: "TEXT",
+                encoded: false,
+            },
+            id_proof_value: {
+                schema: "TEXT",
+                encoded: false,
+            },
+            door_no: {
+                schema: "TEXT",
+                encoded: false,
+            },
+            synced: {
+                schema: "BOOLEAN NOT NULL DEFAULT 0",
+                encoded: false,
+            },
         },
         requiredFields: ["id", "fhtitle", "fhname", "name"],
         primary: ["id"],
@@ -68,12 +149,26 @@ export const TablesSQliteSchema: Record<TableNames, {
     balances: {
         name: "balances",
         columns: {
-            date: "TEXT NOT NULL",
-            opening: "REAL NOT NULL",
-            closing: "REAL NOT NULL",
-            company: "TEXT REFERENCES companies(name)",
-            synced: "BOOLEAN NOT NULL DEFAULT 0",
-            // Composite PK emulated by UNIQUE
+            date: {
+                schema: "TEXT NOT NULL",
+                encoded: false,
+            },
+            opening: {
+                schema: "REAL NOT NULL",
+                encoded: false,
+            },
+            closing: {
+                schema: "REAL NOT NULL",
+                encoded: false,
+            },
+            company: {
+                schema: "TEXT REFERENCES companies(name)",
+                encoded: false,
+            },
+            synced: {
+                schema: "BOOLEAN NOT NULL DEFAULT 0",
+                encoded: false,
+            },
         },
         requiredFields: ["date", "opening", "closing", "company"],
         unique: ["date", "company"],
@@ -83,18 +178,54 @@ export const TablesSQliteSchema: Record<TableNames, {
     billings: {
         name: "billings",
         columns: {
-            serial: "TEXT NOT NULL",
-            loan_no: "INTEGER NOT NULL",
-            date: "TEXT NOT NULL",
-            customer_id: "TEXT REFERENCES customers(id)",
-            loan_amount: "REAL NOT NULL",
-            interest_rate: "REAL NOT NULL",
-            first_month_interest: "REAL NOT NULL",
-            doc_charges: "REAL NOT NULL",
-            metal_type: "TEXT NOT NULL CHECK(metal_type IN ('Gold', 'Silver', 'Other'))",
-            released: "BOOLEAN NOT NULL DEFAULT 0",
-            company: "TEXT REFERENCES companies(name)",
-            synced: "BOOLEAN NOT NULL DEFAULT 0",
+            serial: {
+                schema: "TEXT NOT NULL",
+                encoded: false,
+            },
+            loan_no: {
+                schema: "INTEGER NOT NULL",
+                encoded: false,
+            },
+            date: {
+                schema: "TEXT NOT NULL",
+                encoded: false,
+            },
+            customer_id: {
+                schema: "TEXT REFERENCES customers(id)",
+                encoded: false,
+            },
+            loan_amount: {
+                schema: "REAL NOT NULL",
+                encoded: false,
+            },
+            interest_rate: {
+                schema: "REAL NOT NULL",
+                encoded: false,
+            },
+            first_month_interest: {
+                schema: "REAL NOT NULL",
+                encoded: false,
+            },
+            doc_charges: {
+                schema: "REAL NOT NULL",
+                encoded: false,
+            },
+            metal_type: {
+                schema: "TEXT NOT NULL CHECK(metal_type IN ('Gold', 'Silver', 'Other'))",
+                encoded: false,
+            },
+            released: {
+                schema: "BOOLEAN NOT NULL DEFAULT 0",
+                encoded: false,
+            },
+            company: {
+                schema: "TEXT REFERENCES companies(name)",
+                encoded: false,
+            },
+            synced: {
+                schema: "BOOLEAN NOT NULL DEFAULT 0",
+                encoded: false,
+            },
             // Composite primary key → emulate with UNIQUE
         },
         requiredFields: [
@@ -115,16 +246,46 @@ export const TablesSQliteSchema: Record<TableNames, {
     billing_items: {
         name: "billing_items",
         columns: {
-            serial: "TEXT NOT NULL",
-            loan_no: "INTEGER NOT NULL",
-            product: "TEXT NOT NULL REFERENCES products(name)",
-            quality: "TEXT",
-            extra: "TEXT",
-            quantity: "INTEGER NOT NULL",
-            gross_weight: "REAL NOT NULL",
-            net_weight: "REAL NOT NULL",
-            ignore_weight: "REAL NOT NULL",
-            synced: "BOOLEAN NOT NULL DEFAULT 0",
+            serial: {
+                schema: "TEXT NOT NULL",
+                encoded: false,
+            },
+            loan_no: {
+                schema: "INTEGER NOT NULL",
+                encoded: false,
+            },
+            product: {
+                schema: "TEXT NOT NULL REFERENCES products(name)",
+                encoded: false,
+            },
+            quality: {
+                schema: "TEXT",
+                encoded: false,
+            },
+            extra: {
+                schema: "TEXT",
+                encoded: false,
+            },
+            quantity: {
+                schema: "INTEGER NOT NULL",
+                encoded: false,
+            },
+            gross_weight: {
+                schema: "REAL NOT NULL",
+                encoded: false,
+            },
+            net_weight: {
+                schema: "REAL NOT NULL",
+                encoded: false,
+            },
+            ignore_weight: {
+                schema: "REAL NOT NULL",
+                encoded: false,
+            },
+            synced: {
+                schema: "BOOLEAN NOT NULL DEFAULT 0",
+                encoded: false,
+            },
         },
         requiredFields: [
             "serial",
@@ -142,12 +303,30 @@ export const TablesSQliteSchema: Record<TableNames, {
     releases: {
         name: "releases",
         columns: {
-            serial: "TEXT NOT NULL",
-            loan_no: "INTEGER NOT NULL",
-            date: "TEXT NOT NULL",
-            interest_amount: "REAL NOT NULL",
-            total_amount: "REAL NOT NULL",
-            synced: "BOOLEAN NOT NULL DEFAULT 0",
+            serial: {
+                schema: "TEXT NOT NULL",
+                encoded: false,
+            },
+            loan_no: {
+                schema: "INTEGER NOT NULL",
+                encoded: false,
+            },
+            date: {
+                schema: "TEXT NOT NULL",
+                encoded: false,
+            },
+            interest_amount: {
+                schema: "REAL NOT NULL",
+                encoded: false,
+            },
+            total_amount: {
+                schema: "REAL NOT NULL",
+                encoded: false,
+            },
+            synced: {
+                schema: "BOOLEAN NOT NULL DEFAULT 0",
+                encoded: false,
+            },
         },
         requiredFields: ["serial", "loan_no", "date", "interest_amount", "total_amount"],
         unique: ["serial", "loan_no"],
@@ -157,13 +336,34 @@ export const TablesSQliteSchema: Record<TableNames, {
     interest_rates: {
         name: "interest_rates",
         columns: {
-            metal_type: "TEXT NOT NULL CHECK(metal_type IN ('Gold', 'Silver', 'Other'))",
-            rate: "REAL NOT NULL",
-            from_: "INTEGER NOT NULL",
-            to_: "INTEGER NOT NULL",
-            doc_charges: "REAL NOT NULL",
-            doc_charges_type: "TEXT NOT NULL CHECK(doc_charges_type IN ('Fixed', 'Percentage'))",
-            synced: "BOOLEAN NOT NULL DEFAULT 0",
+            metal_type: {
+                schema: "TEXT NOT NULL CHECK(metal_type IN ('Gold', 'Silver', 'Other'))",
+                encoded: false,
+            },
+            rate: {
+                schema: "REAL NOT NULL",
+                encoded: false,
+            },
+            from_: {
+                schema: "INTEGER NOT NULL",
+                encoded: false,
+            },
+            to_: {
+                schema: "INTEGER NOT NULL",
+                encoded: false,
+            },
+            doc_charges: {
+                schema: "REAL NOT NULL",
+                encoded: false,
+            },
+            doc_charges_type: {
+                schema: "TEXT NOT NULL CHECK(doc_charges_type IN ('Fixed', 'Percentage'))",
+                encoded: false,
+            },
+            synced: {
+                schema: "BOOLEAN NOT NULL DEFAULT 0",
+                encoded: false,
+            },
         },
         requiredFields: [
             "metal_type",
@@ -180,8 +380,14 @@ export const TablesSQliteSchema: Record<TableNames, {
     address_lines: {
         name: "address_lines",
         columns: {
-            address: "TEXT PRIMARY KEY UNIQUE",
-            synced: "BOOLEAN NOT NULL DEFAULT 0",
+            address: {
+                schema: "TEXT PRIMARY KEY UNIQUE",
+                encoded: true,
+            },
+            synced: {
+                schema: "BOOLEAN NOT NULL DEFAULT 0",
+                encoded: false,
+            },
         },
         requiredFields: ["address"],
         primary: ["address"],

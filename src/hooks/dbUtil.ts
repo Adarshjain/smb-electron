@@ -1,7 +1,7 @@
-import type {LocalTables, TableNames, Tables} from "../../tables";
+import type {LocalTables, TableName, Tables} from "../../tables";
 import type {ElectronToReactResponse} from "../../electron/main.ts";
 
-export function getDBMethods<K extends TableNames>(table: K) {
+export function getDBMethods<K extends TableName>(table: K) {
     const create =
         async (record: Tables[K]['Row']): Promise<ElectronToReactResponse<null>> => window.api.db.create(table, record)
 
