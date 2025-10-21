@@ -1,4 +1,4 @@
-import {mapToRegex} from "@/lib/myUtils";
+import {mapToRegex} from "@/lib/myUtils.tsx";
 
 const ENGLISH_TO_TAMIL: Record<string, string> = {
     'f': 'qp',

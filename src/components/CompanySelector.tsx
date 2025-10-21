@@ -2,7 +2,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/
 import {useCompany} from "../context/CompanyProvider.tsx";
 import {cn} from "@/lib/utils.ts";
 
-export default function SelectCompany(props: {className?: string}) {
+export default function CompanySelector(props: {className?: string}) {
     const {company, setCompany, allCompanies} = useCompany()
     return (
         <Select

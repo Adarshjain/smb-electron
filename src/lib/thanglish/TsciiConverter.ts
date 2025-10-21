@@ -1,4 +1,4 @@
-import {mapToRegex} from "@/lib/myUtils";
+import {mapToRegex} from "@/lib/myUtils.tsx";
 
 const decodeMap: Record<string, string> = {
     '∙': 'ஃ',
@@ -626,13 +626,12 @@ const encodeMap: Record<string, string> = {
 const decodeMapRegex = mapToRegex(decodeMap);
 const encodeMapRegex = mapToRegex(encodeMap);
 
-
-export function decode(input: string): string {
+export function decode<T extends string | null | undefined>(input: T): T {
     if (!input) return input;
-    return input.replace(decodeMapRegex, (match) => decodeMap[match] || match);
+    return input.replace(decodeMapRegex, (match) => decodeMap[match] || match) as T;
 }
 
-export function encode(input: string): string {
-    if (!input) return input;
-    return input.replace(encodeMapRegex, (match) => encodeMap[match] || match);
+export function encode<T extends string | null | undefined>(input: T): T {
+    if (input == null) return input;
+    return input.replace(encodeMapRegex, (match) => encodeMap[match] || match) as T;
 }

@@ -13,6 +13,7 @@ import {Field, FieldError, FieldGroup, FieldLabel, FieldSet} from "@/components/
 import {format} from "date-fns";
 import {useEnterNavigation} from "@/hooks/useEnterNavigation.ts";
 import {getDBMethods} from "@/hooks/dbUtil.ts";
+import {rpcError} from "@/lib/myUtils.tsx";
 
 const formSchema = z.object({
     name: z.string().min(1, 'Name is required'),
@@ -66,11 +67,7 @@ export function CompanySettings({company, label}: {company?: Tables['companies']
                 if (response.error === 'UNIQUE constraint failed: companies.name') {
                     toast.error(`${data.name} already exists.`);
                 } else {
-                    toast.error(`Error: ${response.error}`, {
-                        description: <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4"><code>{response.stack}</code></pre>,
-                        classNames: {content: "flex flex-col gap-2"},
-                        style: {"--border-radius": "calc(var(--radius) + 4px)"} as React.CSSProperties,
-                    })
+                    rpcError(response)
                 }
             } else {
                 toast.success(isCreate ? `Created company "${data.name}"` : `Saved changes to "${data.name}"`)
