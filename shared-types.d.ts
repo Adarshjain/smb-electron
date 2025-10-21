@@ -9,3 +9,4 @@ export type ElectronToReactResponse<T> = {
     stack: string | undefined;
 }
 
+

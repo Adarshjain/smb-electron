@@ -626,12 +626,38 @@ const encodeMap: Record<string, string> = {
 const decodeMapRegex = mapToRegex(decodeMap);
 const encodeMapRegex = mapToRegex(encodeMap);
 
+// Simple cache for decode/encode results
+const decodeCache = new Map<string, string>();
+const encodeCache = new Map<string, string>();
+
 export function decode<T extends string | null | undefined>(input: T): T {
     if (!input) return input;
-    return input.replace(decodeMapRegex, (match) => decodeMap[match] || match) as T;
+
+    // Check cache first
+    const cached = decodeCache.get(input);
+    if (cached !== undefined) return cached as T;
+
+    // Compute result
+    const result = input.replace(decodeMapRegex, (match) => decodeMap[match] || match);
+
+    // Store in cache
+    decodeCache.set(input, result);
+
+    return result as T;
 }
 
 export function encode<T extends string | null | undefined>(input: T): T {
     if (input == null) return input;
-    return input.replace(encodeMapRegex, (match) => encodeMap[match] || match) as T;
+    
+    // Check cache first
+    const cached = encodeCache.get(input);
+    if (cached !== undefined) return cached as T;
+    
+    // Compute result
+    const result = input.replace(encodeMapRegex, (match) => encodeMap[match] || match);
+    
+    // Store in cache
+    encodeCache.set(input, result);
+    
+    return result as T;
 }
