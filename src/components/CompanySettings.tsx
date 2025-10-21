@@ -5,7 +5,7 @@ import DatePicker from "@/components/DatePicker.tsx";
 import {Checkbox} from "@/components/ui/checkbox"
 import type {Tables} from "../../tables";
 import {toast} from "sonner";
-import {type JSX, useEffect} from "react";
+import {type JSX, useCallback, useEffect} from "react";
 import {zodResolver} from "@hookform/resolvers/zod"
 import {Controller, type ControllerRenderProps, useForm} from "react-hook-form"
 import * as z from "zod"
@@ -50,12 +50,7 @@ export function CompanySettings({company, label}: {company?: Tables['companies']
         }
     }, [company, reset]);
 
-    const formRef = useEnterNavigation({
-        fields: ["name", "current_date", "next_serial_letter", "next_serial_number"],
-        onSubmit: () => handleSubmit(onSubmit)(),
-    });
-
-    async function onSubmit(data: FormData) {
+    const onSubmit = useCallback(async (data: FormData) => {
         const toastId = toast.loading(isCreate ? 'Creating company...' : 'Saving changes...');
         try {
             const {create, update} = getDBMethods('companies');
@@ -85,7 +80,16 @@ export function CompanySettings({company, label}: {company?: Tables['companies']
         } finally {
             toast.dismiss(toastId);
         }
-    }
+    }, [isCreate]);
+
+    const handleFormSubmit = useCallback(() => {
+        handleSubmit(onSubmit)();
+    }, [handleSubmit, onSubmit]);
+
+    const formRef = useEnterNavigation({
+        fields: ["name", "current_date", "next_serial_letter", "next_serial_number"],
+        onSubmit: handleFormSubmit,
+    });
 
     const renderField = <K extends keyof FormData>(name: K, label: string, render: (field: ControllerRenderProps<FormData, K>, invalid: boolean) => JSX.Element) => (
         <Controller
