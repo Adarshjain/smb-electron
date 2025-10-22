@@ -19,6 +19,6 @@ export function TableView() {
                 {allTables.map(table => <SelectItem key={table} value={table}>{table}</SelectItem>)}
             </SelectContent>
         </Select>
-        <DataView table={currentTable} key={currentTable}/>
+        <DataView className="p-4" table={currentTable} key={currentTable}/>
     </div>;
 }
