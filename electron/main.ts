@@ -209,10 +209,11 @@ ipcMain.handle('db:delete', async <K extends TableName>(
 ipcMain.handle('db:query', async (
     _event: IpcMainInvokeEvent,
     query: string,
-    params?: unknown[]
+    params?: unknown[],
+    justRun = false
 ): Promise<ElectronToReactResponse<unknown | null>> => {
     try {
-        return {success: true, data: executeSql(query, params)};
+        return {success: true, data: executeSql(query, params, justRun)};
     } catch (error) {
         return {success: false, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined};
     }

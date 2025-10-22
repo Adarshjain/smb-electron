@@ -7,8 +7,14 @@ import {decode} from "@/lib/thanglish/TsciiConverter.ts";
 import {Input} from "@/components/ui/input.tsx";
 import {useThanglish} from "@/context/ThanglishProvider.tsx";
 import {TablesSQliteSchema} from "../../tableSchema.ts";
+import {cn} from "@/lib/utils.ts";
 
-export default function DataView<K extends TableName>(props: { table: K }) {
+export default function DataView<K extends TableName>(props: {
+    table: K,
+    hideSearch?: boolean,
+    className?: string,
+    onRowClick?: (record: Tables[K]['Row']) => void,
+}) {
     const [tableData, setTableData] = useState<Tables[K]['Row'][]>([]);
     const [search, setSearch] = useState<string>("");
     const {convert} = useThanglish();
@@ -53,12 +59,12 @@ export default function DataView<K extends TableName>(props: { table: K }) {
             .join('|');
     };
 
-    return <div className="p-4 gap-3 flex flex-col">
-        <Input
+    return <div className={cn("gap-3 flex flex-col", props.className)}>
+        {!props.hideSearch ? <Input
             value={search}
             onInput={(e) => setSearch(convert((e.target as HTMLInputElement).value))}
             placeholder="Search..."
-        />
+        /> : null}
         <Table>
             <TableHeader>
                 <TableRow>
@@ -69,7 +75,7 @@ export default function DataView<K extends TableName>(props: { table: K }) {
             </TableHeader>
             <TableBody>
                 {filteredData.map(record => (
-                    <TableRow key={getRowKey(record)}>
+                    <TableRow key={getRowKey(record)} onClick={() => props.onRowClick?.(record)}>
                         {
                             Object.entries(record).map(([key, val]) => {
                                 if (!(key in columns)) return null;

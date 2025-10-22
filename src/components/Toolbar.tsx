@@ -1,5 +1,5 @@
 import * as React from "react"
-import {ArrowLeftIcon, HomeIcon} from "lucide-react"
+import {ArrowLeftIcon, HomeIcon, SettingsIcon} from "lucide-react"
 
 import {
     NavigationMenu,
@@ -40,7 +40,7 @@ export default function Toolbar() {
                                         canGoBack ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed',
                                     )}
                                 >
-                                    <ArrowLeftIcon size={20} aria-hidden={true} />
+                                    <ArrowLeftIcon size={20} aria-hidden={true}/>
                                     <span className="sr-only">Back</span>
                                 </NavigationMenuLink>
                             </TooltipTrigger>
@@ -59,7 +59,7 @@ export default function Toolbar() {
                                             'flex size-8 items-center justify-center p-1.5 rounded-md transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer',
                                         )}
                                     >
-                                        <HomeIcon size={20} aria-hidden={true} />
+                                        <HomeIcon size={20} aria-hidden={true}/>
                                         <span className="sr-only">Home</span>
                                     </Link>
                                 </NavigationMenuLink>
@@ -76,13 +76,35 @@ export default function Toolbar() {
                     </NavigationMenuItem>
                 </NavigationMenuList>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center mr-4 gap-3">
                 {location.pathname === '/' ? <CompanySelector/> : null}
-                <span className="mx-4 text-sm text-gray-600">{location.pathname}</span>
+                <span className="text-sm text-gray-600">{location.pathname}</span>
                 <Button
-                    className={`mr-4 text-white cursor-pointer py-1 h-7 ${isTamil ? 'bg-blue-600 hover:bg-blue-500' : 'bg-green-600 hover:bg-green-500'}`}
+                    className={`text-white cursor-pointer py-1 h-7 ${isTamil ? 'bg-blue-600 hover:bg-blue-500' : 'bg-green-600 hover:bg-green-500'}`}
                     onClick={() => setIsTamil(!isTamil)}
                 >{isTamil ? 'Tamil' : 'English'}</Button>
+                <NavigationMenuList>
+                    <NavigationMenuItem>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <NavigationMenuLink asChild>
+                                    <Link
+                                        to="/settings"
+                                        className={cn(
+                                            'flex size-8 items-center justify-center p-1.5 rounded-md transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer',
+                                        )}
+                                    >
+                                        <SettingsIcon size={20} aria-hidden={true}/>
+                                        <span className="sr-only">Home</span>
+                                    </Link>
+                                </NavigationMenuLink>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="px-2 py-1 text-xs">
+                                <p>Settings</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </NavigationMenuItem>
+                </NavigationMenuList>
             </div>
         </NavigationMenu>
     )
