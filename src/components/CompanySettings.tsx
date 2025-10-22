@@ -23,7 +23,7 @@ export default function CompanySettings() {
         refetch();
     }
 
-    return <div className="w-[600px]">
+    return <div className="w-[650px]">
         <div className="text-xl font-medium py-3 flex justify-between">
             Companies
             <CrudCompany label={<Button variant="outline" className="cursor-pointer">Add Company</Button>} onSave={refetch}/>
