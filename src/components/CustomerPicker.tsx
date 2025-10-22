@@ -2,7 +2,8 @@ import {cn} from '@/lib/utils'
 import {Command, CommandGroup, CommandItem, CommandList,} from '@/components/ui/command'
 import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover'
 import {Check} from 'lucide-react'
-import {useEffect, useState, useRef} from "react";
+import {useEffect, useRef, useState} from "react";
+import {useVirtualizer} from '@tanstack/react-virtual'
 import {query} from "@/hooks/dbUtil.ts";
 import type {Tables} from "../../tables";
 import {Input} from "@/components/ui/input.tsx";
@@ -27,6 +28,14 @@ export default function CustomerPicker({
     const {convert} = useThanglish()
     const inputRef = useRef<HTMLInputElement>(null)
     const itemRefs = useRef<(HTMLDivElement | null)[]>([])
+    const parentRef = useRef<HTMLDivElement>(null)
+
+    const virtualizer = useVirtualizer({
+        count: items.length,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => 34, // Approximate height of each item in pixels
+        overscan: 5, // Number of items to render outside the visible area
+    })
 
     useEffect(() => {
         let active = true
@@ -56,13 +65,13 @@ export default function CustomerPicker({
     }, [items])
 
     useEffect(() => {
-        if (itemRefs.current[highlightedIndex]) {
-            itemRefs.current[highlightedIndex]?.scrollIntoView({
-                block: 'nearest',
+        if (highlightedIndex >= 0 && highlightedIndex < items.length) {
+            virtualizer.scrollToIndex(highlightedIndex, {
+                align: 'auto',
                 behavior: 'smooth'
             })
         }
-    }, [highlightedIndex])
+    }, [highlightedIndex, virtualizer, items.length])
 
     const handleSelect = (opt: Tables['customers']['Row']) => {
         setSelected(opt)
@@ -128,34 +137,52 @@ export default function CustomerPicker({
                     />
                 </div>
             </PopoverTrigger>
-            <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" onOpenAutoFocus={(e) => e.preventDefault()}>
+            <PopoverContent className="p-0 w-[610px]" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <Command shouldFilter={false}>
-                    <CommandList className="max-h-60 overflow-auto">
-                        {/*<CommandEmpty>No results found.</CommandEmpty>*/}
+                    <CommandList ref={parentRef} className="max-h-150 overflow-auto">
                         <CommandGroup>
-                            {items.map((opt, index) => (
-                                <CommandItem
-                                    key={opt.id}
-                                    value={opt.id}
-                                    onSelect={() => handleSelect(opt)}
-                                    ref={(el) => {
-                                        itemRefs.current[index] = el
-                                    }}
-                                    className={cn(
-                                        index % 2 === 1 && "bg-accent",
-                                        isKeyboardNavigating && highlightedIndex === index && "bg-blue-500 text-white",
-                                        "data-[selected=true]:bg-blue-200",
-                                    )}
-                                >
-                                    <div className="w-[160px]">{decode(opt.name)}</div>
-                                    <div className="w-[30px]">{decode(opt.fhtitle)}</div>
-                                    <div className="w-[160px]">{decode(opt.fhname)}</div>
-                                    <div className="w-[200px]">{decode(opt.area)}</div>
-                                    {selected?.id === opt.id && (
-                                        <Check className="ml-auto h-4 w-4"/>
-                                    )}
-                                </CommandItem>
-                            ))}
+                            <div
+                                style={{
+                                    height: `${virtualizer.getTotalSize()}px`,
+                                    width: '100%',
+                                    position: 'relative',
+                                }}
+                            >
+                                {virtualizer.getVirtualItems().map((virtualItem) => {
+                                    const opt = items[virtualItem.index]
+                                    const index = virtualItem.index
+                                    return (
+                                        <CommandItem
+                                            key={opt.id}
+                                            value={opt.id}
+                                            onSelect={() => handleSelect(opt)}
+                                            ref={(el) => {
+                                                itemRefs.current[index] = el
+                                            }}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                width: '100%',
+                                                transform: `translateY(${virtualItem.start}px)`,
+                                            }}
+                                            className={cn(
+                                                index % 2 === 1 && "bg-accent",
+                                                "data-[selected=true]:bg-blue-200 px-2 py-1 text-base",
+                                                isKeyboardNavigating && highlightedIndex === index && "bg-blue-500 text-white data-[selected=true]:text-white data-[selected=true]:bg-blue-500",
+                                            )}
+                                        >
+                                            <div className="w-[160px]">{decode(opt.name)}</div>
+                                            <div className="w-[30px]">{decode(opt.fhtitle)}</div>
+                                            <div className="w-[160px]">{decode(opt.fhname)}</div>
+                                            <div className="w-[180px]">{decode(opt.area)}</div>
+                                            {selected?.id === opt.id && (
+                                                <Check className="ml-auto h-4 w-4"/>
+                                            )}
+                                        </CommandItem>
+                                    )
+                                })}
+                            </div>
                         </CommandGroup>
                     </CommandList>
                 </Command>
