@@ -7,8 +7,8 @@ export const tables: (keyof Tables)[] = [
     'companies',
     'customers',
     'balances',
-    'billings',
-    'billing_items',
+    'bills',
+    'bill_items',
     'releases',
     'interest_rates',
     'products',
@@ -35,8 +35,8 @@ export async function migrateSchema() {
     }
     for (const table of Object.values(TablesSQliteSchema)) {
         const {name, columns, unique} = table;
-        const columnDefs = Object.entries(columns.schema)
-            .map(([col, def]) => `${col} ${def}`)
+        const columnDefs = Object.entries(columns)
+            .map(([col, def]) => `${col} ${def.schema}`)
             .join(", ");
 
         const exists = db.prepare(
@@ -65,10 +65,10 @@ export async function migrateSchema() {
         }[];
         const existingCols = pragma.map((row) => row.name);
 
-        for (const [colName, colDef] of Object.entries(columns.schema)) {
+        for (const [colName, colDef] of Object.entries(columns)) {
             if (!existingCols.includes(colName)) {
                 db.exec(`ALTER TABLE ${name}
-                    ADD COLUMN ${colName} ${colDef}`);
+                    ADD COLUMN ${colName} ${colDef.schema}`);
                 console.log(`➕ Added column '${colName}' to '${name}'`);
             }
         }
@@ -262,8 +262,13 @@ export function update<K extends TableName>(table: K, record: Tables[K]['Update'
     return null;
 }
 
-export function executeSql(sql: string, params: unknown[] = []): unknown[] | null {
+export function executeSql(sql: string, params: unknown[] = [], justRun = false): unknown[] | null {
     if (!db) return null;
+
+    if (justRun) {
+        db.prepare(sql).run(...params);
+        return null;
+    }
 
     const stmt = db.prepare(sql);
     return stmt.all(...params) as unknown[];

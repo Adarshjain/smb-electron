@@ -7,7 +7,7 @@ import {
     NavigationMenuLink,
     NavigationMenuList,
 } from "@/components/ui/navigation-menu"
-import {useLocation, useNavigate} from "react-router-dom";
+import {Link, useLocation, useNavigate} from "react-router-dom";
 import {useThanglish} from "@/context/ThanglishProvider.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip.tsx";
@@ -19,25 +19,12 @@ export default function Toolbar() {
     const location = useLocation()
     const navigate = useNavigate()
     const [canGoBack, setCanGoBack] = React.useState(false)
-    const historyStackRef = React.useRef(0) // Track depth in navigation stack
-    const prevLocationKeyRef = React.useRef(location.key)
 
     React.useEffect(() => {
-        // If the location key changed, this is a navigation
-        if (prevLocationKeyRef.current !== location.key) {
-            // Check if this was a back navigation by checking window.history.state
-            const historyState = window.history.state
-            
-            // If the location key matches something we've seen before, it's likely a back/forward
-            // Otherwise it's a new push navigation
-            if (historyState?.idx !== undefined) {
-                // React Router BrowserRouter stores the current index
-                historyStackRef.current = historyState.idx
-            }
-            
-            prevLocationKeyRef.current = location.key
-            setCanGoBack(historyStackRef.current > 0)
-        }
+        // React Router stores the current history index in window.history.state.idx
+        // If idx > 0, there's history to go back to
+        const historyState = window.history.state as { idx?: number } | null
+        setCanGoBack((historyState?.idx ?? 0) > 0)
     }, [location])
     return (
         <NavigationMenu className="w-full max-w-full border-b py-1 flex justify-between">
@@ -65,20 +52,27 @@ export default function Toolbar() {
                     <NavigationMenuItem>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <NavigationMenuLink
-                                    href={"/"}
-                                    className={cn(
-                                        'flex size-8 items-center justify-center p-1.5 rounded-md transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer',
-                                    )}
-                                >
-                                    <HomeIcon size={20} aria-hidden={true} />
-                                    <span className="sr-only">Home</span>
+                                <NavigationMenuLink asChild>
+                                    <Link
+                                        to="/"
+                                        className={cn(
+                                            'flex size-8 items-center justify-center p-1.5 rounded-md transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer',
+                                        )}
+                                    >
+                                        <HomeIcon size={20} aria-hidden={true} />
+                                        <span className="sr-only">Home</span>
+                                    </Link>
                                 </NavigationMenuLink>
                             </TooltipTrigger>
                             <TooltipContent side="bottom" className="px-2 py-1 text-xs">
                                 <p>Home</p>
                             </TooltipContent>
                         </Tooltip>
+                    </NavigationMenuItem>
+                    <NavigationMenuItem>
+                        <NavigationMenuLink asChild>
+                            <Link to="/table-view">Tables</Link>
+                        </NavigationMenuLink>
                     </NavigationMenuItem>
                 </NavigationMenuList>
             </div>

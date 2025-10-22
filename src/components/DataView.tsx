@@ -54,7 +54,6 @@ export default function DataView<K extends TableName>(props: { table: K }) {
     };
 
     return <div className="p-4 gap-3 flex flex-col">
-        <div className="text-2xl bold text-center">{props.table}</div>
         <Input
             value={search}
             onInput={(e) => setSearch(convert((e.target as HTMLInputElement).value))}

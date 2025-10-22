@@ -1,0 +1,19 @@
+{
+  "watch": [
+    "dist-electron/electron",
+    "dist-electron/tableSchema.js",
+    "dist-electron/tables.d.ts",
+    "dist-electron/shared-types.d.ts"
+  ],
+  "ext": "js",
+  "delay": 500,
+  "ignore": [
+    "dist-electron/electron/build/**",
+    "node_modules/**"
+  ],
+  "exec": "electron .",
+  "env": {
+    "ELECTRON_DISABLE_SECURITY_WARNINGS": "true"
+  }
+}
+

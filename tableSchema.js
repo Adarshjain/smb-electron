@@ -1,15 +1,7 @@
-import type {TableName} from "./tables";
-
-export const TablesSQliteSchema: Record<TableName, {
-    name: TableName,
-    columns: Record<string, {
-        schema: string;
-        encoded: boolean;
-    }>,
-    requiredFields: string[],
-    unique?: string[],
-    primary: string[],
-}> = {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TablesSQliteSchema = void 0;
+exports.TablesSQliteSchema = {
     areas: {
         name: "areas",
         columns: {
@@ -37,7 +29,6 @@ export const TablesSQliteSchema: Record<TableName, {
         requiredFields: ["name"],
         primary: ["name"],
     },
-
     companies: {
         name: "companies",
         columns: {
@@ -65,7 +56,6 @@ export const TablesSQliteSchema: Record<TableName, {
         requiredFields: ["name", "current_date", "next_serial"],
         primary: ["name"],
     },
-
     products: {
         name: "products",
         columns: {
@@ -89,7 +79,6 @@ export const TablesSQliteSchema: Record<TableName, {
         requiredFields: ["name", "metal_type", "product_type"],
         primary: ["name"],
     },
-
     customers: {
         name: "customers",
         columns: {
@@ -106,7 +95,7 @@ export const TablesSQliteSchema: Record<TableName, {
                 encoded: true,
             },
             area: {
-                schema: "TEXT",
+                schema: "TEXT REFERENCES areas(name)",
                 encoded: true,
             },
             phone_no: {
@@ -145,7 +134,6 @@ export const TablesSQliteSchema: Record<TableName, {
         requiredFields: ["id", "fhtitle", "fhname", "name"],
         primary: ["id"],
     },
-
     balances: {
         name: "balances",
         columns: {
@@ -162,7 +150,7 @@ export const TablesSQliteSchema: Record<TableName, {
                 encoded: false,
             },
             company: {
-                schema: "TEXT NOT NULL DEFAULT 0",
+                schema: "TEXT NOT NULL REFERENCES companies(name)",
                 encoded: false,
             },
             synced: {
@@ -174,9 +162,8 @@ export const TablesSQliteSchema: Record<TableName, {
         unique: ["date", "company"],
         primary: ["date", "company"],
     },
-
-    bills: {
-        name: "bills",
+    billings: {
+        name: "billings",
         columns: {
             serial: {
                 schema: "TEXT NOT NULL",
@@ -191,7 +178,7 @@ export const TablesSQliteSchema: Record<TableName, {
                 encoded: false,
             },
             customer_id: {
-                schema: "TEXT",
+                schema: "TEXT REFERENCES customers(id)",
                 encoded: false,
             },
             loan_amount: {
@@ -219,7 +206,7 @@ export const TablesSQliteSchema: Record<TableName, {
                 encoded: false,
             },
             company: {
-                schema: "TEXT",
+                schema: "TEXT REFERENCES companies(name)",
                 encoded: false,
             },
             synced: {
@@ -242,9 +229,8 @@ export const TablesSQliteSchema: Record<TableName, {
         unique: ["serial", "loan_no"],
         primary: ["serial", "loan_no"],
     },
-
-    bill_items: {
-        name: "bill_items",
+    billing_items: {
+        name: "billing_items",
         columns: {
             serial: {
                 schema: "TEXT NOT NULL",
@@ -255,7 +241,7 @@ export const TablesSQliteSchema: Record<TableName, {
                 encoded: false,
             },
             product: {
-                schema: "TEXT NOT NULL",
+                schema: "TEXT NOT NULL REFERENCES products(name)",
                 encoded: false,
             },
             quality: {
@@ -296,9 +282,9 @@ export const TablesSQliteSchema: Record<TableName, {
             "net_weight",
             "ignore_weight",
         ],
+        unique: ["serial", "loan_no"],
         primary: ["serial", "loan_no"],
     },
-
     releases: {
         name: "releases",
         columns: {
@@ -318,10 +304,6 @@ export const TablesSQliteSchema: Record<TableName, {
                 schema: "REAL NOT NULL",
                 encoded: false,
             },
-            loan_amount: {
-                schema: "REAL NOT NULL",
-                encoded: false,
-            },
             total_amount: {
                 schema: "REAL NOT NULL",
                 encoded: false,
@@ -331,11 +313,10 @@ export const TablesSQliteSchema: Record<TableName, {
                 encoded: false,
             },
         },
-        requiredFields: ["serial", "loan_no", "date", "interest_amount", "loan_amount", "total_amount"],
+        requiredFields: ["serial", "loan_no", "date", "interest_amount", "total_amount"],
         unique: ["serial", "loan_no"],
         primary: ["serial", "loan_no"],
     },
-
     interest_rates: {
         name: "interest_rates",
         columns: {
@@ -379,7 +360,6 @@ export const TablesSQliteSchema: Record<TableName, {
         unique: ["rate", "from_", "to_"],
         primary: ["rate", "from_", "to_"],
     },
-
     address_lines: {
         name: "address_lines",
         columns: {
@@ -395,4 +375,4 @@ export const TablesSQliteSchema: Record<TableName, {
         requiredFields: ["address"],
         primary: ["address"],
     },
-} as const;
+};
