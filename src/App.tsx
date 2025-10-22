@@ -1,9 +1,9 @@
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import {Home} from "./pages/Home.tsx";
 import { Toaster } from "@/components/ui/sonner"
-import {TableView} from "@/components/TableView.tsx";
+import {TableView} from "@/pages/TableView.tsx";
 import Toolbar from "@/components/Toolbar.tsx";
-import Settings from "@/components/Settings.tsx";
+import Settings from "@/pages/Settings.tsx";
 
 function App() {
     return (
