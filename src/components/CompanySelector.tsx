@@ -2,7 +2,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/
 import {useCompany} from "../context/CompanyProvider.tsx";
 import {cn} from "@/lib/utils.ts";
 
-export default function CompanySelector(props: {className?: string}) {
+export default function CompanySelector(props: {className?: string; disabled?: boolean}) {
     const {company, setCompany, allCompanies} = useCompany()
     return (
         <Select
@@ -13,6 +13,7 @@ export default function CompanySelector(props: {className?: string}) {
                 }
             }}
             value={company?.name || ""}
+            disabled={props.disabled}
         >
             <SelectTrigger className={cn("w-full", props.className)}>
                 <SelectValue placeholder="Select Company"/>

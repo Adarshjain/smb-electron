@@ -77,7 +77,7 @@ export default function Toolbar() {
                 </NavigationMenuList>
             </div>
             <div className="flex items-center mr-4 gap-3">
-                {location.pathname === '/' ? <CompanySelector/> : null}
+                <CompanySelector disabled={location.pathname !== '/'}/>
                 <span className="text-sm text-gray-600">{location.pathname}</span>
                 <Button
                     className={`text-white cursor-pointer py-1 h-7 ${isTamil ? 'bg-blue-600 hover:bg-blue-500' : 'bg-green-600 hover:bg-green-500'}`}
