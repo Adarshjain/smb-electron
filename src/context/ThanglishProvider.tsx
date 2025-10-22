@@ -10,7 +10,7 @@ interface ThanglishContextType {
 const ThanglishContext = createContext<ThanglishContextType | undefined>(undefined);
 
 export function ThanglishProvider({ children }: { children: ReactNode }) {
-    const [isTamil, setIsTamil] = useState<boolean>(false);
+    const [isTamil, setIsTamil] = useState<boolean>(true);
 
     // Toggle isTamil when F10 is pressed
     useEffect(() => {
