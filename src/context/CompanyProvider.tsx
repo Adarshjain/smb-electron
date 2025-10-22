@@ -1,6 +1,7 @@
-import {createContext, type ReactNode, useContext, useEffect, useState} from 'react';
+import {createContext, type ReactNode, useContext, useEffect, useMemo, useState} from 'react';
 import type {Tables} from "../../tables";
 import {getDBMethods} from "../hooks/dbUtil.ts";
+import {toastElectronResponse} from "@/lib/myUtils.tsx";
 
 interface CompanyContextType {
     company: Tables['companies']['Row'] | null;
@@ -16,20 +17,21 @@ const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 export function CompanyProvider({children}: { children: ReactNode }) {
     const [company, setCompany] = useState<Tables['companies']['Row'] | null>(null);
     const [allCompanies, setAllCompanies] = useState<Tables['companies']['Row'][]>([]);
+    const {update, read} = useMemo(() => getDBMethods('companies'), []);
 
     const setCurrentDate = async (current_date: string) => {
         if (company) {
-            await getDBMethods('companies').update({
+            toastElectronResponse(await update({
                 current_date,
                 name: company.name
-            });
+            }));
             setCompany({...company, current_date});
         }
     }
 
     const setNextSerial = async (next_serial: string) => {
         if (company) {
-            await getDBMethods('companies').update({
+            await update({
                 next_serial,
                 name: company.name
             });
@@ -38,7 +40,7 @@ export function CompanyProvider({children}: { children: ReactNode }) {
     }
 
     const fetchCompanies = () => {
-        getDBMethods('companies').read({}).then((response) => {
+        read({}).then((response) => {
             if (response.success && response.data && response.data.length > 0) {
                 setAllCompanies(response.data as Tables['companies']['Row'][]);
                 const companyMatch = (response.data as Tables['companies']['Row'][]).find(comp => comp.is_default === 1) || response.data[0]

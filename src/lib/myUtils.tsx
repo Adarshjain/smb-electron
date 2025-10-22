@@ -47,6 +47,35 @@ export function viewableDate(dateStr: string): string {
     return format(new Date(dateStr), "dd/MM/yyyy");
 }
 
+export function isToday(dateStr: string): boolean {
+    const date = new Date(dateStr);
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear();
+}
+
+export function currentIsoDate() {
+    return new Date().toISOString().split('T')[0]
+}
+
+export function nextIsoDate(dateStr?: string): string {
+    const date = new Date(dateStr || currentIsoDate());
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().split('T')[0];
+}
+
+export function previousIsoDate(dateStr?: string): string {
+    const date = new Date(dateStr || currentIsoDate());
+    date.setDate(date.getDate() - 1);
+    return date.toISOString().split('T')[0];
+}
+
+export function isValidIsoDate(dateStr: string): boolean {
+    const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    return isoDateRegex.test(dateStr);
+}
+
 export function toastElectronResponse<T>(response: ElectronToReactResponse<T>, successMessage = 'Success') {
     if (!response.success) {
         if (response.error === 'UNIQUE constraint failed') {

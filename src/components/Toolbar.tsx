@@ -12,12 +12,14 @@ import {useThanglish} from "@/context/ThanglishProvider.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 import {cn} from "@/lib/utils.ts";
-import CompanySelector from "@/components/CompanySelector.tsx";
+import {useCompany} from "@/context/CompanyProvider.tsx";
+import CurrentDateCrud from "@/components/CurrentDateCrud.tsx";
 
 export default function Toolbar() {
     const {isTamil, setIsTamil} = useThanglish()
     const location = useLocation()
     const navigate = useNavigate()
+    const {company} = useCompany()
     const [canGoBack, setCanGoBack] = React.useState(false)
 
     React.useEffect(() => {
@@ -27,8 +29,8 @@ export default function Toolbar() {
         setCanGoBack((historyState?.idx ?? 0) > 0)
     }, [location])
     return (
-        <NavigationMenu className="w-full max-w-full border-b py-1 flex justify-between">
-            <div className="ml-2">
+        <NavigationMenu className="w-full max-w-full border-b py-1">
+            <div className="ml-2 w-1/3 flex items-start">
                 <NavigationMenuList className="flex-wrap">
                     <NavigationMenuItem>
                         <Tooltip>
@@ -76,9 +78,10 @@ export default function Toolbar() {
                     </NavigationMenuItem>
                 </NavigationMenuList>
             </div>
-            <div className="flex items-center mr-4 gap-3">
-                <CompanySelector disabled={location.pathname !== '/'}/>
-                <span className="text-sm text-gray-600">{location.pathname}</span>
+            {company ? <div className="w-1/3  flex justify-center">
+                <div>{company.name} <CurrentDateCrud /></div>
+            </div> : null}
+            <div className="flex justify-end mr-4 gap-3 w-1/3">
                 <Button
                     className={`text-white cursor-pointer py-1 h-7 ${isTamil ? 'bg-blue-600 hover:bg-blue-500' : 'bg-green-600 hover:bg-green-500'}`}
                     onClick={() => setIsTamil(!isTamil)}
