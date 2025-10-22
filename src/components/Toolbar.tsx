@@ -71,11 +71,6 @@ export default function Toolbar() {
                             </TooltipContent>
                         </Tooltip>
                     </NavigationMenuItem>
-                    <NavigationMenuItem>
-                        <NavigationMenuLink asChild>
-                            <Link to="/table-view">Tables</Link>
-                        </NavigationMenuLink>
-                    </NavigationMenuItem>
                 </NavigationMenuList>
             </div>
             {company ? <div className="w-1/3  flex justify-center">

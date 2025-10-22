@@ -5,7 +5,7 @@ import DatePicker from "@/components/DatePicker.tsx";
 import {Checkbox} from "@/components/ui/checkbox"
 import type {Tables} from "../../tables";
 import {toast} from "sonner";
-import {type JSX, useCallback, useEffect, useState} from "react";
+import {type JSX, useCallback, useEffect, useMemo, useState} from "react";
 import {zodResolver} from "@hookform/resolvers/zod"
 import {Controller, type ControllerRenderProps, useForm} from "react-hook-form"
 import * as z from "zod"
@@ -32,17 +32,20 @@ export interface CrudCompanyProps {
 }
 
 export function CrudCompany({company, label, onSave}: CrudCompanyProps) {
-    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const isCreate = !company;
+    
+    const defaultValues = useMemo(() => ({
+        name: "",
+        current_date: format(new Date(), 'yyyy-MM-dd'),
+        is_default: false,
+        next_serial_letter: 'A',
+        next_serial_number: 1,
+    }), []);
+    
     const {control, handleSubmit, reset} = useForm<FormData>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
-            name: "",
-            current_date: format(new Date(), 'yyyy-MM-dd'),
-            is_default: false,
-            next_serial_letter: 'A',
-            next_serial_number: 1,
-        },
+        defaultValues,
     })
 
     useEffect(() => {
@@ -93,7 +96,11 @@ export function CrudCompany({company, label, onSave}: CrudCompanyProps) {
         onSubmit: handleFormSubmit,
     });
 
-    const renderField = <K extends keyof FormData>(name: K, label: string, render: (field: ControllerRenderProps<FormData, K>, invalid: boolean) => JSX.Element) => (
+    const renderField = useCallback(<K extends keyof FormData>(
+        name: K, 
+        label: string, 
+        render: (field: ControllerRenderProps<FormData, K>, invalid: boolean) => JSX.Element
+    ) => (
         <Controller
             name={name}
             control={control}
@@ -105,12 +112,12 @@ export function CrudCompany({company, label, onSave}: CrudCompanyProps) {
                 </Field>
             )}
         />
-    );
+    ), [control]);
 
     return (
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogTrigger asChild>
-                {label ? label : <Button variant="outline">{label || (isCreate ? 'Create Company' : 'Edit Company')}</Button>}
+                {label || <Button variant="outline">{isCreate ? 'Create Company' : 'Edit Company'}</Button>}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[450px]" onPointerDownOutside={(e) => e.preventDefault()}>
                 <DialogHeader>
@@ -126,35 +133,47 @@ export function CrudCompany({company, label, onSave}: CrudCompanyProps) {
                             <DatePicker {...field} id="current_date" name="current_date" isError={invalid}/>
                         ))}
                         
-                        <Controller
-                            name="next_serial_letter"
-                            control={control}
-                            render={({field: letterField, fieldState: letterState}) => (
+                        <Field className="gap-1">
+                            <FieldLabel>Next Loan</FieldLabel>
+                            <div className="flex">
+                                <Controller
+                                    name="next_serial_letter"
+                                    control={control}
+                                    render={({field, fieldState}) => (
+                                        <Input 
+                                            {...field} 
+                                            id="next_serial_letter" 
+                                            name="next_serial_letter" 
+                                            maxLength={1} 
+                                            placeholder="A"
+                                            aria-invalid={fieldState.invalid}
+                                            className="w-14 rounded-r-none text-center uppercase focus-visible:z-10"
+                                        />
+                                    )}
+                                />
                                 <Controller
                                     name="next_serial_number"
                                     control={control}
-                                    render={({field: numberField, fieldState: numberState}) => (
-                                        <Field data-invalid={letterState.invalid || numberState.invalid} className="gap-1">
-                                            <FieldLabel>Next Loan</FieldLabel>
-                                            <div className="flex">
-                                                <Input {...letterField} id="next_serial_letter" name="next_serial_letter" maxLength={1} placeholder="A"
-                                                    className="w-14 rounded-r-none text-center uppercase focus-visible:z-10"/>
-                                                <Input {...numberField} id="next_serial_number" name="next_serial_number" type="number" placeholder="1"
-                                                    className="w-24 rounded-l-none border-l-0 text-center focus-visible:z-10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        if (/^\d{0,5}$/.test(val)) numberField.onChange(val ? parseInt(val) : "");
-                                                    }}
-                                                />
-                                            </div>
-                                            {(letterState.invalid || numberState.invalid) && (
-                                                <FieldError errors={[letterState.error, numberState.error].filter(Boolean)}/>
-                                            )}
-                                        </Field>
+                                    render={({field, fieldState}) => (
+                                        <Input 
+                                            {...field} 
+                                            id="next_serial_number" 
+                                            name="next_serial_number" 
+                                            type="number" 
+                                            placeholder="1"
+                                            aria-invalid={fieldState.invalid}
+                                            className="w-24 rounded-l-none border-l-0 text-center focus-visible:z-10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                if (/^\d{0,5}$/.test(val)) {
+                                                    field.onChange(val ? parseInt(val) : "");
+                                                }
+                                            }}
+                                        />
                                     )}
                                 />
-                            )}
-                        />
+                            </div>
+                        </Field>
 
                         <Controller
                             name="is_default"
@@ -178,7 +197,7 @@ export function CrudCompany({company, label, onSave}: CrudCompanyProps) {
                         <DialogClose asChild>
                             <Button variant="outline">Cancel</Button>
                         </DialogClose>
-                        <Button type="button" onClick={() => handleSubmit(onSubmit)()}>
+                        <Button type="button" onClick={handleFormSubmit}>
                             {isCreate ? 'Create Company' : 'Save Changes'}
                         </Button>
                     </DialogFooter>
