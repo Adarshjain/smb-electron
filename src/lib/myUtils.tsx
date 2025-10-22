@@ -1,8 +1,11 @@
 import {toast} from "sonner";
 import {format} from "date-fns";
 import type {ElectronToReactResponse} from "../../shared-types";
+import type {TableName, Tables} from "../../tables";
+import {TablesSQliteSchema} from "../../tableSchema.ts";
+import {decode, encode} from "@/lib/thanglish/TsciiConverter.ts";
 
-export const mapToRegex = (map: Record<string, string>) => {
+export function mapToRegex(map: Record<string, string>) {
     return new RegExp(
         Object.keys(map)
             .sort((a, b) => {
@@ -15,7 +18,7 @@ export const mapToRegex = (map: Record<string, string>) => {
     );
 }
 
-export function log(...args: any[]) {
+export function log(...args: unknown[]) {
     const blueLabel =
         "color: white; background-color: #007bff; padding: 2px 4px; border-radius: 2px; font-weight: bold;";
     // const greenLabel =
@@ -26,7 +29,7 @@ export function log(...args: any[]) {
     console.log(`%c${first}%c`, blueLabel, resetStyle, ...args);
 }
 
-export const rpcError = (response: { success: false; error: string; stack: string | undefined }) => {
+export function rpcError(response: { success: false; error: string; stack: string | undefined }) {
     toast.error(`Error: ${response.error}`, {
         description: <pre
             className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4"><code>{response.stack}</code></pre>,
@@ -86,4 +89,36 @@ export function toastElectronResponse<T>(response: ElectronToReactResponse<T>, s
     } else {
         toast.success(successMessage)
     }
+}
+
+export function decodeRecord<K extends TableName>(tableName: K, record: Tables[K]['Row']): Tables[K]['Row'] {
+    const columnSchema = TablesSQliteSchema[tableName].columns;
+    const encodedKeys = Object.keys(record).filter(key => columnSchema[key]?.encoded) as (keyof Tables[K]['Row'])[];
+
+    if (encodedKeys.length === 0) {
+        return record;
+    }
+
+    const decodedRecord = {...record};
+    for (const key of encodedKeys) {
+        decodedRecord[key] = decode(record[key as keyof Tables[K]['Row']] as string) as Tables[K]['Row'][typeof key];
+    }
+
+    return decodedRecord;
+}
+
+export function encodeRecord<K extends TableName>(tableName: K, record: Tables[K]['Row']): Tables[K]['Row'] {
+    const columnSchema = TablesSQliteSchema[tableName].columns;
+    const encodedKeys = Object.keys(record).filter(key => columnSchema[key]?.encoded) as (keyof Tables[K]['Row'])[];
+
+    if (encodedKeys.length === 0) {
+        return record;
+    }
+
+    const encodedRecord = {...record};
+    for (const key of encodedKeys) {
+        encodedRecord[key] = encode(record[key as keyof Tables[K]['Row']] as string) as Tables[K]['Row'][typeof key];
+    }
+
+    return encodedRecord;
 }

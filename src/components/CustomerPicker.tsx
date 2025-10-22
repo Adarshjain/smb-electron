@@ -8,7 +8,8 @@ import {query} from "@/hooks/dbUtil.ts";
 import type {Tables} from "../../tables";
 import {Input} from "@/components/ui/input.tsx";
 import {useThanglish} from "@/context/ThanglishProvider.tsx";
-import {decode, encode} from "@/lib/thanglish/TsciiConverter.ts";
+import {encode} from "@/lib/thanglish/TsciiConverter.ts";
+import {decodeRecord} from "@/lib/myUtils.tsx";
 
 interface SearchableSelectProps {
     onChange?: (value: Tables['customers']['Row']) => void
@@ -75,7 +76,7 @@ export default function CustomerPicker({
 
     const handleSelect = (opt: Tables['customers']['Row']) => {
         setSelected(opt)
-        onChange?.(opt)
+        onChange?.(decodeRecord('customers', opt))
         setOpen(false)
         setSearch('')
         setIsKeyboardNavigating(false)
@@ -149,7 +150,7 @@ export default function CustomerPicker({
                                 }}
                             >
                                 {virtualizer.getVirtualItems().map((virtualItem) => {
-                                    const opt = items[virtualItem.index]
+                                    const opt = decodeRecord('customers', items[virtualItem.index])
                                     const index = virtualItem.index
                                     return (
                                         <CommandItem
@@ -172,10 +173,10 @@ export default function CustomerPicker({
                                                 isKeyboardNavigating && highlightedIndex === index && "bg-blue-500 text-white data-[selected=true]:text-white data-[selected=true]:bg-blue-500",
                                             )}
                                         >
-                                            <div className="w-[160px]">{decode(opt.name)}</div>
-                                            <div className="w-[30px]">{decode(opt.fhtitle)}</div>
-                                            <div className="w-[160px]">{decode(opt.fhname)}</div>
-                                            <div className="w-[180px]">{decode(opt.area)}</div>
+                                            <div className="w-[160px]">{opt.name}</div>
+                                            <div className="w-[30px]">{opt.fhtitle}</div>
+                                            <div className="w-[160px]">{opt.fhname}</div>
+                                            <div className="w-[180px]">{opt.area}</div>
                                             {selected?.id === opt.id && (
                                                 <Check className="ml-auto h-4 w-4"/>
                                             )}
