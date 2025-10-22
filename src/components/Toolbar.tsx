@@ -19,11 +19,25 @@ export default function Toolbar() {
     const location = useLocation()
     const navigate = useNavigate()
     const [canGoBack, setCanGoBack] = React.useState(false)
+    const historyStackRef = React.useRef(0) // Track depth in navigation stack
+    const prevLocationKeyRef = React.useRef(location.key)
 
     React.useEffect(() => {
-        // Track if user has navigated within the app
-        // We consider we can go back if we're not on the home page
-        setCanGoBack(location.key !== 'default')
+        // If the location key changed, this is a navigation
+        if (prevLocationKeyRef.current !== location.key) {
+            // Check if this was a back navigation by checking window.history.state
+            const historyState = window.history.state
+            
+            // If the location key matches something we've seen before, it's likely a back/forward
+            // Otherwise it's a new push navigation
+            if (historyState?.idx !== undefined) {
+                // React Router BrowserRouter stores the current index
+                historyStackRef.current = historyState.idx
+            }
+            
+            prevLocationKeyRef.current = location.key
+            setCanGoBack(historyStackRef.current > 0)
+        }
     }, [location])
     return (
         <NavigationMenu className="w-full max-w-full border-b py-1 flex justify-between">
