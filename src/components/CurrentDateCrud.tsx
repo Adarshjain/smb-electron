@@ -44,20 +44,28 @@ export default function CurrentDateCrud() {
             <div className="flex gap-2">
                 <DatePicker defaultValue={company.current_date} onInputChange={setInternalDate}/>
                 <DialogClose asChild>
-                    <Button onClick={(e) => {
-                        if (!isValidIsoDate(internalDate)){
-                            e.preventDefault();
-                            return;
-                        }
-                        void setCurrentDate(internalDate)
-                    }} variant="outline">Set</Button>
+                    <Button
+                        onClick={(e) => {
+                            if (!isValidIsoDate(internalDate)) {
+                                e.preventDefault();
+                                return;
+                            }
+                            void setCurrentDate(internalDate)
+                        }}
+                        variant="outline"
+                    >Set</Button>
                 </DialogClose>
             </div>
             <DialogClose asChild>
                 <div className="flex gap-2 justify-between">
-                    <Button onClick={() => setCurrentDate(previousIsoDate(company?.current_date))} variant="outline"><ArrowLeft/> Previous Date</Button>
+                    <Button
+                        onClick={() => setCurrentDate(previousIsoDate(company?.current_date))}
+                        variant="outline"
+                    ><ArrowLeft/> Previous Date</Button>
                     <Button variant="link">Cancel</Button>
-                    <Button onClick={() => setCurrentDate(nextIsoDate(company?.current_date))}>Next Date<ArrowRight/></Button>
+                    <Button
+                        onClick={() => setCurrentDate(nextIsoDate(company?.current_date))}
+                    >Next Date<ArrowRight/></Button>
                 </div>
             </DialogClose>
         </DialogContent>
