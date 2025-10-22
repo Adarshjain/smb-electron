@@ -8,7 +8,7 @@ import {SyncManager} from "./db/SyncManager";
 import {create, deleteRecord, executeSql, migrateSchema, read, tables, update} from "./db/localDB";
 import type {LocalTables, TableName, Tables} from "../tables";
 import type {ElectronToReactResponse} from "../shared-types";
-import {initAreas} from "./seed";
+import {initAllSeedData} from "./seed";
 
 type IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
 
@@ -83,7 +83,7 @@ const initSupabase = async () => {
         }
     });
 
-    await syncManager.start();
+    // await syncManager.start();
 }
 
 // Set app name before app is ready (important for macOS)
@@ -122,7 +122,7 @@ app.on('before-quit', () => {
 // Testing
 ipcMain.handle('init-seed', async (): Promise<ElectronToReactResponse<void>> => {
     try {
-        initAreas();
+        initAllSeedData();
         return {success: true};
     } catch (error) {
         return {success: false, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined};

@@ -68,14 +68,14 @@ export interface Tables {
             date: string;
             opening: number;
             closing: number;
-            company: string | null;
+            company: string;
         };
         Insert: Tables['balances']['Row'];
         Update: Partial<Tables['balances']['Row']>;
-        Delete: { date: string; company: string | null };
+        Delete: { date: string; company: string };
     };
 
-    billings: {
+    bills: {
         Row: {
             serial: string;
             loan_no: number;
@@ -86,15 +86,15 @@ export interface Tables {
             first_month_interest: number;
             doc_charges: number;
             metal_type: MetalType;
-            released: boolean;
+            released: 0 | 1;
             company: string | null;
         };
-        Insert: Tables['billings']['Row'];
-        Update: Partial<Tables['billings']['Row']>;
+        Insert: Tables['bills']['Row'];
+        Update: Partial<Tables['bills']['Row']>;
         Delete: { serial: string; loan_no: number }
     };
 
-    billing_items: {
+    bill_items: {
         Row: {
             serial: string;
             loan_no: number;
@@ -106,8 +106,8 @@ export interface Tables {
             net_weight: number;
             ignore_weight: number;
         };
-        Insert: Tables['billing_items']['Row'];
-        Update: Partial<Tables['billing_items']['Row']>;
+        Insert: Tables['bill_items']['Row'];
+        Update: Partial<Tables['bill_items']['Row']>;
         Delete: { serial: string; loan_no: number; }
     };
 
@@ -116,6 +116,7 @@ export interface Tables {
             serial: string;
             loan_no: number;
             date: string;
+            loan_amount: number;
             interest_amount: number;
             total_amount: number;
         };
@@ -128,8 +129,8 @@ export interface Tables {
         Row: {
             metal_type: MetalType;
             rate: number;
-            from: number;
-            to: number;
+            from_: number;
+            to_: number;
             doc_charges: number;
             doc_charges_type: DocChargesType;
         };

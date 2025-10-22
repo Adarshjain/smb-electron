@@ -7,12 +7,12 @@ import DataView from "@/components/DataView.tsx";
 export function TableView() {
     const [currentTable, setCurrentTable] = useState<TableName>("companies");
     const allTables = Object.keys(TablesSQliteSchema) as TableName[];
-    return <div>
+    return <div className="pt-4">
         <Select
             onValueChange={(value) => setCurrentTable(value as TableName)}
             value={currentTable}
         >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-[200px] ml-4">
                 <SelectValue placeholder="Select Table"/>
             </SelectTrigger>
             <SelectContent>
