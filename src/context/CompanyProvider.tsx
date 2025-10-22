@@ -1,4 +1,4 @@
-import {createContext, useContext, useState, type ReactNode, useEffect} from 'react';
+import {createContext, type ReactNode, useContext, useEffect, useState} from 'react';
 import type {Tables} from "../../tables";
 import {getDBMethods} from "../hooks/dbUtil.ts";
 
@@ -8,11 +8,12 @@ interface CompanyContextType {
     setCompany: (company: Tables['companies']['Row']) => void;
     setCurrentDate: (date: string) => Promise<void>;
     setNextSerial: (date: string) => Promise<void>;
+    refetch: () => void;
 }
 
 const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 
-export function CompanyProvider({ children }: { children: ReactNode }) {
+export function CompanyProvider({children}: { children: ReactNode }) {
     const [company, setCompany] = useState<Tables['companies']['Row'] | null>(null);
     const [allCompanies, setAllCompanies] = useState<Tables['companies']['Row'][]>([]);
 
@@ -22,7 +23,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
                 current_date,
                 name: company.name
             });
-            setCompany({ ...company, current_date });
+            setCompany({...company, current_date});
         }
     }
 
@@ -32,11 +33,11 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
                 next_serial,
                 name: company.name
             });
-            setCompany({ ...company, next_serial });
+            setCompany({...company, next_serial});
         }
     }
 
-    useEffect(() => {
+    const fetchCompanies = () => {
         getDBMethods('companies').read({}).then((response) => {
             if (response.success && response.data && response.data.length > 0) {
                 setAllCompanies(response.data as Tables['companies']['Row'][]);
@@ -44,10 +45,19 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
                 setCompany(companyMatch);
             }
         })
-    }, []);
+    }
+
+    useEffect(() => fetchCompanies, []);
 
     return (
-        <CompanyContext.Provider value={{ company, setCompany, allCompanies, setCurrentDate, setNextSerial }}>
+        <CompanyContext.Provider value={{
+            company,
+            setCompany,
+            allCompanies,
+            setCurrentDate,
+            setNextSerial,
+            refetch: fetchCompanies
+        }}>
             {children}
         </CompanyContext.Provider>
     );

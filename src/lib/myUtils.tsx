@@ -1,4 +1,6 @@
 import {toast} from "sonner";
+import {format} from "date-fns";
+import type {ElectronToReactResponse} from "../../shared-types";
 
 export const mapToRegex = (map: Record<string, string>) => {
     return new RegExp(
@@ -39,4 +41,20 @@ export function generateUUID() {
         const v = c === 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
+}
+
+export function viewableDate(dateStr: string): string {
+    return format(new Date(dateStr), "dd/MM/yyyy");
+}
+
+export function toastElectronResponse<T>(response: ElectronToReactResponse<T>, successMessage = 'Success') {
+    if (!response.success) {
+        if (response.error === 'UNIQUE constraint failed') {
+            toast.error('Already exists!');
+        } else {
+            rpcError(response)
+        }
+    } else {
+        toast.success(successMessage)
+    }
 }

@@ -25,8 +25,8 @@ contextBridge.exposeInMainWorld('api', {
             record: Tables[K]['Delete']
         ): Promise<ElectronToReactResponse<null>> =>
             ipcRenderer.invoke('db:delete', table, record),
-        query: (query: string, params?: unknown[]): Promise<ElectronToReactResponse<unknown | null>> =>
-            ipcRenderer.invoke('db:query', query, params),
+        query: (query: string, params?: unknown[], justRun?: boolean): Promise<ElectronToReactResponse<unknown | null>> =>
+            ipcRenderer.invoke('db:query', query, params, justRun),
         initSeed: (): Promise<ElectronToReactResponse<void>> => ipcRenderer.invoke('init-seed'),
     },
     supabase: {
