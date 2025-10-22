@@ -24,7 +24,7 @@ export default function CompanySettings() {
     }
 
     return <div className="w-[650px]">
-        <div className="text-xl font-medium py-3 flex justify-between">
+        <div className="text-xl font-medium pb-3 flex justify-between">
             Companies
             <CrudCompany label={<Button variant="outline" className="cursor-pointer">Add Company</Button>} onSave={refetch}/>
         </div>
