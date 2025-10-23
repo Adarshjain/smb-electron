@@ -62,7 +62,7 @@ export default function NewLoan() {
     }, [handleSubmit, onSubmit]);
 
     const formRef = useEnterNavigation({
-        fields: [""],
+        fields: ["serial", "loan_no", "customer_picker"],
         onSubmit: handleFormSubmit,
     });
 
@@ -95,7 +95,9 @@ export default function NewLoan() {
                     render={({field, fieldState}) => (
                         <Input
                             {...field}
-                            id="next_serial_letter"
+                            id="serial"
+                            name="serial"
+                            autoFocus
                             maxLength={1}
                             placeholder="A"
                             aria-invalid={fieldState.invalid}
@@ -109,7 +111,8 @@ export default function NewLoan() {
                     render={({field, fieldState}) => (
                         <Input
                             {...field}
-                            id="next_serial_number"
+                            id="loan_no"
+                            name="loan_no"
                             type="number"
                             placeholder="1"
                             aria-invalid={fieldState.invalid}
@@ -124,7 +127,7 @@ export default function NewLoan() {
                     )}
                 />
             </div>
-            <CustomerPicker onChange={console.log} />
+            <CustomerPicker onChange={console.log}/>
             {/*{renderField('', 'Name', (field, invalid) => (*/}
             {/*    <Input {...field} id="name" name="name" aria-invalid={invalid} autoFocus autoComplete="off"/>*/}
             {/*))}*/}
