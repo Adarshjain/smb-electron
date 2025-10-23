@@ -7,6 +7,8 @@ import {Field, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field.t
 import {useEnterNavigation} from "@/hooks/useEnterNavigation.ts";
 import {Input} from "@/components/ui/input.tsx";
 import CustomerPicker from "@/components/CustomerPicker.tsx";
+import SearchSelect from "@/components/SearchSelect.tsx";
+import ProductSelector from "@/components/ProductSelector.tsx";
 
 const newLoanSchema = z.object({
     serial: z.string().min(1).max(1),
@@ -128,6 +130,7 @@ export default function NewLoan() {
                 />
             </div>
             <CustomerPicker onChange={console.log}/>
+            <ProductSelector metalType="Gold" />
             {/*{renderField('', 'Name', (field, invalid) => (*/}
             {/*    <Input {...field} id="name" name="name" aria-invalid={invalid} autoFocus autoComplete="off"/>*/}
             {/*))}*/}

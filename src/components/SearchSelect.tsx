@@ -4,87 +4,110 @@ import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover'
 import {Check} from 'lucide-react'
 import {useEffect, useRef, useState} from "react";
 import {useVirtualizer} from '@tanstack/react-virtual'
-import {query} from "@/hooks/dbUtil.ts";
-import type {Tables} from "../../tables";
 import {Input} from "@/components/ui/input.tsx";
 import {useThanglish} from "@/context/ThanglishProvider.tsx";
-import {encode} from "@/lib/thanglish/TsciiConverter.ts";
-import {decodeRecord} from "@/lib/myUtils.tsx";
+import {decode} from "@/lib/thanglish/TsciiConverter.ts";
 
-interface SearchableSelectProps {
-    onChange?: (value: Tables['customers']['Row']) => void
+const DefaultStringRenderer = ({item}: { item: string }) => <div>{item}</div>;
+
+interface SearchableSelectProps<T = string> {
+    options: T[]
+    onChange?: (value: T) => void
+    onSearchChange?: (searchValue: string) => void
     placeholder?: string
+    renderRow?: (item: T, isSelected: boolean) => React.ReactNode
+    getKey?: (item: T) => string | number
+    transformInput?: (value: string) => string
+    triggerWidth?: string
+    popoverWidth?: string
+    autoFocus?: boolean
+    inputId?: string
+    inputName?: string
+    estimatedRowHeight?: number
 }
 
-export default function CustomerPicker({
-                                           onChange,
-                                           placeholder = 'Search Customer...',
-                                       }: SearchableSelectProps) {
+export default function SearchSelect<T = string>({
+                                                     options,
+                                                     onChange,
+                                                     onSearchChange,
+                                                     placeholder = 'Search...',
+                                                     renderRow,
+                                                     getKey,
+                                                     transformInput,
+                                                     triggerWidth = 'w-[500px]',
+                                                     popoverWidth = 'w-[610px]',
+                                                     autoFocus = false,
+                                                     inputId,
+                                                     inputName,
+                                                     estimatedRowHeight = 34,
+                                                 }: SearchableSelectProps<T>) {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState('')
-    const [items, setItems] = useState<Tables['customers']['Row'][]>([])
-    const [selected, setSelected] = useState<Tables['customers']['Row'] | null>(null)
+    const [selected, setSelected] = useState<T | null>(null)
     const [highlightedIndex, setHighlightedIndex] = useState(-1)
     const [isKeyboardNavigating, setIsKeyboardNavigating] = useState(false)
-    const {convert} = useThanglish()
     const inputRef = useRef<HTMLInputElement>(null)
     const itemRefs = useRef<(HTMLDivElement | null)[]>([])
     const parentRef = useRef<HTMLDivElement>(null)
+    const {convert} = useThanglish();
+
+    // Default implementations for string type
+    const defaultGetKey = (item: T, index: number): string | number => {
+        if (typeof item === 'string') return item
+        if (typeof item === 'number') return item
+        if (item && typeof item === 'object' && 'id' in item) return (item as Record<string, string>).id
+        return index
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const defaultRenderRow = (item: T, _isSelected: boolean): React.ReactNode => {
+        if (typeof item === 'string') {
+            return <DefaultStringRenderer item={decode(item)}/>
+        }
+        // For objects, try to display a name property or stringify
+        if (item && typeof item === 'object' && 'name' in item) {
+            return <div>{String((item as Record<string, string>).name)}</div>
+        }
+        return <div>{String(item)}</div>
+    }
 
     const virtualizer = useVirtualizer({
-        count: items.length,
+        count: options.length,
         getScrollElement: () => parentRef.current,
-        estimateSize: () => 34, // Approximate height of each item in pixels
-        overscan: 5, // Number of items to render outside the visible area
+        estimateSize: () => estimatedRowHeight,
+        overscan: 5,
     })
 
     useEffect(() => {
-        let active = true
-        const run = async () => {
-            const res = await query<Tables['customers']['Row'][]>(`SELECT *
-                                                                   FROM customers
-                                                                   WHERE name LIKE '${encode(search)}%'`)
-            if (active) setItems(res.success ? res.data || [] : [])
-        }
-        if (search.length === 0) {
-            setItems([])
-            return
-        }
-        run()
-        return () => {
-            active = false
-        }
-    }, [search])
-
-    useEffect(() => {
-        if (items.length > 0) {
+        if (options.length > 0) {
             setHighlightedIndex(0)
             setIsKeyboardNavigating(true)
         } else {
             setHighlightedIndex(-1)
             setIsKeyboardNavigating(false)
         }
-    }, [items])
+    }, [options])
 
     useEffect(() => {
-        if (highlightedIndex >= 0 && highlightedIndex < items.length) {
+        if (highlightedIndex >= 0 && highlightedIndex < options.length) {
             virtualizer.scrollToIndex(highlightedIndex, {
                 align: 'auto',
                 behavior: 'smooth'
             })
         }
-    }, [highlightedIndex, virtualizer, items.length])
+    }, [highlightedIndex, virtualizer, options.length])
 
-    const handleSelect = (opt: Tables['customers']['Row']) => {
+    const handleSelect = (opt: T) => {
         setSelected(opt)
-        onChange?.(decodeRecord('customers', opt))
+        onChange?.(opt)
         setOpen(false)
-        setSearch('')
+        setSearch(opt && typeof opt === 'string' ? opt : '')
+        onSearchChange?.(opt && typeof opt === 'string' ? opt : '')
         setIsKeyboardNavigating(false)
     }
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (!open || items.length === 0) return
+        if (!open || options.length === 0) return
 
         switch (e.key) {
             case 'ArrowDown':
@@ -92,21 +115,21 @@ export default function CustomerPicker({
                 setIsKeyboardNavigating(true)
                 setHighlightedIndex((prev) => {
                     if (prev === -1) return 0
-                    return (prev + 1) % items.length
+                    return (prev + 1) % options.length
                 })
                 break
             case 'ArrowUp':
                 e.preventDefault()
                 setIsKeyboardNavigating(true)
                 setHighlightedIndex((prev) => {
-                    if (prev === -1) return items.length - 1
-                    return (prev - 1 + items.length) % items.length
+                    if (prev === -1) return options.length - 1
+                    return (prev - 1 + options.length) % options.length
                 })
                 break
             case 'Enter':
                 e.preventDefault()
-                if (highlightedIndex >= 0 && items[highlightedIndex]) {
-                    handleSelect(items[highlightedIndex])
+                if (highlightedIndex >= 0 && options[highlightedIndex]) {
+                    handleSelect(options[highlightedIndex])
                 }
                 break
             case 'Escape':
@@ -118,10 +141,12 @@ export default function CustomerPicker({
         }
     }
 
+    const renderer = renderRow || defaultRenderRow
+
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger
-                className="w-[500px]"
+                className={triggerWidth}
                 asChild
                 onClick={(e) => {
                     e.stopPropagation();
@@ -132,12 +157,14 @@ export default function CustomerPicker({
                     <Input
                         ref={inputRef}
                         value={search}
-                        autoFocus
-                        id="customer_picker"
-                        name="customer_picker"
+                        autoFocus={autoFocus}
+                        id={inputId}
+                        name={inputName}
                         onChange={(e) => {
                             e.stopPropagation()
-                            setSearch(convert(e.target.value))
+                            const value = transformInput ? transformInput(e.target.value) : e.target.value
+                            setSearch(convert(value))
+                            onSearchChange?.(convert(value))
                             setOpen(true)
                         }}
                         onBlur={(e) => {
@@ -149,7 +176,7 @@ export default function CustomerPicker({
                     />
                 </div>
             </PopoverTrigger>
-            <PopoverContent className="p-0 w-[610px]" onOpenAutoFocus={(e) => e.preventDefault()}>
+            <PopoverContent className={cn("p-0", popoverWidth)} onOpenAutoFocus={(e) => e.preventDefault()}>
                 <Command shouldFilter={false}>
                     <CommandList ref={parentRef} className="max-h-150 overflow-auto">
                         <CommandGroup>
@@ -161,12 +188,15 @@ export default function CustomerPicker({
                                 }}
                             >
                                 {virtualizer.getVirtualItems().map((virtualItem) => {
-                                    const opt = decodeRecord('customers', items[virtualItem.index])
+                                    const opt = options[virtualItem.index]
                                     const index = virtualItem.index
+                                    const key = getKey ? getKey(opt) : defaultGetKey(opt, index)
+                                    const isSelected = selected === opt
+
                                     return (
                                         <CommandItem
-                                            key={opt.id}
-                                            value={opt.id}
+                                            key={key}
+                                            value={String(key)}
                                             onSelect={() => handleSelect(opt)}
                                             ref={(el) => {
                                                 itemRefs.current[index] = el
@@ -184,11 +214,8 @@ export default function CustomerPicker({
                                                 isKeyboardNavigating && highlightedIndex === index && "bg-blue-500 text-white data-[selected=true]:text-white data-[selected=true]:bg-blue-500",
                                             )}
                                         >
-                                            <div className="w-[160px]">{opt.name}</div>
-                                            <div className="w-[30px]">{opt.fhtitle}</div>
-                                            <div className="w-[160px]">{opt.fhname}</div>
-                                            <div className="w-[180px]">{opt.area}</div>
-                                            {selected?.id === opt.id && (
+                                            {renderer(opt, isSelected)}
+                                            {isSelected && (
                                                 <Check className="ml-auto h-4 w-4"/>
                                             )}
                                         </CommandItem>
