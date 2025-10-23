@@ -124,6 +124,8 @@ export default function CustomerPicker({
                     <Input
                         ref={inputRef}
                         value={search}
+                        autoFocus
+                        name="customer_picker"
                         onChange={(e) => {
                             e.stopPropagation()
                             setSearch(convert(e.target.value))
