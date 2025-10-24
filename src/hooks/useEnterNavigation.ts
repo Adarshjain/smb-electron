@@ -8,30 +8,25 @@ interface UseEnterNavigationOptions {
 export function useEnterNavigation({ fields, onSubmit }: UseEnterNavigationOptions) {
     const formRef = useRef<HTMLFormElement>(null);
 
-    const handleKeyDown = useCallback((e: KeyboardEvent) => {
-        if (e.key !== "Enter") return;
-
-        const target = e.target as HTMLElement;
-
+    const next = useCallback((shiftKey = false) => {
+        const activeElement = document.activeElement as HTMLElement;
+        
         // Only handle input/select/textarea elements
         if (
-            !(target instanceof HTMLInputElement ||
-                target instanceof HTMLTextAreaElement ||
-                target instanceof HTMLSelectElement)
+            !(activeElement instanceof HTMLInputElement ||
+                activeElement instanceof HTMLTextAreaElement ||
+                activeElement instanceof HTMLSelectElement)
         ) {
             return;
         }
 
-        const fieldName = target.getAttribute("name");
+        const fieldName = activeElement.getAttribute("name");
         if (!fieldName) return;
-
-        // Prevent default Enter submit
-        e.preventDefault();
 
         const currentIndex = fields.indexOf(fieldName);
         if (currentIndex === -1) return;
 
-        const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
+        const nextIndex = shiftKey ? currentIndex - 1 : currentIndex + 1;
 
         const form = formRef.current;
         if (!form) return;
@@ -46,6 +41,15 @@ export function useEnterNavigation({ fields, onSubmit }: UseEnterNavigationOptio
             else form.requestSubmit?.();
         }
     }, [fields, onSubmit]);
+
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+        if (e.key !== "Enter") return;
+
+        // Prevent default Enter submit
+        e.preventDefault();
+
+        next(e.shiftKey);
+    }, [next]);
 
     const setFormRef = useCallback((element: HTMLFormElement | null) => {
         if (formRef.current) {
@@ -65,5 +69,5 @@ export function useEnterNavigation({ fields, onSubmit }: UseEnterNavigationOptio
         };
     }, [handleKeyDown]);
 
-    return setFormRef;
+    return { setFormRef, next };
 }
