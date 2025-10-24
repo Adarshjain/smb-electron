@@ -9,6 +9,9 @@ import {Input} from "@/components/ui/input.tsx";
 import CustomerPicker from "@/components/CustomerPicker.tsx";
 import ProductSelector from "@/components/ProductSelector.tsx";
 import type {Tables} from "../../tables";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+
+import '@/NewLoan.css';
 
 const newLoanSchema = z.object({
     serial: z.string().min(1).max(1),
@@ -66,30 +69,12 @@ export default function NewLoan() {
     }, [handleSubmit, onSubmit]);
 
     const {setFormRef, next} = useEnterNavigation({
-        fields: ["serial", "loan_no", "customer_picker", "product_picker"],
+        fields: ["serial", "loan_no", "customer_picker", "metal_type", "product", "quality", "seal"],
         onSubmit: handleFormSubmit,
     });
 
-    const renderField = useCallback(<K extends keyof Loan>(
-        name: K,
-        label: string,
-        render: (field: ControllerRenderProps<Loan, K>, invalid: boolean) => JSX.Element
-    ) => (
-        <Controller
-            name={name}
-            control={control}
-            render={({field, fieldState}) => (
-                <Field data-invalid={fieldState.invalid} className="gap-1">
-                    <FieldLabel htmlFor={name}>{label}</FieldLabel>
-                    {render(field, fieldState.invalid)}
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]}/>}
-                </Field>
-            )}
-        />
-    ), [control]);
-
-
-    return <form ref={setFormRef}>
+    return <form ref={setFormRef} className="p-4">
+        {/*<pre><code>{JSON.stringify(values, null, 2)}</code></pre>*/}
         <FieldGroup className="gap-3">
             <div className="flex">
                 <Controller
@@ -134,11 +119,59 @@ export default function NewLoan() {
                 setValue('customer', customer);
                 next()
             }}/>
-            {selectedCustomer ? <div>
-                {selectedCustomer.name} {selectedCustomer.fhtitle} {selectedCustomer.fhname}
-            </div> : null
-            }
-            <ProductSelector metalType="Gold" inputName="product_picker"/>
+            {selectedCustomer ?
+                <div>{selectedCustomer.name} {selectedCustomer.fhtitle} {selectedCustomer.fhname}</div> : null}
+            <Controller
+                name="metal_type"
+                control={control}
+                render={({field}) => (
+                    <Select onValueChange={(value: string) => {
+                        field.onChange(value);
+                        next();
+                    }} value={field.value}>
+                        <SelectTrigger name="metal_type">
+                            <SelectValue placeholder="Meta Type"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Gold">Gold</SelectItem>
+                            <SelectItem value="Silver">Silver</SelectItem>
+                        </SelectContent>
+                    </Select>
+                )}
+            />
+            <div className="flex w-[800px] input-matrix flex-col">
+                <div className="flex">
+                    <Controller
+                        name="product"
+                        control={control}
+                        render={({field}) => (
+                            <ProductSelector
+                                onChange={field.onChange}
+                                productType="product"
+                                metalType="Gold"
+                                inputName="product"
+                                placeholder="Product"
+                                triggerWidth="w-[250px]"
+                            />
+                        )}
+                    />
+
+                    <ProductSelector
+                        productType="quality"
+                        metalType="Other"
+                        inputName="quality"
+                        placeholder="Quality"
+                        triggerWidth="w-[250px]"
+                    />
+                    <ProductSelector
+                        productType="seal"
+                        metalType="Other"
+                        inputName="seal"
+                        placeholder="Seal"
+                        triggerWidth="w-[150px]"
+                    />
+                </div>
+            </div>
             {/*{renderField('', 'Name', (field, invalid) => (*/}
             {/*    <Input {...field} id="name" name="name" aria-invalid={invalid} autoFocus autoComplete="off"/>*/}
             {/*))}*/}

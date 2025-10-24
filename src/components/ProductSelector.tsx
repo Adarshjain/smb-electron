@@ -1,10 +1,17 @@
-import type {MetalType} from "../../tables";
+import type {MetalType, ProductType} from "../../tables";
 import {useEffect, useState} from "react";
 import {getDBMethods} from "@/hooks/dbUtil.ts";
 import SearchSelect from "@/components/SearchSelect.tsx";
 import {decode} from "@/lib/thanglish/TsciiConverter.ts";
 
-export default function ProductSelector(props: { metalType: MetalType; inputName?: string }) {
+export default function ProductSelector(props: {
+    productType: ProductType;
+    metalType: MetalType;
+    inputName?: string;
+    placeholder?: string;
+    onChange?: (value: string) => void
+    triggerWidth?: string
+}) {
     const [products, setProducts] = useState<string[]>([]);
     const [search, setSearch] = useState('');
     const [filteredProducts, setFilteredProducts] = useState<string[]>([]);
@@ -13,7 +20,7 @@ export default function ProductSelector(props: { metalType: MetalType; inputName
         const run = async () => {
             const response = await getDBMethods('products').read({
                 metal_type: props.metalType,
-                product_type: 'product',
+                product_type: props.productType,
             });
             if (response.success && response.data) {
                 const productNames = response.data.map(item => decode(item.name)).sort((a, b) => a.localeCompare(b));
@@ -24,7 +31,7 @@ export default function ProductSelector(props: { metalType: MetalType; inputName
             }
         }
         run();
-    }, [props.metalType]);
+    }, [props.metalType, props.productType]);
 
     useEffect(() => {
         if (!search.trim()) {
@@ -35,7 +42,14 @@ export default function ProductSelector(props: { metalType: MetalType; inputName
             ...products.filter(item => item.toLowerCase().includes(search.toLowerCase())),
         ])];
         setFilteredProducts(productNames);
-    }, [products, props.metalType, search]);
+    }, [products, search]);
 
-    return <SearchSelect options={filteredProducts} onSearchChange={setSearch} inputName={props.inputName}/>
+    return <SearchSelect
+        options={filteredProducts}
+        onSearchChange={setSearch}
+        inputName={props.inputName}
+        placeholder={props.placeholder}
+        onChange={props.onChange}
+        triggerWidth={props.triggerWidth}
+    />
 }
