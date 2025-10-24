@@ -18,7 +18,7 @@ interface SearchableSelectProps {
 
 export default function CustomerPicker({
                                            onChange,
-                                           placeholder = 'Search Customer...',
+                                           placeholder = 'Customer',
                                        }: SearchableSelectProps) {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState('')

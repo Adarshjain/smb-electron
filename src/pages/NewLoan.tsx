@@ -7,8 +7,8 @@ import {Field, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field.t
 import {useEnterNavigation} from "@/hooks/useEnterNavigation.ts";
 import {Input} from "@/components/ui/input.tsx";
 import CustomerPicker from "@/components/CustomerPicker.tsx";
-import SearchSelect from "@/components/SearchSelect.tsx";
 import ProductSelector from "@/components/ProductSelector.tsx";
+import type {Tables} from "../../tables";
 
 const newLoanSchema = z.object({
     serial: z.string().min(1).max(1),
@@ -18,7 +18,7 @@ const newLoanSchema = z.object({
     first_month_interest: z.float32(),
     date: z.string(),
     doc_charges: z.float32(),
-    customer_id: z.string(),
+    customer: z.custom<Tables['customers']['Row']>().nullable(),
     metal_type: z.enum(['Gold', 'Silver']),
     company: z.string(),
     released: z.number().min(0).max(1)
@@ -38,16 +38,18 @@ export default function NewLoan() {
         first_month_interest: 0,
         date: !company ? '' : company.current_date,
         doc_charges: 0,
-        customer_id: '',
+        customer: null,
         metal_type: 'Gold',
         company: !company ? '' : company.name,
         released: 0,
     }), [company, loanNo, serial]);
 
-    const {control, handleSubmit, reset} = useForm<Loan>({
+    const {control, handleSubmit, reset, watch, setValue} = useForm<Loan>({
         resolver: zodResolver(newLoanSchema),
         defaultValues,
     })
+
+    const selectedCustomer = watch("customer")
 
     useEffect(() => {
         if (company) {
@@ -63,11 +65,10 @@ export default function NewLoan() {
         handleSubmit(onSubmit)();
     }, [handleSubmit, onSubmit]);
 
-    const formRef = useEnterNavigation({
-        fields: ["serial", "loan_no", "customer_picker"],
+    const {setFormRef, next} = useEnterNavigation({
+        fields: ["serial", "loan_no", "customer_picker", "product_picker"],
         onSubmit: handleFormSubmit,
     });
-
 
     const renderField = useCallback(<K extends keyof Loan>(
         name: K,
@@ -88,7 +89,7 @@ export default function NewLoan() {
     ), [control]);
 
 
-    return <form ref={formRef}>
+    return <form ref={setFormRef}>
         <FieldGroup className="gap-3">
             <div className="flex">
                 <Controller
@@ -129,8 +130,15 @@ export default function NewLoan() {
                     )}
                 />
             </div>
-            <CustomerPicker onChange={console.log}/>
-            <ProductSelector metalType="Gold" />
+            <CustomerPicker onChange={(customer: Tables['customers']['Row']) => {
+                setValue('customer', customer);
+                next()
+            }}/>
+            {selectedCustomer ? <div>
+                {selectedCustomer.name} {selectedCustomer.fhtitle} {selectedCustomer.fhname}
+            </div> : null
+            }
+            <ProductSelector metalType="Gold" inputName="product_picker"/>
             {/*{renderField('', 'Name', (field, invalid) => (*/}
             {/*    <Input {...field} id="name" name="name" aria-invalid={invalid} autoFocus autoComplete="off"/>*/}
             {/*))}*/}

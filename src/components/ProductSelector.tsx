@@ -4,7 +4,7 @@ import {getDBMethods} from "@/hooks/dbUtil.ts";
 import SearchSelect from "@/components/SearchSelect.tsx";
 import {decode} from "@/lib/thanglish/TsciiConverter.ts";
 
-export default function ProductSelector(props: { metalType: MetalType }) {
+export default function ProductSelector(props: { metalType: MetalType; inputName?: string }) {
     const [products, setProducts] = useState<string[]>([]);
     const [search, setSearch] = useState('');
     const [filteredProducts, setFilteredProducts] = useState<string[]>([]);
@@ -16,7 +16,7 @@ export default function ProductSelector(props: { metalType: MetalType }) {
                 product_type: 'product',
             });
             if (response.success && response.data) {
-                const productNames = response.data.map(item => decode(item.name));
+                const productNames = response.data.map(item => decode(item.name)).sort((a, b) => a.localeCompare(b));
                 setProducts(productNames);
                 setFilteredProducts(productNames);
             } else {
@@ -30,9 +30,12 @@ export default function ProductSelector(props: { metalType: MetalType }) {
         if (!search.trim()) {
             setFilteredProducts([]);
         }
-        const productNames = products.filter(item => item.includes(search));
+        const productNames = [...new Set([
+            ...products.filter(item => item.toLowerCase().startsWith(search.toLowerCase())),
+            ...products.filter(item => item.toLowerCase().includes(search.toLowerCase())),
+        ])];
         setFilteredProducts(productNames);
     }, [products, props.metalType, search]);
 
-    return <SearchSelect options={filteredProducts} onSearchChange={setSearch}/>
+    return <SearchSelect options={filteredProducts} onSearchChange={setSearch} inputName={props.inputName}/>
 }
