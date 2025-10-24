@@ -10,15 +10,6 @@ export function useEnterNavigation({ fields, onSubmit }: UseEnterNavigationOptio
 
     const next = useCallback((shiftKey = false) => {
         const activeElement = document.activeElement as HTMLElement;
-        
-        // Only handle input/select/textarea elements
-        if (
-            !(activeElement instanceof HTMLInputElement ||
-                activeElement instanceof HTMLTextAreaElement ||
-                activeElement instanceof HTMLSelectElement)
-        ) {
-            return;
-        }
 
         const fieldName = activeElement.getAttribute("name");
         if (!fieldName) return;

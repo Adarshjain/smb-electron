@@ -117,7 +117,7 @@ export const initProducts = () => {
             create('products', {
                 name: record.quality,
                 product_type: "quality",
-                metal_type: "Gold"
+                metal_type: "Other"
             })
         } catch (e) {
             console.log(e instanceof Error ? e.message : 'Random Error');
