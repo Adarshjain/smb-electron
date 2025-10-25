@@ -1,9 +1,11 @@
 import {toast} from "sonner";
 import {format} from "date-fns";
 import type {ElectronToReactResponse} from "../../shared-types";
-import type {TableName, Tables} from "../../tables";
+import type {MetalType, TableName, Tables} from "../../tables";
 import {TablesSQliteSchema} from "../../tableSchema.ts";
 import {decode, encode} from "@/lib/thanglish/TsciiConverter.ts";
+import MyCache from "@/lib/MyCache.ts";
+import {getDBMethods} from "@/hooks/dbUtil.ts";
 
 export function mapToRegex(map: Record<string, string>) {
     return new RegExp(
@@ -121,4 +123,36 @@ export function encodeRecord<K extends TableName>(tableName: K, record: Tables[K
     }
 
     return encodedRecord;
+}
+
+export async function getRate(principal: number, metalType: MetalType): Promise<Tables['interest_rates']['Row'] | undefined> {
+    const cache = new MyCache<Tables['interest_rates']['Row'][]>('IntRates');
+    let intRates = cache.get('intRates');
+    if (!intRates) {
+        const response = await getDBMethods('interest_rates').read({});
+        if (response.success) {
+            cache.set('intRates', response.data || []);
+            intRates = response.data || []
+        }
+    }
+    return intRates?.find(rate => {
+        if (rate.metal_type === metalType) {
+            if (principal >= rate.from_ && principal <= rate.to_) {
+                return rate;
+            }
+        }
+    })
+}
+
+export function getInterest(principal: number, intRate: number, months = 1) {
+    return +(principal * (intRate / 100) * months).toFixed(2);
+}
+
+export async function getDocCharges(principal: number, rate: Tables['interest_rates']['Row']): Promise<number> {
+    const {doc_charges: docCharges} = rate;
+    if (rate.doc_charges_type === 'Fixed') {
+        return docCharges;
+    } else {
+        return +(principal * (docCharges / 100)).toFixed(2);
+    }
 }
