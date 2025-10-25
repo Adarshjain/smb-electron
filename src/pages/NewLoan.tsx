@@ -31,9 +31,9 @@ const newLoanSchema = z.object({
             quality: z.string(),
             extra: z.string(),
             quantity: z.number(),
-            gross_weight: z.number(),
-            net_weight: z.number(),
-            ignore_weight: z.number(),
+            gross_weight: z.string(),
+            net_weight: z.string(),
+            ignore_weight: z.string(),
         })
     ).min(1)
 })
@@ -49,9 +49,9 @@ export default function NewLoan() {
         quality: "",
         extra: "",
         quantity: 0,
-        gross_weight: 0,
-        net_weight: 0,
-        ignore_weight: 0,
+        gross_weight: "0.00",
+        net_weight: "0.00",
+        ignore_weight: "0.00",
     }), []);
 
     const defaultValues = useMemo<Loan>(() => ({
@@ -169,11 +169,14 @@ export default function NewLoan() {
                     name="metal_type"
                     control={control}
                     render={({field}) => (
-                        <Select onValueChange={(value: string) => {
-                            field.onChange(value);
-                            replace([defaultBillingItemValues]);
-                            setTimeout(() => next(false, `billing_items.0.product`), 100)
-                        }} value={field.value}>
+                        <Select
+                            onValueChange={(value: string) => {
+                                field.onChange(value);
+                                replace([defaultBillingItemValues]);
+                                setTimeout(() => next(false, `billing_items.0.product`), 100)
+                            }}
+                            value={field.value}
+                        >
                             <SelectTrigger name="metal_type" className="w-60">
                                 <SelectValue placeholder="Meta Type"/>
                             </SelectTrigger>
@@ -284,9 +287,8 @@ export default function NewLoan() {
                                             onFocus={(e) => {
                                                 e.currentTarget.select();
                                             }}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                field.onChange(val ? parseFloat(val) : 0);
+                                            onBlur={() => {
+                                                field.onChange(parseFloat(field.value || "0").toFixed(2))
                                             }}
                                             id={`billing_items.${i}.ignore_weight`}
                                             name={`billing_items.${i}.ignore_weight`}
@@ -318,9 +320,8 @@ export default function NewLoan() {
                                                 onFocus={(e) => {
                                                     e.currentTarget.select();
                                                 }}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    field.onChange(val ? parseFloat(val) : 0);
+                                                onBlur={() => {
+                                                    field.onChange(parseFloat(field.value).toFixed(2))
                                                 }}
                                                 id={`billing_items.${i}.gross_weight`}
                                                 name={`billing_items.${i}.gross_weight`}
