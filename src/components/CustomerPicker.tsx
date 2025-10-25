@@ -84,7 +84,7 @@ export default function CustomerPicker({
     }
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (!open || items.length === 0) return
+        if ((!open || items.length === 0) && e.key !== 'Enter') return
 
         switch (e.key) {
             case 'ArrowDown':

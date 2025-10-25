@@ -27,7 +27,6 @@ export default function ProductSelector(props: {
             if (response.success && response.data) {
                 const productNames = response.data.map(item => decode(item.name)).sort((a, b) => a.localeCompare(b));
                 setProducts(productNames);
-                setFilteredProducts(productNames);
             } else {
                 setProducts([]);
             }
@@ -38,6 +37,7 @@ export default function ProductSelector(props: {
     useEffect(() => {
         if (!search.trim()) {
             setFilteredProducts([]);
+            return
         }
         const productNames = [...new Set([
             ...products.filter(item => item.toLowerCase().startsWith(search.toLowerCase())),
