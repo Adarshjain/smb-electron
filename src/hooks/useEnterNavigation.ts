@@ -8,7 +8,13 @@ interface UseEnterNavigationOptions {
 export function useEnterNavigation({ fields, onSubmit }: UseEnterNavigationOptions) {
     const formRef = useRef<HTMLFormElement>(null);
 
-    const next = useCallback((shiftKey = false) => {
+    const next = useCallback((shiftKey = false, name?: string) => {
+        const form = formRef.current;
+        if (!form) return;
+        if (name) {
+            const nextField = form.querySelector<HTMLElement>(`[name="${name}"]`);
+            nextField?.focus();
+        }
         const activeElement = document.activeElement as HTMLElement;
 
         const fieldName = activeElement.getAttribute("name");
@@ -18,9 +24,6 @@ export function useEnterNavigation({ fields, onSubmit }: UseEnterNavigationOptio
         if (currentIndex === -1) return;
 
         const nextIndex = shiftKey ? currentIndex - 1 : currentIndex + 1;
-
-        const form = formRef.current;
-        if (!form) return;
 
         if (nextIndex >= 0 && nextIndex < fields.length) {
             const nextName = fields[nextIndex];

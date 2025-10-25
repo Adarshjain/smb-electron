@@ -11,6 +11,8 @@ export default function ProductSelector(props: {
     placeholder?: string;
     onChange?: (value: string) => void
     triggerWidth?: string
+    onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+    onFocus?: (event: React.FocusEvent<HTMLInputElement>) => void;
 }) {
     const [products, setProducts] = useState<string[]>([]);
     const [search, setSearch] = useState('');
@@ -51,5 +53,7 @@ export default function ProductSelector(props: {
         placeholder={props.placeholder}
         onChange={props.onChange}
         triggerWidth={props.triggerWidth}
+        onKeyDown={props.onKeyDown}
+        onFocus={props.onFocus}
     />
 }

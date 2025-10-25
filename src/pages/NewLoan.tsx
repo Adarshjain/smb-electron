@@ -1,9 +1,9 @@
 import * as z from "zod"
 import {useCompany} from "@/context/CompanyProvider.tsx";
-import {type JSX, useCallback, useEffect, useMemo} from "react";
-import {Controller, type ControllerRenderProps, useForm} from "react-hook-form";
+import {useCallback, useEffect, useMemo} from "react";
+import {Controller, useFieldArray, useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {Field, FieldError, FieldGroup, FieldLabel} from "@/components/ui/field.tsx";
+import {FieldGroup, FieldLabel} from "@/components/ui/field.tsx";
 import {useEnterNavigation} from "@/hooks/useEnterNavigation.ts";
 import {Input} from "@/components/ui/input.tsx";
 import CustomerPicker from "@/components/CustomerPicker.tsx";
@@ -17,14 +17,25 @@ const newLoanSchema = z.object({
     serial: z.string().min(1).max(1),
     loan_no: z.number().min(1).max(10000),
     loan_amount: z.number(),
-    interest_rate: z.float32(),
-    first_month_interest: z.float32(),
+    interest_rate: z.number(),
+    first_month_interest: z.number(),
     date: z.string(),
-    doc_charges: z.float32(),
+    doc_charges: z.number(),
     customer: z.custom<Tables['customers']['Row']>().nullable(),
     metal_type: z.enum(['Gold', 'Silver']),
     company: z.string(),
-    released: z.number().min(0).max(1)
+    released: z.number().min(0).max(1),
+    billing_items: z.array(
+        z.object({
+            product: z.string(),
+            quality: z.string(),
+            extra: z.string(),
+            quantity: z.number(),
+            gross_weight: z.number(),
+            net_weight: z.number(),
+            ignore_weight: z.number(),
+        })
+    ).min(1)
 })
 
 type Loan = z.infer<typeof newLoanSchema>
@@ -32,6 +43,16 @@ type Loan = z.infer<typeof newLoanSchema>
 export default function NewLoan() {
     const {company} = useCompany()
     const [serial, loanNo] = useMemo(() => (!company ? '' : company.next_serial).split('-'), [company])
+
+    const defaultBillingItemValues = useMemo(() => ({
+        product: "",
+        quality: "",
+        extra: "",
+        quantity: 0,
+        gross_weight: 0,
+        net_weight: 0,
+        ignore_weight: 0,
+    }), []);
 
     const defaultValues = useMemo<Loan>(() => ({
         serial,
@@ -45,7 +66,8 @@ export default function NewLoan() {
         metal_type: 'Gold',
         company: !company ? '' : company.name,
         released: 0,
-    }), [company, loanNo, serial]);
+        billing_items: [defaultBillingItemValues]
+    }), [company, defaultBillingItemValues, loanNo, serial]);
 
     const {control, handleSubmit, reset, watch, setValue} = useForm<Loan>({
         resolver: zodResolver(newLoanSchema),
@@ -53,6 +75,11 @@ export default function NewLoan() {
     })
 
     const selectedCustomer = watch("customer")
+
+    const {fields, append, remove} = useFieldArray({
+        name: 'billing_items',
+        control,
+    })
 
     useEffect(() => {
         if (company) {
@@ -68,13 +95,29 @@ export default function NewLoan() {
         handleSubmit(onSubmit)();
     }, [handleSubmit, onSubmit]);
 
+    const billingItemsNames: string[] = useMemo(() => {
+        return fields.map((_, i) => [
+            `billing_items.${i}.product`,
+            `billing_items.${i}.quality`,
+            `billing_items.${i}.extra`,
+            `billing_items.${i}.quantity`,
+            `billing_items.${i}.gross_weight`,
+            `billing_items.${i}.ignore_weight`,
+        ]).flat();
+    }, [fields]);
+
     const {setFormRef, next} = useEnterNavigation({
-        fields: ["serial", "loan_no", "customer_picker", "metal_type", "product", "quality", "seal"],
+        fields: [
+            "serial",
+            "loan_no",
+            "customer_picker",
+            "metal_type",
+            ...billingItemsNames,
+        ],
         onSubmit: handleFormSubmit,
     });
 
     return <form ref={setFormRef} className="p-4">
-        {/*<pre><code>{JSON.stringify(values, null, 2)}</code></pre>*/}
         <FieldGroup className="gap-3">
             <div className="flex">
                 <Controller
@@ -129,7 +172,7 @@ export default function NewLoan() {
                         field.onChange(value);
                         next();
                     }} value={field.value}>
-                        <SelectTrigger name="metal_type">
+                        <SelectTrigger name="metal_type" className="w-60">
                             <SelectValue placeholder="Meta Type"/>
                         </SelectTrigger>
                         <SelectContent>
@@ -139,42 +182,143 @@ export default function NewLoan() {
                     </Select>
                 )}
             />
-            <div className="flex w-[800px] input-matrix flex-col">
-                <div className="flex">
-                    <Controller
-                        name="product"
-                        control={control}
-                        render={({field}) => (
-                            <ProductSelector
-                                onChange={field.onChange}
-                                productType="product"
-                                metalType="Gold"
-                                inputName="product"
-                                placeholder="Product"
-                                triggerWidth="w-[250px]"
+            <div>
+                <div className="flex input-matrix-title">
+                    <FieldLabel className="px-3 py-1 w-[280px]">Product</FieldLabel>
+                    <FieldLabel className="px-3 py-1 w-[280px]">Quality</FieldLabel>
+                    <FieldLabel className="px-3 py-1 w-[120px]">Seal</FieldLabel>
+                    <FieldLabel className="px-3 py-1 w-16 text-right">Qty</FieldLabel>
+                    <FieldLabel className="px-3 py-1 w-24 text-right">Ignore Wt</FieldLabel>
+                    <FieldLabel className="px-3 py-1 w-24 text-right">Gross Wt</FieldLabel>
+                </div>
+                <div className="flex input-matrix flex-col">
+                    {fields.map((_, i) => (
+                        <div className="flex" key={i}>
+                            <Controller
+                                name={`billing_items.${i}.product`}
+                                control={control}
+                                render={({field}) => (
+                                    <ProductSelector
+                                        onChange={field.onChange}
+                                        onFocus={(e) => {
+                                            e.currentTarget.select();
+                                        }}
+                                        productType="product"
+                                        metalType="Gold"
+                                        inputName={`billing_items.${i}.product`}
+                                        placeholder=""
+                                        triggerWidth="min-w-[280px]"
+                                    />
+                                )}
                             />
-                        )}
-                    />
-
-                    <ProductSelector
-                        productType="quality"
-                        metalType="Other"
-                        inputName="quality"
-                        placeholder="Quality"
-                        triggerWidth="w-[250px]"
-                    />
-                    <ProductSelector
-                        productType="seal"
-                        metalType="Other"
-                        inputName="seal"
-                        placeholder="Seal"
-                        triggerWidth="w-[150px]"
-                    />
+                            <Controller
+                                name={`billing_items.${i}.quality`}
+                                control={control}
+                                render={({field}) => (
+                                    <ProductSelector
+                                        onChange={field.onChange}
+                                        onFocus={(e) => {
+                                            e.currentTarget.select();
+                                        }}
+                                        productType="quality"
+                                        metalType="Other"
+                                        inputName={`billing_items.${i}.quality`}
+                                        placeholder=""
+                                        triggerWidth="min-w-[280px]"
+                                    />
+                                )}
+                            />
+                            <Controller
+                                name={`billing_items.${i}.extra`}
+                                control={control}
+                                render={({field}) => (
+                                    <ProductSelector
+                                        onKeyDown={(e) => {
+                                            if (e.key === '/') {
+                                                append(defaultBillingItemValues)
+                                                setTimeout(() => next(false, `billing_items.${i + 1}.product`), 10)
+                                            }
+                                        }}
+                                        onFocus={(e) => {
+                                            e.currentTarget.select();
+                                        }}
+                                        onChange={field.onChange}
+                                        productType="seal"
+                                        metalType="Other"
+                                        inputName={`billing_items.${i}.extra`}
+                                        placeholder=""
+                                        triggerWidth="min-w-[120px] w-[120px] max-w-[120px]"
+                                    />
+                                )}
+                            />
+                            <Controller
+                                name={`billing_items.${i}.quantity`}
+                                control={control}
+                                render={({field}) => (
+                                    <Input
+                                        {...field}
+                                        onFocus={(e) => {
+                                            e.currentTarget.select();
+                                        }}
+                                        id={`billing_items.${i}.quantity`}
+                                        name={`billing_items.${i}.quantity`}
+                                        type="number"
+                                        placeholder=""
+                                        className="w-16 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                )}
+                            />
+                            <Controller
+                                name={`billing_items.${i}.gross_weight`}
+                                control={control}
+                                render={({field}) => (
+                                    <Input
+                                        {...field}
+                                        onFocus={(e) => {
+                                            e.currentTarget.select();
+                                        }}
+                                        id={`billing_items.${i}.gross_weight`}
+                                        name={`billing_items.${i}.gross_weight`}
+                                        type="number"
+                                        placeholder=""
+                                        className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                )}
+                            />
+                            <Controller
+                                name={`billing_items.${i}.ignore_weight`}
+                                control={control}
+                                render={({field}) => (
+                                    <div>
+                                        <Input
+                                            onKeyDown={(e) => {
+                                                if (e.key === '/') {
+                                                    append(defaultBillingItemValues)
+                                                    setTimeout(() => next(false, `billing_items.${i + 1}.product`), 10)
+                                                }
+                                                if (e.key === '-') {
+                                                    if (fields.length > 1) {
+                                                        remove(i);
+                                                    }
+                                                }
+                                            }}
+                                            {...field}
+                                            onFocus={(e) => {
+                                                e.currentTarget.select();
+                                            }}
+                                            id={`billing_items.${i}.ignore_weight`}
+                                            name={`billing_items.${i}.ignore_weight`}
+                                            type="number"
+                                            placeholder=""
+                                            className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        />
+                                    </div>
+                                )}
+                            />
+                        </div>
+                    ))}
                 </div>
             </div>
-            {/*{renderField('', 'Name', (field, invalid) => (*/}
-            {/*    <Input {...field} id="name" name="name" aria-invalid={invalid} autoFocus autoComplete="off"/>*/}
-            {/*))}*/}
         </FieldGroup>
     </form>;
 }

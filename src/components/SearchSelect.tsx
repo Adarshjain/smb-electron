@@ -24,6 +24,8 @@ interface SearchableSelectProps<T = string> {
     inputId?: string
     inputName?: string
     estimatedRowHeight?: number
+    onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+    onFocus?: (event: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 export default function SearchSelect<T = string>({
@@ -40,6 +42,8 @@ export default function SearchSelect<T = string>({
                                                      inputId,
                                                      inputName,
                                                      estimatedRowHeight = 34,
+                                                     onKeyDown,
+                                                     onFocus,
                                                  }: SearchableSelectProps<T>) {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState('')
@@ -107,7 +111,7 @@ export default function SearchSelect<T = string>({
     }
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (!open || options.length === 0) return
+        if ((!open || options.length === 0) && e.key !== 'Enter') return
 
         switch (e.key) {
             case 'ArrowDown':
@@ -139,6 +143,7 @@ export default function SearchSelect<T = string>({
                 inputRef.current?.blur()
                 break
         }
+        onKeyDown?.(e);
     }
 
     const renderer = renderRow || defaultRenderRow
@@ -171,6 +176,7 @@ export default function SearchSelect<T = string>({
                             e.stopPropagation()
                             setOpen(false)
                         }}
+                        onFocus={onFocus}
                         onKeyDown={handleKeyDown}
                         placeholder={placeholder}
                     />
