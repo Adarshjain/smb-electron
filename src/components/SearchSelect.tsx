@@ -111,7 +111,12 @@ export default function SearchSelect<T = string>({
     }
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if ((!open || options.length === 0) && e.key !== 'Enter') return
+        if (options.length === 0) {
+            if (e.key === 'Enter') {
+                onKeyDown?.(e);
+            }
+            return
+        }
 
         switch (e.key) {
             case 'ArrowDown':

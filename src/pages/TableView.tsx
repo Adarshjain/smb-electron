@@ -1,4 +1,4 @@
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {useState} from "react";
 import type {TableName} from "../../tables";
 import {TablesSQliteSchema} from "../../tableSchema.ts";
