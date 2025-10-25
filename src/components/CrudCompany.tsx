@@ -91,7 +91,7 @@ export function CrudCompany({company, label, onSave}: CrudCompanyProps) {
         handleSubmit(onSubmit)();
     }, [handleSubmit, onSubmit]);
 
-    const formRef = useEnterNavigation({
+    const {setFormRef} = useEnterNavigation({
         fields: ["name", "current_date", "next_serial_letter", "next_serial_number"],
         onSubmit: handleFormSubmit,
     });
@@ -123,7 +123,7 @@ export function CrudCompany({company, label, onSave}: CrudCompanyProps) {
                 <DialogHeader>
                     <DialogTitle>{isCreate ? 'Create Company' : 'Edit Company'}</DialogTitle>
                 </DialogHeader>
-                <form ref={formRef}>
+                <form ref={setFormRef}>
                     <FieldGroup className="gap-3">
                         {renderField('name', 'Name', (field, invalid) => (
                             <Input {...field} id="name" name="name" aria-invalid={invalid} autoFocus autoComplete="off"/>
