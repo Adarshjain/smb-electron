@@ -1,12 +1,12 @@
 import React, { memo } from 'react';
 import {
-  Controller,
   type Control,
+  Controller,
   type FieldPath,
   type FieldValues,
 } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
-import { VALIDATION_CONSTRAINTS, FIELD_WIDTHS } from '@/constants/loanForm';
+import { FIELD_WIDTHS, VALIDATION_CONSTRAINTS } from '@/constants/loanForm';
 
 interface SerialNumberInputProps<T extends FieldValues> {
   control: Control<T>;

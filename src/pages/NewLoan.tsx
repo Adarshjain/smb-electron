@@ -110,7 +110,7 @@ export default function NewLoan() {
     (e: ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       const loanAmount = parseFloat(value || '0');
-      performLoanCalculation({ loanAmount });
+      void performLoanCalculation({ loanAmount });
     },
     [performLoanCalculation]
   );
@@ -118,7 +118,7 @@ export default function NewLoan() {
   const handleInterestChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const interest = e.target.value;
-      performLoanCalculation({
+      void performLoanCalculation({
         customInterestRate: parseFloat(interest || '0'),
       });
     },
@@ -140,7 +140,7 @@ export default function NewLoan() {
     [getValues, setValue, recalculateTotalFromDocCharges]
   );
 
-  const onSubmit = useCallback(async (data: Loan) => {
+  const onSubmit = useCallback((data: Loan) => {
     try {
       if (!isLoanReadyForSubmit(data)) {
         toast.error('Please fill in all required fields');
@@ -158,7 +158,7 @@ export default function NewLoan() {
   }, []);
 
   const handleFormSubmit = useCallback(() => {
-    handleSubmit(onSubmit)();
+    void handleSubmit(onSubmit)();
   }, [handleSubmit, onSubmit]);
 
   const billingItemsNames: FormFieldName[] = useMemo(() => {
@@ -189,9 +189,9 @@ export default function NewLoan() {
 
   const handleMetalTypeChange = () => {
     fieldArray.replace([DEFAULT_BILLING_ITEM as BillingItemType]);
-    setTimeout(async () => {
+    setTimeout(() => {
       next(false, 'billing_items.0.product');
-      await performLoanCalculation();
+      void performLoanCalculation();
     }, TIMING.METAL_TYPE_CHANGE_DELAY);
   };
 
