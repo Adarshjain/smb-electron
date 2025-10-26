@@ -26,10 +26,8 @@ const getIconPath = () => {
     // In production, they'll be in the resources folder
     let iconPath;
     if (process.env.VITE_DEV_SERVER_URL) {
-        // Development mode - use project root path
         iconPath = path.join(process.cwd(), 'electron', 'build', iconName);
     } else {
-        // Production mode - use app path
         iconPath = path.join(process.resourcesPath, 'electron', 'build', iconName);
     }
     return iconPath;
@@ -50,10 +48,8 @@ const createWindow = () => {
     win.maximize();
 
     if (process.env.VITE_DEV_SERVER_URL) {
-        // Dev mode: load Vite server
         win.loadURL(process.env.VITE_DEV_SERVER_URL);
     } else {
-        // Production mode: load built React files
         win.loadFile(path.join(__dirname, '../dist/index.html'));
     }
 

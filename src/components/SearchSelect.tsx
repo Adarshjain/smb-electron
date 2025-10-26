@@ -55,7 +55,6 @@ export default function SearchSelect<T = string>({
     const parentRef = useRef<HTMLDivElement>(null)
     const {convert} = useThanglish();
 
-    // Default implementations for string type
     const defaultGetKey = (item: T, index: number): string | number => {
         if (typeof item === 'string') return item
         if (typeof item === 'number') return item
