@@ -1,8 +1,5 @@
 declare global {
-  interface Window {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]: any;
-  }
+  type Window = Record<string, any>;
 }
 
 /**
@@ -138,10 +135,9 @@ class MyCache<T = any> {
   forEach(callback: (value: T, key: string) => void): void {
     const cache = this.getCacheObject();
     Object.entries(cache).forEach(([key, value]) => {
-      callback(value as T, key);
+      callback(value, key);
     });
   }
 }
 
 export default MyCache;
-

@@ -22,5 +22,10 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["vite.config.ts"]
+  "include": [
+    "vite.config.ts",
+    "tableSchema.ts",
+    "tables.d.ts",
+    "shared-types.d.ts"
+  ]
 }

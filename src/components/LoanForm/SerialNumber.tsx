@@ -1,5 +1,10 @@
 import React, { memo } from 'react';
-import { Controller, type Control, type FieldPath, type FieldValues } from 'react-hook-form';
+import {
+  Controller,
+  type Control,
+  type FieldPath,
+  type FieldValues,
+} from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { VALIDATION_CONSTRAINTS, FIELD_WIDTHS } from '@/constants/loanForm';
 
@@ -15,7 +20,9 @@ interface SerialNumberInputProps<T extends FieldValues> {
   };
 }
 
-export const SerialNumber = memo(function SerialNumberInput<T extends FieldValues>({
+export const SerialNumber = memo(function SerialNumberInput<
+  T extends FieldValues,
+>({
   control,
   serialFieldName,
   numberFieldName,
@@ -69,4 +76,6 @@ export const SerialNumber = memo(function SerialNumberInput<T extends FieldValue
       />
     </div>
   );
-}) as <T extends FieldValues>(props: SerialNumberInputProps<T>) => React.ReactElement;
+}) as <T extends FieldValues>(
+  props: SerialNumberInputProps<T>
+) => React.ReactElement;

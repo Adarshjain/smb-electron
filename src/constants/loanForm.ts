@@ -65,13 +65,13 @@ export const VALIDATION_CONSTRAINTS = {
 
 // Default values
 export const DEFAULT_BILLING_ITEM = {
-  product: "",
-  quality: "",
-  extra: "",
+  product: '',
+  quality: '',
+  extra: '',
   quantity: 0,
-  gross_weight: "0.00",
-  net_weight: "0.00",
-  ignore_weight: "0.00",
+  gross_weight: '0.00',
+  net_weight: '0.00',
+  ignore_weight: '0.00',
 } as const;
 
 // Timing constants
@@ -79,4 +79,3 @@ export const TIMING = {
   METAL_TYPE_CHANGE_DELAY: 100,
   ADD_ITEM_FOCUS_DELAY: 10,
 } as const;
-

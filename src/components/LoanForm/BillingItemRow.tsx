@@ -28,11 +28,16 @@ export const BillingItemRow = memo(function BillingItemRow({
   const handleAddItemKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === KEYBOARD_SHORTCUTS.ADD_BILLING_ITEM) {
       onAddItem();
-      setTimeout(() => onNavigateToNext(`billing_items.${index + 1}.product`), 10);
+      setTimeout(
+        () => onNavigateToNext(`billing_items.${index + 1}.product`),
+        10
+      );
     }
   };
 
-  const handleRemoveItemKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleRemoveItemKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
     if (e.key === KEYBOARD_SHORTCUTS.REMOVE_BILLING_ITEM) {
       if (fieldsLength > 1) {
         onRemoveItem();
@@ -173,4 +178,3 @@ export const BillingItemRow = memo(function BillingItemRow({
     </div>
   );
 });
-

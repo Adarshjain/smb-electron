@@ -38,4 +38,3 @@ export type BillingItemFieldName = keyof BillingItem;
 export type FormFieldName =
   | LoanFieldName
   | `billing_items.${number}.${BillingItemFieldName}`;
-

@@ -16,10 +16,10 @@ export const LoanCustomerSection = memo(function LoanCustomerSection({
       <CustomerPicker onChange={onCustomerChange} />
       {selectedCustomer && (
         <div>
-          {selectedCustomer.name} {selectedCustomer.fhtitle} {selectedCustomer.fhname}
+          {selectedCustomer.name} {selectedCustomer.fhtitle}{' '}
+          {selectedCustomer.fhname}
         </div>
       )}
     </>
   );
 });
-

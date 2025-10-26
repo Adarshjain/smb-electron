@@ -1,5 +1,14 @@
-import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import {
+  Controller,
+  type Control,
+  type FieldValues,
+  type Path,
+} from 'react-hook-form';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import type { ChangeEvent, FocusEvent } from 'react';
 
 interface FormNumberInputProps<T extends FieldValues> {
@@ -53,7 +62,9 @@ export function FormNumberInput<T extends FieldValues>({
               if (onCustomBlur) {
                 onCustomBlur(e);
               } else {
-                field.onChange(parseFloat(field.value || '0').toFixed(decimalPlaces));
+                field.onChange(
+                  parseFloat(field.value || '0').toFixed(decimalPlaces)
+                );
               }
             }}
             id={name}
@@ -78,4 +89,3 @@ export function FormNumberInput<T extends FieldValues>({
     />
   );
 }
-
