@@ -6,7 +6,7 @@ import {FieldGroup} from '@/components/ui/field';
 import {useEnterNavigation} from '@/hooks/useEnterNavigation';
 import type {MetalType, Tables} from '../../tables';
 import {useLoanCalculations} from '@/hooks/useLoanCalculations';
-import {LoanHeader} from '@/components/LoanForm/LoanHeader';
+import {SerialNumber} from '@/components/LoanForm/SerialNumber.tsx';
 import {LoanCustomerSection} from '@/components/LoanForm/LoanCustomerSection';
 import {BillingItemsTable} from '@/components/LoanForm/BillingItemsTable';
 import {LoanAmountSection} from '@/components/LoanForm/LoanAmountSection';
@@ -185,7 +185,11 @@ export default function NewLoan() {
         <form ref={setFormRef} className="p-4 flex flex-row justify-between">
             <div className="flex flex-1">
                 <FieldGroup className="gap-3">
-                    <LoanHeader control={control}/>
+                    <SerialNumber
+                        control={control}
+                        serialFieldName="serial"
+                        numberFieldName="loan_no"
+                    />
 
                     <LoanCustomerSection
                         selectedCustomer={selectedCustomer}
