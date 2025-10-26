@@ -13,6 +13,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 
 import '@/NewLoan.css';
 import {getDocCharges, getInterest, getRate} from "@/lib/myUtils.tsx";
+import {InputGroup, InputGroupAddon, InputGroupInput} from "@/components/ui/input-group";
 
 const newLoanSchema = z.object({
     serial: z.string().min(1).max(1),
@@ -97,7 +98,7 @@ export default function NewLoan() {
         customInterestRate?: number,
         metalType?: MetalType
     } = {}) => {
-        const { loanAmount: newLoanAmount, customInterestRate, metalType: newMetalType } = options;
+        const {loanAmount: newLoanAmount, customInterestRate, metalType: newMetalType} = options;
 
         const loanAmount = newLoanAmount ?? parseFloat(getValues('loan_amount') || "0");
         const metalType = newMetalType ?? getValues('metal_type');
@@ -139,6 +140,14 @@ export default function NewLoan() {
         setValue('interest_rate', interest);
         await calculateLoanAmounts({customInterestRate: parseFloat(interest || "0")});
     }, [calculateLoanAmounts, setValue]);
+
+    const handleDocChargeChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
+        const charge = e.target.value;
+        const parsed = parseFloat(charge || "0");
+        const [loanAmount, fmi] = getValues(['loan_amount', 'first_month_interest']);
+        setValue('doc_charges', parsed.toFixed(2));
+        setValue('total', (parseFloat(loanAmount || "0") - parseFloat(fmi || "0") - parsed).toFixed(2));
+    }, [getValues, setValue]);
 
     const onSubmit = useCallback(async (data: Loan) => {
         console.log(data);
@@ -392,114 +401,135 @@ export default function NewLoan() {
                         ))}
                     </div>
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-col w-[300px] input-column">
                     <Controller
                         name="loan_amount"
                         control={control}
                         render={({field}) => (
-                            <Input
-                                {...field}
-                                onFocus={(e) => {
-                                    e.currentTarget.select();
-                                }}
-                                onChange={handleLoanAmountChange}
-                                onBlur={() => {
-                                    field.onChange(parseFloat(field.value || "0").toFixed(2))
-                                }}
-                                id="loan_amount"
-                                name="loan_amount"
-                                type="number"
-                                placeholder="Amount"
-                                className="w-60 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
+                            <InputGroup>
+                                <InputGroupInput
+                                    {...field}
+                                    onFocus={(e) => {
+                                        e.currentTarget.select();
+                                    }}
+                                    onChange={handleLoanAmountChange}
+                                    onBlur={() => {
+                                        field.onChange(parseFloat(field.value || "0").toFixed(2))
+                                    }}
+                                    id="loan_amount"
+                                    name="loan_amount"
+                                    type="number"
+                                    placeholder="Amount"
+                                    className="text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                <InputGroupAddon>Amount</InputGroupAddon>
+                                <InputGroupAddon align="inline-end" className="!pl-0 w-6.5">₹</InputGroupAddon>
+                            </InputGroup>
                         )}
                     />
                     <Controller
                         name="interest_rate"
                         control={control}
                         render={({field}) => (
-                            <Input
-                                {...field}
-                                onFocus={(e) => {
-                                    e.currentTarget.select();
-                                }}
-                                onChange={handleInterestChange}
-                                onBlur={() => {
-                                    field.onChange(parseFloat(field.value || "0").toFixed(2))
-                                }}
-                                id="interest_rate"
-                                name="interest_rate"
-                                type="number"
-                                placeholder=""
-                                className="w-60 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
+                            <InputGroup>
+                                <InputGroupInput
+                                    {...field}
+                                    onFocus={(e) => {
+                                        e.currentTarget.select();
+                                    }}
+                                    onChange={handleInterestChange}
+                                    onBlur={() => {
+                                        field.onChange(parseFloat(field.value || "0").toFixed(2))
+                                    }}
+                                    id="interest_rate"
+                                    name="interest_rate"
+                                    type="number"
+                                    placeholder=""
+                                    className="text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                <InputGroupAddon>Percent</InputGroupAddon>
+                                <InputGroupAddon align="inline-end" className="!pl-0 w-6.5">%</InputGroupAddon>
+                            </InputGroup>
                         )}
                     />
                     <Controller
                         name="first_month_interest"
                         control={control}
                         render={({field}) => (
-                            <Input
-                                {...field}
-                                disabled
-                                onFocus={(e) => {
-                                    e.currentTarget.select();
-                                }}
-                                onBlur={() => {
-                                    field.onChange(parseFloat(field.value || "0").toFixed(2))
-                                }}
-                                id="first_month_interest"
-                                name="first_month_interest"
-                                type="number"
-                                placeholder="FMI"
-                                className="w-60 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
+                            <InputGroup>
+                                <InputGroupInput
+                                    {...field}
+                                    disabled
+                                    onFocus={(e) => {
+                                        e.currentTarget.select();
+                                    }}
+                                    onBlur={() => {
+                                        field.onChange(parseFloat(field.value || "0").toFixed(2))
+                                    }}
+                                    id="first_month_interest"
+                                    name="first_month_interest"
+                                    type="number"
+                                    placeholder="FMI"
+                                    className="text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                <InputGroupAddon>Interest</InputGroupAddon>
+                                <InputGroupAddon align="inline-end" className="!pl-0 w-6.5">₹</InputGroupAddon>
+                            </InputGroup>
                         )}
                     />
                     <Controller
                         name="doc_charges"
                         control={control}
                         render={({field}) => (
-                            <Input
-                                {...field}
-                                onFocus={(e) => {
-                                    e.currentTarget.select();
-                                }}
-                                onBlur={() => {
-                                    field.onChange(parseFloat(field.value || "0").toFixed(2))
-                                }}
-                                id="doc_charges"
-                                name="doc_charges"
-                                type="number"
-                                placeholder="FMI"
-                                className="w-60 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
+                            <InputGroup>
+                                <InputGroupInput
+                                    {...field}
+                                    onFocus={(e) => {
+                                        e.currentTarget.select();
+                                    }}
+                                    onChange={handleDocChargeChange}
+                                    onBlur={() => {
+                                        field.onChange(parseFloat(field.value || "0").toFixed(2))
+                                    }}
+                                    id="doc_charges"
+                                    name="doc_charges"
+                                    type="number"
+                                    placeholder="FMI"
+                                    className="text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                <InputGroupAddon>Doc Charge</InputGroupAddon>
+                                <InputGroupAddon align="inline-end" className="!pl-0 w-6.5">₹</InputGroupAddon>
+                            </InputGroup>
                         )}
                     />
                     <Controller
                         name="total"
                         control={control}
                         render={({field}) => (
-                            <Input
-                                {...field}
-                                disabled
-                                onFocus={(e) => {
-                                    e.currentTarget.select();
-                                }}
-                                onBlur={() => {
-                                    field.onChange(parseFloat(field.value || "0").toFixed(2))
-                                }}
-                                id="total"
-                                name="total"
-                                type="number"
-                                placeholder="Total"
-                                className="w-60 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
+                            <InputGroup>
+                                <InputGroupInput
+                                    {...field}
+                                    disabled
+                                    onFocus={(e) => {
+                                        e.currentTarget.select();
+                                    }}
+                                    onBlur={() => {
+                                        field.onChange(parseFloat(field.value || "0").toFixed(2))
+                                    }}
+                                    id="total"
+                                    name="total"
+                                    type="number"
+                                    placeholder="Total"
+                                    className="text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                <InputGroupAddon>Total</InputGroupAddon>
+                                <InputGroupAddon align="inline-end" className="!pl-0 w-6.5">₹</InputGroupAddon>
+                            </InputGroup>
                         )}
                     />
                 </div>
             </FieldGroup>
         </div>
-        <pre>{JSON.stringify(values, null, 2)}</pre>
+        <pre class="text-xs">{JSON.stringify(values, null, 2)}</pre>
     </form>;
 }
