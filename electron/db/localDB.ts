@@ -73,7 +73,6 @@ export async function migrateSchema() {
             }
         }
 
-        // 3️⃣ Check if unique constraints exist (optional safeguard)
         if (unique && unique.length > 0) {
             const indexName = `${name}_unique_${unique.join("_")}`;
             const indexExists = db.prepare(
@@ -174,7 +173,6 @@ export function upsert<K extends TableName>(table: K, record: Tables[K]['Row']):
     const existing = existingStmt.get(...whereValues);
 
     if (existing) {
-        // Update
         const updateFields = Object.keys(record)
             .filter(key => !pkFields.includes(key))
             .map(key => `${key} = ?`)
@@ -192,7 +190,6 @@ export function upsert<K extends TableName>(table: K, record: Tables[K]['Row']):
 
         updateStmt.run(...updateValues, ...whereValues);
     } else {
-        // Insert
         const keys = Object.keys(record);
         const values = Object.values(record);
         const placeholders = keys.map(() => '?').join(', ');

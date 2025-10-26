@@ -1,11 +1,11 @@
 import {useCallback, useEffect, useRef} from "react";
 
-interface UseEnterNavigationOptions {
-    fields: string[]; // ordered list of field "name" attributes
+interface UseEnterNavigationOptions<T> {
+    fields: (T | string)[]; // ordered list of field "name" attributes
     onSubmit?: () => void; // optional submit callback
 }
 
-export function useEnterNavigation({fields, onSubmit}: UseEnterNavigationOptions) {
+export function useEnterNavigation<T = string>({fields, onSubmit}: UseEnterNavigationOptions<T>) {
     const formRef = useRef<HTMLFormElement>(null);
 
     const next = useCallback((shiftKey = false, name?: string) => {

@@ -633,14 +633,11 @@ const encodeCache = new Map<string, string>();
 export function decode<T extends string | null | undefined>(input: T): T {
     if (!input) return input;
 
-    // Check cache first
     const cached = decodeCache.get(input);
     if (cached !== undefined) return cached as T;
 
-    // Compute result
     const result = input.replace(decodeMapRegex, (match) => decodeMap[match] || match);
 
-    // Store in cache
     decodeCache.set(input, result);
 
     return result as T;
@@ -649,14 +646,11 @@ export function decode<T extends string | null | undefined>(input: T): T {
 export function encode<T extends string | null | undefined>(input: T): T {
     if (input == null) return input;
     
-    // Check cache first
     const cached = encodeCache.get(input);
     if (cached !== undefined) return cached as T;
     
-    // Compute result
     const result = input.replace(encodeMapRegex, (match) => encodeMap[match] || match);
     
-    // Store in cache
     encodeCache.set(input, result);
     
     return result as T;
