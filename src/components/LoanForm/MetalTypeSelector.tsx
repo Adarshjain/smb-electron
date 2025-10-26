@@ -1,6 +1,12 @@
 import { memo } from 'react';
 import { Controller, type Control } from 'react-hook-form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { Loan } from '@/types/loanForm';
 import type { MetalType } from '@/../tables';
 import { FIELD_WIDTHS } from '@/constants/loanForm';
@@ -27,7 +33,10 @@ export const MetalTypeSelector = memo(function MetalTypeSelector({
           }}
           value={field.value}
         >
-          <SelectTrigger name="metal_type" className={FIELD_WIDTHS.METAL_TYPE_SELECT}>
+          <SelectTrigger
+            name="metal_type"
+            className={FIELD_WIDTHS.METAL_TYPE_SELECT}
+          >
             <SelectValue placeholder="Metal Type" />
           </SelectTrigger>
           <SelectContent>
@@ -39,4 +48,3 @@ export const MetalTypeSelector = memo(function MetalTypeSelector({
     />
   );
 });
-

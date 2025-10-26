@@ -66,4 +66,3 @@ export const LoanAmountSection = memo(function LoanAmountSection({
     </div>
   );
 });
-

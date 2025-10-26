@@ -40,14 +40,21 @@ export function useLoanCalculations() {
       try {
         setIsCalculating(true);
 
-        const { loanAmount: newLoanAmount, customInterestRate, metalType: newMetalType } = options;
+        const {
+          loanAmount: newLoanAmount,
+          customInterestRate,
+          metalType: newMetalType,
+        } = options;
 
-        const loanAmount = newLoanAmount ?? parseFloat(currentLoanAmount || '0');
+        const loanAmount =
+          newLoanAmount ?? parseFloat(currentLoanAmount || '0');
         const metalType = newMetalType ?? currentMetalType;
 
         const rateConfig = await getRate(loanAmount, metalType);
         if (!rateConfig) {
-          toast.error('No interest rate configuration found for this amount and metal type');
+          toast.error(
+            'No interest rate configuration found for this amount and metal type'
+          );
           return null;
         }
 
@@ -96,30 +103,40 @@ export function useLoanCalculations() {
   /**
    * Calculates total net weight across all billing items
    */
-  const calculateTotalNetWeight = useCallback((items: BillingItem[]): string => {
-    const total = items.reduce((sum, item) => {
-      const netWeight = parseFloat(calculateNetWeight(item) || '0');
-      return sum + netWeight;
-    }, 0);
-    return total.toFixed(DECIMAL_PRECISION.WEIGHT);
-  }, [calculateNetWeight]);
+  const calculateTotalNetWeight = useCallback(
+    (items: BillingItem[]): string => {
+      const total = items.reduce((sum, item) => {
+        const netWeight = parseFloat(calculateNetWeight(item) || '0');
+        return sum + netWeight;
+      }, 0);
+      return total.toFixed(DECIMAL_PRECISION.WEIGHT);
+    },
+    [calculateNetWeight]
+  );
 
   /**
    * Calculates total gross weight across all billing items
    */
-  const calculateTotalGrossWeight = useCallback((items: BillingItem[]): string => {
-    const total = items.reduce((sum, item) => {
-      const grossWeight = parseFloat(item.gross_weight || '0');
-      return sum + grossWeight;
-    }, 0);
-    return total.toFixed(DECIMAL_PRECISION.WEIGHT);
-  }, []);
+  const calculateTotalGrossWeight = useCallback(
+    (items: BillingItem[]): string => {
+      const total = items.reduce((sum, item) => {
+        const grossWeight = parseFloat(item.gross_weight || '0');
+        return sum + grossWeight;
+      }, 0);
+      return total.toFixed(DECIMAL_PRECISION.WEIGHT);
+    },
+    []
+  );
 
   /**
    * Recalculates total when doc charges change manually
    */
   const recalculateTotalFromDocCharges = useCallback(
-    (loanAmount: string, firstMonthInterest: string, docCharges: number): string => {
+    (
+      loanAmount: string,
+      firstMonthInterest: string,
+      docCharges: number
+    ): string => {
       const loan = parseFloat(loanAmount || '0');
       const fmi = parseFloat(firstMonthInterest || '0');
       const total = loan - fmi - docCharges;
@@ -137,4 +154,3 @@ export function useLoanCalculations() {
     isCalculating,
   };
 }
-

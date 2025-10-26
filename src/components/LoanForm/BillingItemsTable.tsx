@@ -26,22 +26,32 @@ export const BillingItemsTable = memo(function BillingItemsTable({
       <div>
         {/* Table Headers */}
         <div className="flex input-matrix-title">
-          <FieldLabel className={`block px-3 py-1 ${FIELD_WIDTHS.PRODUCT_FIELD}`}>
+          <FieldLabel
+            className={`block px-3 py-1 ${FIELD_WIDTHS.PRODUCT_FIELD}`}
+          >
             Product
           </FieldLabel>
-          <FieldLabel className={`block px-3 py-1 ${FIELD_WIDTHS.QUALITY_FIELD}`}>
+          <FieldLabel
+            className={`block px-3 py-1 ${FIELD_WIDTHS.QUALITY_FIELD}`}
+          >
             Quality
           </FieldLabel>
           <FieldLabel className={`block px-3 py-1 ${FIELD_WIDTHS.SEAL_FIELD}`}>
             Seal
           </FieldLabel>
-          <FieldLabel className={`block px-3 py-1 ${FIELD_WIDTHS.QUANTITY_FIELD} text-right`}>
+          <FieldLabel
+            className={`block px-3 py-1 ${FIELD_WIDTHS.QUANTITY_FIELD} text-right`}
+          >
             Qty
           </FieldLabel>
-          <FieldLabel className={`block px-3 py-1 ${FIELD_WIDTHS.WEIGHT_FIELD} text-right`}>
+          <FieldLabel
+            className={`block px-3 py-1 ${FIELD_WIDTHS.WEIGHT_FIELD} text-right`}
+          >
             Ignore Wt
           </FieldLabel>
-          <FieldLabel className={`block px-3 py-1 ${FIELD_WIDTHS.WEIGHT_FIELD} text-right`}>
+          <FieldLabel
+            className={`block px-3 py-1 ${FIELD_WIDTHS.WEIGHT_FIELD} text-right`}
+          >
             Gross Wt
           </FieldLabel>
         </div>
@@ -65,4 +75,3 @@ export const BillingItemsTable = memo(function BillingItemsTable({
     </>
   );
 });
-

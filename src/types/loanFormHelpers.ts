@@ -68,7 +68,7 @@ export function createBillingItemFieldName(
 export function parseBillingItemFieldName(
   fieldName: string
 ): { index: number; field: string } | null {
-  const match = fieldName.match(/^billing_items\.(\d+)\.(.+)$/);
+  const match = /^billing_items\.(\d+)\.(.+)$/.exec(fieldName);
   if (match) {
     return {
       index: parseInt(match[1], 10),
@@ -91,7 +91,7 @@ export function getLoanFieldValue<K extends keyof Loan>(
 /**
  * Formats a number value to a fixed decimal string
  */
-export function formatDecimal(value: string | number, decimals: number = 2): string {
+export function formatDecimal(value: string | number, decimals = 2): string {
   const num = typeof value === 'string' ? parseFloat(value || '0') : value;
   return num.toFixed(decimals);
 }
@@ -104,4 +104,3 @@ export function safeParseFloat(value: string | number): number {
   const parsed = parseFloat(value || '0');
   return isNaN(parsed) ? 0 : parsed;
 }
-
