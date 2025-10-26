@@ -1,0 +1,32 @@
+# Quick Linting Reference
+
+## Commands
+lint          → npm run lint           # Check for errors
+lint:fix      → npm run lint:fix       # Auto-fix errors
+format        → npm run format         # Format all files
+format:check  → npm run format:check   # Check formatting
+type-check    → npm run type-check     # TypeScript check
+check-all     → npm run check-all      # Run all checks
+
+## Documentation
+LINTING_GUIDE.md          → Comprehensive guide with examples
+LINTING_SETUP_SUMMARY.md  → Setup summary and status
+SETUP_HOOKS.md            → Git hooks setup
+
+## Configuration Files
+eslint.config.js          → ESLint 9 flat config
+.prettierrc.json          → Prettier settings
+.vscode/settings.json     → VSCode settings
+
+## Current Status
+68 issues (54 errors, 14 warnings)
+Most are legitimate code quality issues that need manual fixes.
+
+## Quick Fixes
+Floating promises     → Add 'await' or 'void' or '.catch()'
+|| to ??             → Replace with nullish coalescing
+Async without await  → Remove 'async' or add 'await'
+console.log          → Use console.warn or console.error
+
+See LINTING_GUIDE.md for detailed examples and solutions.
+
