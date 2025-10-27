@@ -73,9 +73,3 @@ export const DEFAULT_BILLING_ITEM = {
   net_weight: '0.00',
   ignore_weight: '0.00',
 } as const;
-
-// Timing constants
-export const TIMING = {
-  METAL_TYPE_CHANGE_DELAY: 100,
-  ADD_ITEM_FOCUS_DELAY: 10,
-} as const;

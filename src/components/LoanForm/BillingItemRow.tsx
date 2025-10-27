@@ -28,9 +28,8 @@ export const BillingItemRow = memo(function BillingItemRow({
   const handleAddItemKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === KEYBOARD_SHORTCUTS.ADD_BILLING_ITEM) {
       onAddItem();
-      setTimeout(
-        () => onNavigateToNext(`billing_items.${index + 1}.product`),
-        10
+      queueMicrotask(() =>
+        onNavigateToNext(`billing_items.${index + 1}.product`)
       );
     }
   };
@@ -53,6 +52,7 @@ export const BillingItemRow = memo(function BillingItemRow({
         control={control}
         render={({ field }) => (
           <ProductSelector
+            value={field.value}
             onChange={field.onChange}
             onFocus={(e) => {
               e.currentTarget.select();
@@ -72,6 +72,7 @@ export const BillingItemRow = memo(function BillingItemRow({
         control={control}
         render={({ field }) => (
           <ProductSelector
+            value={field.value ?? undefined}
             onChange={field.onChange}
             onFocus={(e) => {
               e.currentTarget.select();
@@ -91,6 +92,7 @@ export const BillingItemRow = memo(function BillingItemRow({
         control={control}
         render={({ field }) => (
           <ProductSelector
+            value={field.value ?? undefined}
             onKeyDown={handleAddItemKeyDown}
             onFocus={(e) => {
               e.currentTarget.select();

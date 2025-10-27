@@ -1,9 +1,11 @@
 import * as z from 'zod';
-import type { Tables } from '../../tables';
+import type { Tables } from '@/../tables';
 
 export const newLoanSchema = z.object({
-  serial: z.string().min(1).max(1),
-  loan_no: z.number().min(1).max(10000),
+  serial: z.string().length(1),
+  loan_no: z.number(),
+  old_serial: z.string().length(1),
+  old_loan_no: z.number(),
   loan_amount: z.string(),
   interest_rate: z.string(),
   first_month_interest: z.string(),
@@ -18,8 +20,8 @@ export const newLoanSchema = z.object({
     .array(
       z.object({
         product: z.string(),
-        quality: z.string(),
-        extra: z.string(),
+        quality: z.string().nullable(),
+        extra: z.string().nullable(),
         quantity: z.number(),
         gross_weight: z.string(),
         net_weight: z.string(),

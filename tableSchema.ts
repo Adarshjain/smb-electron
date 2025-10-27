@@ -265,15 +265,15 @@ export const TablesSQliteSchema: Record<
       },
       product: {
         schema: 'TEXT NOT NULL',
-        encoded: false,
+        encoded: true,
       },
       quality: {
         schema: 'TEXT',
-        encoded: false,
+        encoded: true,
       },
       extra: {
         schema: 'TEXT',
-        encoded: false,
+        encoded: true,
       },
       quantity: {
         schema: 'INTEGER NOT NULL',
