@@ -1,6 +1,6 @@
 import type { MetalType, ProductType } from '../../tables';
 import { useEffect, useState } from 'react';
-import { getDBMethods } from '@/hooks/dbUtil.ts';
+import { read } from '@/hooks/dbUtil.ts';
 import SearchSelect from '@/components/SearchSelect.tsx';
 import { decode } from '@/lib/thanglish/TsciiConverter.ts';
 import MyCache from '@/lib/MyCache.ts';
@@ -29,7 +29,7 @@ export default function ProductSelector(props: {
         setProducts(cache.get('products') ?? []);
         return;
       }
-      const response = await getDBMethods('products').read({
+      const response = await read('products', {
         metal_type: props.metalType,
         product_type: props.productType,
       });

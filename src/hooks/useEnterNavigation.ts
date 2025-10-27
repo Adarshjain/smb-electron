@@ -12,7 +12,7 @@ export function useEnterNavigation<T = string>({
   const formRef = useRef<HTMLFormElement>(null);
 
   const next = useCallback(
-    (shiftKey = false, name?: string) => {
+    (name?: string, shiftKey = false) => {
       const form = formRef.current;
       if (!form) return;
       if (name) {
@@ -33,7 +33,7 @@ export function useEnterNavigation<T = string>({
       if (nextIndex >= 0 && nextIndex < fields.length) {
         const nextName = fields[nextIndex];
         const nextField = form.querySelector<HTMLElement>(
-          `[name="${nextName}"]`
+          `[name="${nextName as string}"]`
         );
         nextField?.focus();
       } else {
@@ -52,7 +52,7 @@ export function useEnterNavigation<T = string>({
       // Prevent default Enter submit
       e.preventDefault();
 
-      next(e.shiftKey);
+      next(undefined, e.shiftKey);
     },
     [next]
   );

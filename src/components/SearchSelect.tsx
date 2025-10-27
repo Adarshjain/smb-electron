@@ -212,7 +212,7 @@ export default function SearchSelect<T = string>({
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <Command shouldFilter={false}>
-          <CommandList ref={parentRef} className="max-h-150 overflow-auto">
+          <CommandList ref={parentRef} className="max-h-80 overflow-auto">
             <CommandGroup>
               <div
                 style={{

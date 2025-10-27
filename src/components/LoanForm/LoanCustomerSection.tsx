@@ -1,6 +1,9 @@
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 import CustomerPicker from '@/components/CustomerPicker';
 import type { Tables } from '../../../tables';
+import { read } from '@/hooks/dbUtil.ts';
+import { encode } from '@/lib/thanglish/TsciiConverter.ts';
+import { decodeRecord, toastElectronResponse } from '@/lib/myUtils.tsx';
 
 interface LoanCustomerSectionProps {
   selectedCustomer: Tables['customers']['Row'] | null;
@@ -11,15 +14,49 @@ export const LoanCustomerSection = memo(function LoanCustomerSection({
   selectedCustomer,
   onCustomerChange,
 }: LoanCustomerSectionProps) {
+  const [selectedArea, setSelectedArea] = useState<
+    Tables['areas']['Row'] | null
+  >(null);
+  useEffect(() => {
+    const run = async () => {
+      if (!selectedCustomer) {
+        return;
+      }
+      const response = await read('areas', {
+        name: encode(selectedCustomer.area ?? ''),
+      });
+      if (response.success && response.data?.length) {
+        setSelectedArea(decodeRecord('areas', response.data[0]));
+      } else {
+        toastElectronResponse(response);
+      }
+    };
+    void run();
+  }, [selectedCustomer]);
   return (
-    <>
+    <div>
       <CustomerPicker onChange={onCustomerChange} />
       {selectedCustomer && (
-        <div>
-          {selectedCustomer.name} {selectedCustomer.fhtitle}{' '}
-          {selectedCustomer.fhname}
+        <div className="pl-3 py-4">
+          <div>
+            {selectedCustomer.name} {selectedCustomer.fhtitle}{' '}
+            {selectedCustomer.fhname}
+          </div>
+          <div>
+            {selectedCustomer.door_no} {selectedCustomer.address1}
+          </div>
+          <div>{selectedCustomer.address2}</div>
+          <div>
+            {selectedCustomer.area}{' '}
+            {selectedArea && (
+              <>
+                {selectedArea.post} {selectedArea.town} {selectedArea.pincode}
+              </>
+            )}
+          </div>
+          <div>{selectedCustomer.phone_no}</div>
         </div>
       )}
-    </>
+    </div>
   );
 });

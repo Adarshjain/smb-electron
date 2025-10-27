@@ -21,6 +21,9 @@ export const OldLoanFiller = memo(function OldLoanFiller({
   const numberValue = useWatch({ control, name: 'old_loan_no' });
 
   const fillFromOldLoan = async () => {
+    if (!serialValue || !numberValue) {
+      return;
+    }
     const loan = await loadBillWithDeps(serialValue, numberValue);
     if (!loan) {
       toast.error('Error occurred');
@@ -42,7 +45,12 @@ export const OldLoanFiller = memo(function OldLoanFiller({
         className="!px-4"
         onClick={fillFromOldLoan}
         disabled={
-          !(serialValue.length && numberValue > 0 && numberValue < 10000)
+          !(
+            serialValue?.length &&
+            numberValue &&
+            numberValue > 0 &&
+            numberValue < 10000
+          )
         }
       >
         Fill

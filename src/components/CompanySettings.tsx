@@ -12,7 +12,7 @@ import { toastElectronResponse, viewableDate } from '@/lib/myUtils.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { CrudCompany } from '@/components/CrudCompany.tsx';
 import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
-import { getDBMethods } from '@/hooks/dbUtil.ts';
+import { deleteRecord } from '@/hooks/dbUtil.ts';
 import type { Tables } from '../../tables';
 
 export default function CompanySettings() {
@@ -25,7 +25,7 @@ export default function CompanySettings() {
       );
       return;
     }
-    const response = await getDBMethods('companies').deleteRecord({
+    const response = await deleteRecord('companies', {
       name: company.name,
     });
     toastElectronResponse(response);
@@ -84,7 +84,7 @@ export default function CompanySettings() {
                     </Button>
                   }
                   title={`Delete ${record.name}?`}
-                  onConfirm={() => deleteCompany(record)}
+                  onConfirm={() => void deleteCompany(record)}
                   confirmText="Delete"
                   isDestructive
                 />
