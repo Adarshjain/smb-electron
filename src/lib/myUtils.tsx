@@ -20,17 +20,6 @@ export function mapToRegex(map: Record<string, string>) {
   );
 }
 
-export function log(...args: unknown[]) {
-  const blueLabel =
-    'color: white; background-color: #007bff; padding: 2px 4px; border-radius: 2px; font-weight: bold;';
-  // const greenLabel =
-  //     "color: white; background-color: #28a745; padding: 2px 4px; border-radius: 2px; font-weight: bold;";
-  const resetStyle = ''; // An empty string resets the style
-  const first = args.shift();
-
-  console.log(`%c${first}%c`, blueLabel, resetStyle, ...args);
-}
-
 export function rpcError(response: {
   success: false;
   error: string;
@@ -76,13 +65,13 @@ export function currentIsoDate() {
 }
 
 export function nextIsoDate(dateStr?: string): string {
-  const date = new Date(dateStr || currentIsoDate());
+  const date = new Date(dateStr ?? currentIsoDate());
   date.setDate(date.getDate() + 1);
   return date.toISOString().split('T')[0];
 }
 
 export function previousIsoDate(dateStr?: string): string {
-  const date = new Date(dateStr || currentIsoDate());
+  const date = new Date(dateStr ?? currentIsoDate());
   date.setDate(date.getDate() - 1);
   return date.toISOString().split('T')[0];
 }
@@ -162,8 +151,8 @@ export async function getRate(
   if (!intRates) {
     const response = await getDBMethods('interest_rates').read({});
     if (response.success) {
-      cache.set('intRates', response.data || []);
-      intRates = response.data || [];
+      cache.set('intRates', response.data ?? []);
+      intRates = response.data ?? [];
     }
   }
   return intRates?.find((rate) => {
@@ -179,14 +168,50 @@ export function getInterest(principal: number, intRate: number, months = 1) {
   return +(principal * (intRate / 100) * months).toFixed(2);
 }
 
-export async function getDocCharges(
+export function getDocCharges(
   principal: number,
   rate: Tables['interest_rates']['Row']
-): Promise<number> {
+): number {
   const { doc_charges: docCharges } = rate;
   if (rate.doc_charges_type === 'Fixed') {
     return docCharges;
   } else {
     return +(principal * (docCharges / 100)).toFixed(2);
   }
+}
+
+export default async function loadBillWithDeps(
+  serial: string,
+  loanNo: number
+): Promise<Tables['full_bill']['Row'] | null> {
+  const loan = await getDBMethods('bills').read({
+    serial: serial.toUpperCase(),
+    loan_no: loanNo,
+  });
+  if (!(loan.success && loan.data?.length)) {
+    toast.error('No loan found with given Serial and Loan Number');
+    return null;
+  }
+  const currentLoan = loan.data[0];
+  const customer = await getDBMethods('customers').read({
+    id: currentLoan.customer_id,
+  });
+  if (!(customer.success && customer.data?.length)) {
+    toast.error('No customer match');
+    return null;
+  }
+  const billItems = await getDBMethods('bill_items').read({
+    serial: serial.toUpperCase(),
+    loan_no: loanNo,
+  });
+  if (!(billItems.success && billItems.data?.length)) {
+    toast.error('No items match');
+    return null;
+  }
+
+  return {
+    ...decodeRecord('bills', currentLoan),
+    customer: decodeRecord('customers', customer.data[0]),
+    bill_items: billItems.data.map((item) => decodeRecord('bill_items', item)),
+  };
 }

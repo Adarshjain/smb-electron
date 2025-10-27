@@ -21,6 +21,7 @@ const DefaultStringRenderer = ({ item }: { item: string }) => <div>{item}</div>;
 
 interface SearchableSelectProps<T = string> {
   options: T[];
+  value?: T;
   onChange?: (value: T) => void;
   onSearchChange?: (searchValue: string) => void;
   placeholder?: string;
@@ -39,6 +40,7 @@ interface SearchableSelectProps<T = string> {
 
 export default function SearchSelect<T = string>({
   options,
+  value,
   onChange,
   onSearchChange,
   placeholder = 'Search...',
@@ -63,6 +65,14 @@ export default function SearchSelect<T = string>({
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const parentRef = useRef<HTMLDivElement>(null);
   const { convert } = useThanglish();
+
+  // Sync internal state with external value prop
+  useEffect(() => {
+    if (value !== undefined) {
+      setSelected(value);
+      setSearch(value && typeof value === 'string' ? value : '');
+    }
+  }, [value]);
 
   const defaultGetKey = (item: T, index: number): string | number => {
     if (typeof item === 'string') return item;
@@ -159,7 +169,7 @@ export default function SearchSelect<T = string>({
     onKeyDown?.(e);
   };
 
-  const renderer = renderRow || defaultRenderRow;
+  const renderer = renderRow ?? defaultRenderRow;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

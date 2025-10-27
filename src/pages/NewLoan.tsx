@@ -1,6 +1,6 @@
 import { useCompany } from '@/context/CompanyProvider';
 import { type ChangeEvent, useCallback, useEffect, useMemo } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FieldGroup } from '@/components/ui/field';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
@@ -24,12 +24,13 @@ import {
 import {
   BILLING_ITEM_FIELDS,
   DEFAULT_BILLING_ITEM,
-  TIMING,
 } from '@/constants/loanForm';
 import { toast } from 'sonner';
 
 import '@/NewLoan.css';
 import { MetalTypeSelector } from '@/components/LoanForm/MetalTypeSelector.tsx';
+import { OldLoanFiller } from '@/components/LoanForm/OldLoanFiller.tsx';
+import DatePicker from '@/components/DatePicker.tsx';
 
 export default function NewLoan() {
   const { company } = useCompany();
@@ -42,6 +43,8 @@ export default function NewLoan() {
     () => ({
       serial,
       loan_no: loanNo ? parseInt(loanNo) : 1,
+      old_loan_no: 0,
+      old_serial: '',
       loan_amount: '0.00',
       total: '0.00',
       interest_rate: '0.00',
@@ -189,34 +192,72 @@ export default function NewLoan() {
 
   const handleMetalTypeChange = () => {
     fieldArray.replace([DEFAULT_BILLING_ITEM as BillingItemType]);
-    setTimeout(() => {
+    queueMicrotask(() => {
       next(false, 'billing_items.0.product');
       void performLoanCalculation();
-    }, TIMING.METAL_TYPE_CHANGE_DELAY);
+    });
+  };
+
+  const handleOnOldLoadLoaded = (loan: Tables['full_bill']['Row']) => {
+    setValue('customer', loan.customer);
+    fieldArray.replace(
+      loan.bill_items.map((item) => ({
+        product: item.product,
+        quantity: item.quantity,
+        quality: item.quality,
+        extra: item.extra,
+        gross_weight: item.gross_weight.toFixed(2),
+        ignore_weight: item.ignore_weight.toFixed(2),
+        net_weight: item.net_weight.toFixed(2),
+      }))
+    );
+    setValue('loan_amount', loan.loan_amount.toFixed(2));
+    void performLoanCalculation();
+    queueMicrotask(() => next(false, 'loan_amount'));
   };
 
   return (
     <form ref={setFormRef} className="p-4 flex flex-row justify-between">
       <div className="flex flex-1">
         <FieldGroup className="gap-3">
-          <SerialNumber
-            control={control}
-            serialFieldName="serial"
-            numberFieldName="loan_no"
-          />
+          <div className="flex gap-4">
+            <SerialNumber
+              control={control}
+              serialFieldName="serial"
+              numberFieldName="loan_no"
+            />
+            <Controller
+              name="date"
+              control={control}
+              render={({ field, fieldState }) => (
+                <DatePicker
+                  className="w-27.5"
+                  {...field}
+                  id="date"
+                  name="date"
+                  isError={fieldState.invalid}
+                />
+              )}
+            />
+            <OldLoanFiller
+              control={control}
+              onOldLoanLoad={handleOnOldLoadLoaded}
+            />
+          </div>
 
-          <LoanCustomerSection
-            selectedCustomer={selectedCustomer}
-            onCustomerChange={(customer: Tables['customers']['Row']) => {
-              setValue('customer', customer);
-            }}
-          />
+          <div className="flex gap-6">
+            <LoanCustomerSection
+              selectedCustomer={selectedCustomer}
+              onCustomerChange={(customer: Tables['customers']['Row']) => {
+                setValue('customer', customer);
+              }}
+            />
 
-          <MetalTypeSelector
-            control={control}
-            onMetalTypeChange={handleMetalTypeChange}
-          />
-
+            <MetalTypeSelector
+              control={control}
+              onMetalTypeChange={handleMetalTypeChange}
+            />
+          </div>
           <BillingItemsTable
             control={control}
             metalType={metalType}
@@ -233,7 +274,6 @@ export default function NewLoan() {
           onDocChargeChange={handleDocChargeChange}
         />
       </div>
-      {/*<pre className="text-xs">{JSON.stringify(values, null, 2)}</pre>*/}
     </form>
   );
 }

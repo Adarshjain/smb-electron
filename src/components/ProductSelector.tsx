@@ -8,6 +8,7 @@ import MyCache from '@/lib/MyCache.ts';
 export default function ProductSelector(props: {
   productType: ProductType;
   metalType: MetalType;
+  value?: string;
   inputName?: string;
   placeholder?: string;
   onChange?: (value: string) => void;
@@ -21,9 +22,11 @@ export default function ProductSelector(props: {
 
   useEffect(() => {
     const run = async () => {
-      const cache = new MyCache(`${props.metalType}-${props.productType}`);
+      const cache = new MyCache<string[]>(
+        `${props.metalType}-${props.productType}`
+      );
       if (cache.has('products')) {
-        setProducts(cache.get('products') || []);
+        setProducts(cache.get('products') ?? []);
         return;
       }
       const response = await getDBMethods('products').read({
@@ -40,7 +43,7 @@ export default function ProductSelector(props: {
         setProducts([]);
       }
     };
-    run();
+    void run();
   }, [props.metalType, props.productType]);
 
   useEffect(() => {
@@ -64,6 +67,7 @@ export default function ProductSelector(props: {
   return (
     <SearchSelect
       options={filteredProducts}
+      value={props.value}
       onSearchChange={setSearch}
       inputName={props.inputName}
       placeholder={props.placeholder}

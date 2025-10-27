@@ -14,6 +14,7 @@ interface SerialNumberInputProps<T extends FieldValues> {
   numberFieldName: FieldPath<T>;
   autoFocus?: boolean;
   defaultNumberValue?: number;
+  onNumFieldKeyDown?: () => void;
   onChange?: {
     serial?: (value: string) => void;
     number?: (value: number) => void;
@@ -29,6 +30,7 @@ export const SerialNumber = memo(function SerialNumberInput<
   autoFocus = false,
   defaultNumberValue = 1,
   onChange,
+  onNumFieldKeyDown,
 }: SerialNumberInputProps<T>) {
   return (
     <div className="flex">
@@ -44,6 +46,10 @@ export const SerialNumber = memo(function SerialNumberInput<
             maxLength={VALIDATION_CONSTRAINTS.SERIAL_LENGTH.MAX}
             aria-invalid={fieldState.invalid}
             className={`${FIELD_WIDTHS.SERIAL_INPUT} rounded-r-none text-center uppercase focus-visible:z-10`}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter')
+                document.getElementsByName(numberFieldName)[0]?.focus();
+            }}
             onChange={(e) => {
               field.onChange(e);
               onChange?.serial?.(e.target.value);
@@ -63,6 +69,12 @@ export const SerialNumber = memo(function SerialNumberInput<
             type="number"
             aria-invalid={fieldState.invalid}
             className={`${FIELD_WIDTHS.LOAN_NO_INPUT} rounded-l-none border-l-0 text-center focus-visible:z-10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') onNumFieldKeyDown?.();
+            }}
+            onFocus={(e) => {
+              e.currentTarget.select();
+            }}
             onChange={(e) => {
               const val = e.target.value;
               if (VALIDATION_CONSTRAINTS.LOAN_NO_REGEX.test(val)) {

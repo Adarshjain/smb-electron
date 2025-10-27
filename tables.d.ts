@@ -1,4 +1,4 @@
-export type TableName = keyof Tables;
+export type TableName = Exclude<keyof Tables, 'full_bill'>;
 
 export type MetalType = 'Gold' | 'Silver' | 'Other';
 export type DocChargesType = 'Fixed' | 'Percentage';
@@ -80,7 +80,7 @@ export interface Tables {
       serial: string;
       loan_no: number;
       date: string;
-      customer_id: string | null;
+      customer_id: string;
       loan_amount: number;
       interest_rate: number;
       first_month_interest: number;
@@ -157,6 +157,13 @@ export interface Tables {
     Insert: Tables['address_lines']['Row'];
     Update: Partial<Tables['address_lines']['Row']>;
     Delete: { address: string };
+  };
+
+  full_bill: {
+    Row: Tables['bills']['Row'] & {
+      customer: Tables['customers']['Row'];
+      bill_items: Tables['bill_items']['Row'][];
+    };
   };
 }
 
