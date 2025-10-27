@@ -31,9 +31,11 @@ import '@/NewLoan.css';
 import { MetalTypeSelector } from '@/components/LoanForm/MetalTypeSelector.tsx';
 import { OldLoanFiller } from '@/components/LoanForm/OldLoanFiller.tsx';
 import DatePicker from '@/components/DatePicker.tsx';
+import { create } from '@/hooks/dbUtil.ts';
+import { encodeRecord } from '@/lib/myUtils.tsx';
 
 export default function NewLoan() {
-  const { company } = useCompany();
+  const { company, setNextSerial } = useCompany();
   const [serial, loanNo] = useMemo(
     () => (!company ? '' : company.next_serial).split('-'),
     [company]
@@ -143,22 +145,57 @@ export default function NewLoan() {
     [getValues, setValue, recalculateTotalFromDocCharges]
   );
 
-  const onSubmit = useCallback((data: Loan) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const onSubmit: (data: Loan) => Promise<void> = async (data: Loan) => {
     try {
       if (!isLoanReadyForSubmit(data)) {
         toast.error('Please fill in all required fields');
         return;
       }
-
-      console.log('Loan data submitted:', data);
-      toast.success('Loan saved successfully!');
+      const formattedLoan: Tables['bills']['Insert'] = encodeRecord('bills', {
+        serial: data.serial,
+        loan_no: data.loan_no,
+        customer_id: data.customer?.id ?? '',
+        date: data.date,
+        loan_amount: parseInt(data.loan_amount || '0'),
+        interest_rate: parseFloat(data.interest_rate || '0'),
+        first_month_interest: parseFloat(data.first_month_interest || '0'),
+        doc_charges: parseFloat(data.doc_charges || '0'),
+        metal_type: data.metal_type,
+        released: 0,
+        company: data.company,
+      });
+      const formatterProduct: Tables['bill_items']['Insert'][] =
+        data.billing_items.map((item): Tables['bill_items']['Insert'] =>
+          encodeRecord('bill_items', {
+            serial: data.serial,
+            loan_no: data.loan_no,
+            gross_weight: parseFloat(item.gross_weight || '0'),
+            ignore_weight: parseFloat(item.ignore_weight || '0'),
+            net_weight:
+              parseFloat(item.gross_weight || '0') +
+              parseFloat(item.ignore_weight || ''),
+            product: item.product,
+            quantity: item.quantity,
+            quality: item.quality,
+            extra: item.extra,
+          })
+        );
+      await create('bills', formattedLoan);
+      for (const item of formatterProduct) {
+        await create('bill_items', item);
+      }
+      await setNextSerial();
+      queueMicrotask(() => reset(defaultValues));
+      next('customer_picker');
+      toast.success('Loan saved');
     } catch (error) {
       console.error('Error submitting loan:', error);
       toast.error(
         error instanceof Error ? error.message : 'Failed to save loan'
       );
     }
-  }, []);
+  };
 
   const handleFormSubmit = useCallback(() => {
     void handleSubmit(onSubmit)();
@@ -193,7 +230,7 @@ export default function NewLoan() {
   const handleMetalTypeChange = () => {
     fieldArray.replace([DEFAULT_BILLING_ITEM as BillingItemType]);
     queueMicrotask(() => {
-      next(false, 'billing_items.0.product');
+      next('billing_items.0.product');
       void performLoanCalculation();
     });
   };
@@ -213,7 +250,7 @@ export default function NewLoan() {
     );
     setValue('loan_amount', loan.loan_amount.toFixed(2));
     void performLoanCalculation();
-    queueMicrotask(() => next(false, 'loan_amount'));
+    setTimeout(() => next('loan_amount'), 100);
   };
 
   return (
@@ -262,7 +299,7 @@ export default function NewLoan() {
             control={control}
             metalType={metalType}
             fieldArray={fieldArray}
-            onNavigateToField={(fieldName) => next(false, fieldName)}
+            onNavigateToField={(fieldName) => next(fieldName)}
           />
         </FieldGroup>
       </div>

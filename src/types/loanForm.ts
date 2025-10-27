@@ -4,8 +4,8 @@ import type { Tables } from '@/../tables';
 export const newLoanSchema = z.object({
   serial: z.string().length(1),
   loan_no: z.number(),
-  old_serial: z.string().length(1),
-  old_loan_no: z.number(),
+  old_serial: z.string().optional(),
+  old_loan_no: z.number().optional(),
   loan_amount: z.string(),
   interest_rate: z.string(),
   first_month_interest: z.string(),

@@ -5,7 +5,7 @@ import type { MetalType, TableName, Tables } from '../../tables';
 import { TablesSQliteSchema } from '../../tableSchema.ts';
 import { decode, encode } from '@/lib/thanglish/TsciiConverter.ts';
 import MyCache from '@/lib/MyCache.ts';
-import { getDBMethods } from '@/hooks/dbUtil.ts';
+import { read } from '@/hooks/dbUtil.ts';
 
 export function mapToRegex(map: Record<string, string>) {
   return new RegExp(
@@ -149,7 +149,7 @@ export async function getRate(
   const cache = new MyCache<Tables['interest_rates']['Row'][]>('IntRates');
   let intRates = cache.get('intRates');
   if (!intRates) {
-    const response = await getDBMethods('interest_rates').read({});
+    const response = await read('interest_rates', {});
     if (response.success) {
       cache.set('intRates', response.data ?? []);
       intRates = response.data ?? [];
@@ -184,7 +184,7 @@ export default async function loadBillWithDeps(
   serial: string,
   loanNo: number
 ): Promise<Tables['full_bill']['Row'] | null> {
-  const loan = await getDBMethods('bills').read({
+  const loan = await read('bills', {
     serial: serial.toUpperCase(),
     loan_no: loanNo,
   });
@@ -193,14 +193,14 @@ export default async function loadBillWithDeps(
     return null;
   }
   const currentLoan = loan.data[0];
-  const customer = await getDBMethods('customers').read({
+  const customer = await read('customers', {
     id: currentLoan.customer_id,
   });
   if (!(customer.success && customer.data?.length)) {
     toast.error('No customer match');
     return null;
   }
-  const billItems = await getDBMethods('bill_items').read({
+  const billItems = await read('bill_items', {
     serial: serial.toUpperCase(),
     loan_no: loanNo,
   });

@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/field';
 import { format } from 'date-fns';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
-import { getDBMethods } from '@/hooks/dbUtil.ts';
+import { create, update } from '@/hooks/dbUtil.ts';
 import { toastElectronResponse } from '@/lib/myUtils.tsx';
 
 const formSchema = z.object({
@@ -90,7 +90,6 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
         isCreate ? 'Creating company...' : 'Saving changes...'
       );
       try {
-        const { create, update } = getDBMethods('companies');
         const payload:
           | Tables['companies']['Insert']
           | Tables['companies']['Update'] = {
@@ -109,8 +108,8 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
         }
 
         const response = await (isCreate
-          ? create(payload as Tables['companies']['Insert'])
-          : update(payload as Tables['companies']['Update']));
+          ? create('companies', payload as Tables['companies']['Insert'])
+          : update('companies', payload as Tables['companies']['Update']));
         toastElectronResponse(response);
       } catch (e) {
         toast.error(
@@ -126,7 +125,7 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
   );
 
   const handleFormSubmit = useCallback(() => {
-    handleSubmit(onSubmit)();
+    void handleSubmit(onSubmit)();
   }, [handleSubmit, onSubmit]);
 
   const { setFormRef } = useEnterNavigation({
@@ -166,7 +165,7 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
       <DialogTrigger asChild>
-        {label || (
+        {label ?? (
           <Button variant="outline">
             {isCreate ? 'Create Company' : 'Edit Company'}
           </Button>

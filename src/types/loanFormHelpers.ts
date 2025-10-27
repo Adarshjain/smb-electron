@@ -1,4 +1,4 @@
-import type { Loan, BillingItem, BillingItemFieldName } from './loanForm';
+import type { BillingItem, BillingItemFieldName, Loan } from './loanForm';
 import type { Tables } from '../../tables';
 
 /**
@@ -45,11 +45,9 @@ export function isLoanReadyForSubmit(loan: Loan): boolean {
   }
 
   // Check at least one item has valid data
-  const hasValidItems = loan.billing_items.some(
+  return loan.billing_items.some(
     (item) => hasValidProduct(item) && hasWeightData(item)
   );
-
-  return hasValidItems;
 }
 
 /**

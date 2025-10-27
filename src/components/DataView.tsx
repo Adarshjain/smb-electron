@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getDBMethods } from '@/hooks/dbUtil.ts';
+import { read } from '@/hooks/dbUtil.ts';
 import type { TableName, Tables } from '../../tables';
 import { rpcError } from '@/lib/myUtils.tsx';
 import {
@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input.tsx';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
 import { TablesSQliteSchema } from '../../tableSchema.ts';
 import { cn } from '@/lib/utils.ts';
+import { toast } from 'sonner';
 
 export default function DataView<K extends TableName>(props: {
   table: K;
@@ -37,15 +38,15 @@ export default function DataView<K extends TableName>(props: {
   );
 
   useEffect(() => {
-    getDBMethods(props.table)
-      .read({})
+    read(props.table, {})
       .then((response) => {
         if (response.success) {
           setTableData(response.data || []);
         } else {
           rpcError(response);
         }
-      });
+      })
+      .catch(toast.error);
   }, [props.table]);
 
   const filteredData = useMemo(() => {
