@@ -46,7 +46,6 @@ export const BillingItemRow = memo(function BillingItemRow({
 
   return (
     <div className="flex">
-      {/* Product */}
       <Controller
         name={`billing_items.${index}.product`}
         control={control}
@@ -66,7 +65,6 @@ export const BillingItemRow = memo(function BillingItemRow({
         )}
       />
 
-      {/* Quality */}
       <Controller
         name={`billing_items.${index}.quality`}
         control={control}
@@ -86,7 +84,6 @@ export const BillingItemRow = memo(function BillingItemRow({
         )}
       />
 
-      {/* Seal/Extra */}
       <Controller
         name={`billing_items.${index}.extra`}
         control={control}
@@ -107,7 +104,6 @@ export const BillingItemRow = memo(function BillingItemRow({
         )}
       />
 
-      {/* Quantity */}
       <Controller
         name={`billing_items.${index}.quantity`}
         control={control}
@@ -130,7 +126,6 @@ export const BillingItemRow = memo(function BillingItemRow({
         )}
       />
 
-      {/* Ignore Weight */}
       <Controller
         name={`billing_items.${index}.ignore_weight`}
         control={control}
@@ -152,7 +147,6 @@ export const BillingItemRow = memo(function BillingItemRow({
         )}
       />
 
-      {/* Gross Weight */}
       <Controller
         name={`billing_items.${index}.gross_weight`}
         control={control}
@@ -170,6 +164,24 @@ export const BillingItemRow = memo(function BillingItemRow({
               onBlur={() => {
                 field.onChange(parseFloat(field.value || '0').toFixed(2));
               }}
+              id={`billing_items.${index}.gross_weight`}
+              name={`billing_items.${index}.gross_weight`}
+              type="number"
+              placeholder=""
+              className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+          </div>
+        )}
+      />
+
+      <Controller
+        name={`billing_items.${index}.net_weight`}
+        control={control}
+        render={({ field }) => (
+          <div>
+            <Input
+              {...field}
+              disabled
               id={`billing_items.${index}.gross_weight`}
               name={`billing_items.${index}.gross_weight`}
               type="number"
