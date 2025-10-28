@@ -60,7 +60,7 @@ export function useLoanCalculations() {
 
         const interestRate = customInterestRate ?? rateConfig.rate;
 
-        let docCharges = await getDocCharges(loanAmount, rateConfig);
+        let docCharges = getDocCharges(loanAmount, rateConfig);
         const fmi = getInterest(loanAmount, interestRate);
 
         // Round the total to avoid decimal cents

@@ -5,7 +5,7 @@ import { SerialNumber } from '@/components/LoanForm/SerialNumber.tsx';
 import { Button } from '@/components/ui/button';
 import { ArrowDown } from 'lucide-react';
 import type { Tables } from '../../../tables';
-import loadBillWithDeps from '@/lib/myUtils.tsx';
+import { loadBillWithDeps } from '@/lib/myUtils.tsx';
 
 interface OldLoanFillerProps {
   control: Control<Loan>;

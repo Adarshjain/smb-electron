@@ -33,6 +33,7 @@ import { OldLoanFiller } from '@/components/LoanForm/OldLoanFiller.tsx';
 import DatePicker from '@/components/DatePicker.tsx';
 import { create } from '@/hooks/dbUtil.ts';
 import { encodeRecord } from '@/lib/myUtils.tsx';
+import BillAsLineItem from '@/components/LoanForm/BillAsLineItem.tsx';
 
 export default function NewLoan() {
   const { company, setNextSerial } = useCompany();
@@ -301,6 +302,10 @@ export default function NewLoan() {
             fieldArray={fieldArray}
             onNavigateToField={(fieldName) => next(fieldName)}
           />
+
+          {selectedCustomer && (
+            <BillAsLineItem customerId={selectedCustomer.id} />
+          )}
         </FieldGroup>
       </div>
       <div>

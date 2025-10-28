@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Controller, type Control } from 'react-hook-form';
+import { type Control, Controller } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import ProductSelector from '@/components/ProductSelector';
 import type { MetalType } from '@/../tables';
@@ -157,24 +157,26 @@ export const BillingItemRow = memo(function BillingItemRow({
         name={`billing_items.${index}.gross_weight`}
         control={control}
         render={({ field }) => (
-          <Input
-            onKeyDown={(e) => {
-              handleAddItemKeyDown(e);
-              handleRemoveItemKeyDown(e);
-            }}
-            {...field}
-            onFocus={(e) => {
-              e.currentTarget.select();
-            }}
-            onBlur={() => {
-              field.onChange(parseFloat(field.value || '0').toFixed(2));
-            }}
-            id={`billing_items.${index}.gross_weight`}
-            name={`billing_items.${index}.gross_weight`}
-            type="number"
-            placeholder=""
-            className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-          />
+          <div>
+            <Input
+              onKeyDown={(e) => {
+                handleAddItemKeyDown(e);
+                handleRemoveItemKeyDown(e);
+              }}
+              {...field}
+              onFocus={(e) => {
+                e.currentTarget.select();
+              }}
+              onBlur={() => {
+                field.onChange(parseFloat(field.value || '0').toFixed(2));
+              }}
+              id={`billing_items.${index}.gross_weight`}
+              name={`billing_items.${index}.gross_weight`}
+              type="number"
+              placeholder=""
+              className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+          </div>
         )}
       />
     </div>
