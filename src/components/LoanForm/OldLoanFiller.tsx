@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowDown } from 'lucide-react';
 import type { Tables } from '../../../tables';
 import loadBillWithDeps from '@/lib/myUtils.tsx';
-import { toast } from 'sonner';
 
 interface OldLoanFillerProps {
   control: Control<Loan>;
@@ -20,13 +19,15 @@ export const OldLoanFiller = memo(function OldLoanFiller({
   const serialValue = useWatch({ control, name: 'old_serial' });
   const numberValue = useWatch({ control, name: 'old_loan_no' });
 
-  const fillFromOldLoan = async () => {
+  const fillFromOldLoan = async (
+    e?: React.MouseEvent<HTMLButtonElement>
+  ): Promise<void> => {
+    if (e) e.preventDefault();
     if (!serialValue || !numberValue) {
       return;
     }
     const loan = await loadBillWithDeps(serialValue, numberValue);
     if (!loan) {
-      toast.error('Error occurred');
       return;
     }
     onOldLoanLoad(loan);
