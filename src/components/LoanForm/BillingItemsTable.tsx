@@ -24,7 +24,6 @@ export const BillingItemsTable = memo(function BillingItemsTable({
   return (
     <>
       <div>
-        {/* Table Headers */}
         <div className="flex input-matrix-title">
           <FieldLabel
             className={`block px-3 py-1 ${FIELD_WIDTHS.PRODUCT_FIELD}`}
@@ -54,9 +53,13 @@ export const BillingItemsTable = memo(function BillingItemsTable({
           >
             Gross Wt
           </FieldLabel>
+          <FieldLabel
+            className={`block px-3 py-1 ${FIELD_WIDTHS.WEIGHT_FIELD} text-right`}
+          >
+            Net Wt
+          </FieldLabel>
         </div>
 
-        {/* Table Rows */}
         <div className="flex input-matrix flex-col">
           {fields.map((field, i) => (
             <BillingItemRow

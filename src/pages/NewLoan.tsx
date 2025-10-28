@@ -1,6 +1,6 @@
 import { useCompany } from '@/context/CompanyProvider';
 import { type ChangeEvent, useCallback, useEffect, useMemo } from 'react';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FieldGroup } from '@/components/ui/field';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
@@ -76,6 +76,19 @@ export default function NewLoan() {
     name: 'billing_items',
     control,
   });
+
+  const billingItemValues = useWatch({ control, name: 'billing_items' });
+
+  useEffect(() => {
+    billingItemValues.forEach((item, index) => {
+      const total =
+        parseFloat(item.ignore_weight || '0') +
+        parseFloat(item.gross_weight || '0');
+      if (total !== parseFloat(item.net_weight)) {
+        setValue(`billing_items.${index}.net_weight`, total.toFixed(2));
+      }
+    });
+  }, [billingItemValues, setValue]);
 
   const { calculateLoanAmounts, recalculateTotalFromDocCharges } =
     useLoanCalculations();
