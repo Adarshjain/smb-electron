@@ -56,9 +56,9 @@ const createWindow = () => {
   win.maximize();
 
   if (process.env.VITE_DEV_SERVER_URL) {
-    win.loadURL(process.env.VITE_DEV_SERVER_URL);
+    void win.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
-    win.loadFile(path.join(__dirname, '../dist/index.html'));
+    void win.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
   win.on('closed', () => {
@@ -68,8 +68,8 @@ const createWindow = () => {
 
 const initSupabase = async () => {
   const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_KEY!
+    process.env.SUPABASE_URL ?? '',
+    process.env.SUPABASE_KEY ?? ''
   );
   syncManager = SyncManager.getInstance({
     supabase,
@@ -94,7 +94,7 @@ const initSupabase = async () => {
 app.name = 'Sri Mahaveer Bankers';
 
 // Initialize database before creating window
-app.whenReady().then(async () => {
+void app.whenReady().then(async () => {
   // Set dock icon on macOS (use PNG as icns can be problematic)
   if (process.platform === 'darwin' && app.dock) {
     const dockIconPath = path.join(
@@ -127,21 +127,18 @@ app.on('before-quit', () => {
 // IPC Handlers
 
 // Testing
-ipcMain.handle(
-  'init-seed',
-  async (): Promise<ElectronToReactResponse<void>> => {
-    try {
-      initAllSeedData();
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      };
-    }
+ipcMain.handle('init-seed', (): ElectronToReactResponse<void> => {
+  try {
+    initAllSeedData();
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    };
   }
-);
+});
 
 // Sync
 ipcMain.handle('sync-now', async (): Promise<ElectronToReactResponse<void>> => {
@@ -158,7 +155,7 @@ ipcMain.handle('sync-now', async (): Promise<ElectronToReactResponse<void>> => {
 
 ipcMain.handle(
   'is-syncing-now',
-  async (): Promise<ElectronToReactResponse<boolean | undefined>> => {
+  (): ElectronToReactResponse<boolean | undefined> => {
     try {
       return { success: true, data: syncManager?.isRunning };
     } catch (error) {
@@ -188,11 +185,11 @@ ipcMain.handle(
 
 ipcMain.handle(
   'db:create',
-  async <K extends TableName>(
+  <K extends TableName>(
     _event: IpcMainInvokeEvent,
     table: K,
     record: Tables[K]['Row']
-  ): Promise<ElectronToReactResponse<null>> => {
+  ): ElectronToReactResponse<null> => {
     try {
       return { success: true, data: create(table, record) };
     } catch (error) {
@@ -207,12 +204,12 @@ ipcMain.handle(
 
 ipcMain.handle(
   'db:read',
-  async <K extends TableName>(
+  <K extends TableName>(
     _event: IpcMainInvokeEvent,
     table: K,
     conditions: Partial<LocalTables<K>>,
     fields: keyof LocalTables<K> | '*' = '*'
-  ): Promise<ElectronToReactResponse<LocalTables<K>[] | null>> => {
+  ): ElectronToReactResponse<LocalTables<K>[] | null> => {
     try {
       return { success: true, data: read(table, conditions, fields) };
     } catch (error) {
@@ -227,11 +224,11 @@ ipcMain.handle(
 
 ipcMain.handle(
   'db:update',
-  async <K extends TableName>(
+  <K extends TableName>(
     _event: IpcMainInvokeEvent,
     table: K,
     record: Tables[K]['Update']
-  ): Promise<ElectronToReactResponse<null>> => {
+  ): ElectronToReactResponse<null> => {
     try {
       const result = update(table, record);
       return { success: true, data: result };
@@ -247,11 +244,11 @@ ipcMain.handle(
 
 ipcMain.handle(
   'db:delete',
-  async <K extends TableName>(
+  <K extends TableName>(
     _event: IpcMainInvokeEvent,
     table: K,
     record: Tables[K]['Delete']
-  ): Promise<ElectronToReactResponse<null>> => {
+  ): ElectronToReactResponse<null> => {
     try {
       deleteRecord(table, record);
       return { success: true };
@@ -267,14 +264,17 @@ ipcMain.handle(
 
 ipcMain.handle(
   'db:query',
-  async (
+  (
     _event: IpcMainInvokeEvent,
     query: string,
     params?: unknown[],
     justRun = false
-  ): Promise<ElectronToReactResponse<unknown | null>> => {
+  ): ElectronToReactResponse<unknown> => {
     try {
-      return { success: true, data: executeSql(query, params, justRun) };
+      return {
+        success: true,
+        data: executeSql(query, params, justRun as boolean),
+      };
     } catch (error) {
       return {
         success: false,

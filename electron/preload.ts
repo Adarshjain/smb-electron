@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { type LocalTables, type TableName, type Tables } from '../tables';
 import { type ElectronToReactResponse } from '../shared-types';
+import { type BackupEndResponse } from './db/SyncManager';
 
 contextBridge.exposeInMainWorld('api', {
   db: {
@@ -29,7 +30,7 @@ contextBridge.exposeInMainWorld('api', {
       query: string,
       params?: unknown[],
       justRun?: boolean
-    ): Promise<ElectronToReactResponse<unknown | null>> =>
+    ): Promise<ElectronToReactResponse<unknown>> =>
       ipcRenderer.invoke('db:query', query, params, justRun),
     initSeed: (): Promise<ElectronToReactResponse<void>> =>
       ipcRenderer.invoke('init-seed'),
@@ -42,17 +43,12 @@ contextBridge.exposeInMainWorld('api', {
     initialPull: (): Promise<ElectronToReactResponse<void | undefined>> =>
       ipcRenderer.invoke('initial-pull'),
     onSyncStatus: (
-      callback: (
-        data:
-          | { status: 'started' }
-          | {
-              status: 'ended';
-              lastSync: number;
-              errors: string[];
-            }
-      ) => void
+      callback: (data: { state: 'started' } | BackupEndResponse) => void
     ) => {
-      ipcRenderer.on('sync-status', (_, data) => callback(data));
+      ipcRenderer.on(
+        'sync-status',
+        (_, data: { state: 'started' } | BackupEndResponse) => callback(data)
+      );
     },
   },
 });

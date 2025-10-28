@@ -7,7 +7,7 @@ import type {
 import { db } from './database';
 import { TablesSQliteSchema } from '../../tableSchema';
 
-export const tables: (keyof Tables)[] = [
+export const tables: TableName[] = [
   'areas',
   'companies',
   'customers',
