@@ -168,6 +168,16 @@ export function getInterest(principal: number, intRate: number, months = 1) {
   return +(principal * (intRate / 100) * months).toFixed(2);
 }
 
+export function monthDiff(from: string, to?: string) {
+  const now = to ? new Date(to) : new Date();
+  const start = new Date(from);
+  let months =
+    (now.getFullYear() - start.getFullYear()) * 12 +
+    (now.getMonth() - start.getMonth());
+  if (now.getDate() < start.getDate()) months--;
+  return start.getDate() === now.getDate() ? months - 1 : months;
+}
+
 export function getDocCharges(
   principal: number,
   rate: Tables['interest_rates']['Row']
@@ -180,7 +190,7 @@ export function getDocCharges(
   }
 }
 
-export default async function loadBillWithDeps(
+export async function loadBillWithDeps(
   serial: string,
   loanNo: number
 ): Promise<Tables['full_bill']['Row'] | null> {
@@ -213,5 +223,65 @@ export default async function loadBillWithDeps(
     ...decodeRecord('bills', currentLoan),
     customer: decodeRecord('customers', customer.data[0]),
     bill_items: billItems.data.map((item) => decodeRecord('bill_items', item)),
+  };
+}
+
+export async function fetchBillsByCustomer(
+  customerId: string,
+  skipReleased = true
+): Promise<Tables['full_bill']['Row'][] | undefined> {
+  const billsPromise = read('bills', {
+    customer_id: customerId,
+    released: skipReleased ? 0 : undefined,
+  });
+  const customerPromise = read('customers', {
+    id: customerId,
+  });
+  const [customerResponse, billsResponse] = await Promise.all([
+    customerPromise,
+    billsPromise,
+  ]);
+  if (
+    customerResponse.success &&
+    billsResponse.success &&
+    customerResponse.data?.length &&
+    billsResponse.data?.length
+  ) {
+    const customer = decodeRecord('customers', customerResponse.data[0]);
+    const fullBills: Tables['full_bill']['Row'][] = [];
+    for (const bill of billsResponse.data) {
+      const billItemsResponse = await read('bill_items', {
+        serial: bill.serial,
+        loan_no: bill.loan_no,
+      });
+      if (billItemsResponse.success && billItemsResponse.data?.length) {
+        fullBills.push({
+          ...decodeRecord('bills', bill),
+          customer: customer,
+          bill_items: billItemsResponse.data.map((item) =>
+            decodeRecord('bill_items', item)
+          ),
+        });
+      }
+    }
+    return fullBills;
+  }
+}
+
+export function mergeBillItems(billItems: Tables['bill_items']['Row'][]): {
+  description: string;
+  weight: number;
+} {
+  const description: string[] = [];
+  let weight = 0;
+  for (const bill of billItems) {
+    description.push(
+      `${bill.quality} ${bill.product} ${bill.extra} - ${bill.quantity}`
+    );
+    weight += bill.net_weight;
+  }
+  return {
+    description: description.join(', '),
+    weight,
   };
 }

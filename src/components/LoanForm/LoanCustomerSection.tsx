@@ -37,21 +37,22 @@ export const LoanCustomerSection = memo(function LoanCustomerSection({
     <div>
       <CustomerPicker onChange={onCustomerChange} />
       {selectedCustomer && (
-        <div className="pl-3 py-4">
+        <div className="pl-3 pb-6 pt-1">
           <div>
             {selectedCustomer.name} {selectedCustomer.fhtitle}{' '}
             {selectedCustomer.fhname}
           </div>
           <div>
-            {selectedCustomer.door_no} {selectedCustomer.address1}
+            {selectedCustomer.door_no} {selectedCustomer.address1},
           </div>
           <div>{selectedCustomer.address2}</div>
           <div>
-            {selectedCustomer.area}{' '}
+            {selectedCustomer.area},
             {selectedArea && (
-              <>
-                {selectedArea.post} {selectedArea.town} {selectedArea.pincode}
-              </>
+              <div>
+                {selectedArea.post ? `Post: ${selectedArea.post}` : ''}{' '}
+                {selectedArea.town} {selectedArea.pincode}
+              </div>
             )}
           </div>
           <div>{selectedCustomer.phone_no}</div>
