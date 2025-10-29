@@ -1,4 +1,15 @@
-import { mapToRegex } from '@/lib/myUtils.tsx';
+function mapToRegex(map: Record<string, string>) {
+  return new RegExp(
+    Object.keys(map)
+      .sort((a, b) => {
+        if (b.length === a.length) return a.localeCompare(b);
+        return b.length - a.length;
+      })
+      .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .join('|'),
+    'g'
+  );
+}
 
 const decodeMap: Record<string, string> = {
   '∙': 'ஃ',
@@ -514,7 +525,6 @@ const encodeMap: Record<string, string> = {
   ரொ: '¦Ã¡',
   ரோ: '§Ã¡',
   ரா: 'Ã¡',
-  // 'ரி': 'Ã¢',
   ரீ: 'Ã£',
   ரு: 'Õ',
   ரூ: 'å',

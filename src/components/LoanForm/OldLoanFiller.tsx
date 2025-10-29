@@ -39,12 +39,12 @@ export const OldLoanFiller = memo(function OldLoanFiller({
         control={control}
         serialFieldName="old_serial"
         numberFieldName="old_loan_no"
-        onNumFieldKeyDown={fillFromOldLoan}
+        onNumFieldKeyDown={() => void fillFromOldLoan()}
       />
       <Button
         variant="outline"
         className="!px-4"
-        onClick={fillFromOldLoan}
+        onClick={() => void fillFromOldLoan()}
         disabled={
           !(
             serialValue?.length &&

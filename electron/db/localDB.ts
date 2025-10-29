@@ -5,7 +5,11 @@ import type {
   Tables,
 } from '../../tables';
 import { db } from './database';
-import { TablesSQliteSchema } from '../../tableSchema';
+import {
+  decodeRecord,
+  encodeRecord,
+  TablesSQliteSchema,
+} from '../../tableSchema';
 
 export const tables: TableName[] = [
   'areas',
@@ -44,7 +48,7 @@ export function validate<K extends TableName>(
   }
 }
 
-export async function migrateSchema() {
+export function migrateSchema() {
   if (!db) {
     return null;
   }
@@ -120,6 +124,8 @@ export function create<K extends TableName>(
 
   validate(table, record);
 
+  record = encodeRecord<K>(table, record);
+
   const keys = Object.keys(record);
   const values = Object.values(record);
   const placeholders = keys.map(() => '?').join(', ');
@@ -163,23 +169,48 @@ export function markAsSynced<K extends TableName>(
 export function read<K extends TableName>(
   table: K,
   conditions: Partial<LocalTables<K>>,
-  fields: keyof LocalTables<K> | '*' = '*' // TODO: update return type based on the requested fields
+  fields: keyof LocalTables<K> | '*' = '*', // TODO: update return type based on the requested fields
+  isLikeQuery = false
 ): LocalTables<K>[] | null {
   if (!db) return null;
-  const whereClauses = Object.keys(conditions)
-    .map((field) => `${field} = ?`)
-    .join(' AND ');
-  // Convert boolean values to integers for SQLite
-  const whereValues = Object.values(conditions).map((value) =>
-    typeof value === 'boolean' ? (value ? 1 : 0) : value
+
+  conditions = encodeRecord(
+    table,
+    conditions as unknown as Tables[K]['Row']
+  ) as unknown as Partial<LocalTables<K>>;
+
+  const [whereClauses, whereValues] = Object.entries(conditions).reduce<
+    [string[], (string | number | boolean)[]]
+  >(
+    (
+      [clauses, values],
+      [field, value]: [string, string | number | boolean]
+    ) => {
+      clauses.push(`${field} ${isLikeQuery ? 'LIKE' : '='} ?`);
+      values.push(typeof value === 'boolean' ? (value ? 1 : 0) : value);
+      return [clauses, values];
+    },
+    [[], []]
   );
+
+  const whereClause = whereClauses.join(' AND ');
+
+  console.log(
+    `SELECT ${String(fields)}
+         FROM ${table}
+         ${whereClauses.length ? `WHERE ${whereClause}` : ''}`,
+    whereValues
+  );
+
   const stmt = db.prepare(
     `SELECT ${String(fields)}
          FROM ${table}
-         ${whereClauses.length ? `WHERE ${whereClauses}` : ''}`
+         ${whereClauses.length ? `WHERE ${whereClause}` : ''}`
   );
 
-  return stmt.all(...whereValues) as LocalTables<K>[];
+  return (stmt.all(...whereValues) as LocalTables<K>[]).map(
+    (record) => decodeRecord(table, record) as LocalTables<K>
+  );
 }
 
 export function upsert<K extends TableName>(
@@ -248,6 +279,11 @@ export function deleteRecord<K extends TableName>(
 
   validate(table, record, true);
 
+  record = encodeRecord(
+    table,
+    record as Tables[K]['Row']
+  ) as Tables[K]['Delete'];
+
   const pkFields = TablesSQliteSchema[table].primary;
   if (!pkFields) {
     throw new Error(`Primary key fields not defined for table ${table}`);
@@ -275,6 +311,11 @@ export function update<K extends TableName>(
   if (!db) return null;
 
   validate(table, record, true);
+
+  record = encodeRecord(
+    table,
+    record as Tables[K]['Row']
+  ) as Tables[K]['Update'];
 
   const pkFields = TablesSQliteSchema[table].primary;
   if (!pkFields) {

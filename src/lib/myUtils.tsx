@@ -1,10 +1,8 @@
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import type { ElectronToReactResponse } from '../../shared-types';
-import type { MetalType, TableName, Tables } from '../../tables';
-import { TablesSQliteSchema } from '../../tableSchema.ts';
-import { decode, encode } from '@/lib/thanglish/TsciiConverter.ts';
-import MyCache from '@/lib/MyCache.ts';
+import type { MetalType, Tables } from '../../tables';
+import MyCache from '../../MyCache.ts';
 import { read } from '@/hooks/dbUtil.ts';
 
 export function mapToRegex(map: Record<string, string>) {
@@ -96,52 +94,6 @@ export function toastElectronResponse<T>(
   }
 }
 
-export function decodeRecord<K extends TableName>(
-  tableName: K,
-  record: Tables[K]['Row']
-): Tables[K]['Row'] {
-  const columnSchema = TablesSQliteSchema[tableName].columns;
-  const encodedKeys = Object.keys(record).filter(
-    (key) => columnSchema[key]?.encoded
-  ) as (keyof Tables[K]['Row'])[];
-
-  if (encodedKeys.length === 0) {
-    return record;
-  }
-
-  const decodedRecord = { ...record };
-  for (const key of encodedKeys) {
-    decodedRecord[key] = decode(
-      record[key] as string
-    ) as Tables[K]['Row'][typeof key];
-  }
-
-  return decodedRecord;
-}
-
-export function encodeRecord<K extends TableName>(
-  tableName: K,
-  record: Tables[K]['Row']
-): Tables[K]['Row'] {
-  const columnSchema = TablesSQliteSchema[tableName].columns;
-  const encodedKeys = Object.keys(record).filter(
-    (key) => columnSchema[key]?.encoded
-  ) as (keyof Tables[K]['Row'])[];
-
-  if (encodedKeys.length === 0) {
-    return record;
-  }
-
-  const encodedRecord = { ...record };
-  for (const key of encodedKeys) {
-    encodedRecord[key] = encode(
-      record[key] as string
-    ) as Tables[K]['Row'][typeof key];
-  }
-
-  return encodedRecord;
-}
-
 export async function getRate(
   principal: number,
   metalType: MetalType
@@ -220,9 +172,9 @@ export async function loadBillWithDeps(
   }
 
   return {
-    ...decodeRecord('bills', currentLoan),
-    customer: decodeRecord('customers', customer.data[0]),
-    bill_items: billItems.data.map((item) => decodeRecord('bill_items', item)),
+    ...currentLoan,
+    customer: customer.data[0],
+    bill_items: billItems.data,
   };
 }
 
@@ -247,7 +199,7 @@ export async function fetchBillsByCustomer(
     customerResponse.data?.length &&
     billsResponse.data?.length
   ) {
-    const customer = decodeRecord('customers', customerResponse.data[0]);
+    const customer = customerResponse.data[0];
     const fullBills: Tables['full_bill']['Row'][] = [];
     for (const bill of billsResponse.data) {
       const billItemsResponse = await read('bill_items', {
@@ -256,11 +208,9 @@ export async function fetchBillsByCustomer(
       });
       if (billItemsResponse.success && billItemsResponse.data?.length) {
         fullBills.push({
-          ...decodeRecord('bills', bill),
+          ...bill,
           customer: customer,
-          bill_items: billItemsResponse.data.map((item) =>
-            decodeRecord('bill_items', item)
-          ),
+          bill_items: billItemsResponse.data,
         });
       }
     }

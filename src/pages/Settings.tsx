@@ -22,7 +22,7 @@ export default function Settings() {
           </Button>
         }
         title={`Delete all entries and refresh?`}
-        onConfirm={() => window.api.db.initSeed()}
+        onConfirm={() => void window.api.db.initSeed()}
         confirmText="Delete"
         isDestructive
       />

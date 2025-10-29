@@ -10,12 +10,16 @@
     "skipLibCheck": true,
     "types": ["node", "electron"],
     "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": false,
     "resolveJsonModule": true
   },
   "include": [
     "**/*.ts",
     "../tables.d.ts",
     "../tableSchema.ts",
+    "../thanglish/TsciiConverter.ts",
+    "../MyCache.ts",
     "../shared-types.d.ts"
   ]
 }

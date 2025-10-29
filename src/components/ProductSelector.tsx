@@ -2,8 +2,7 @@ import type { MetalType, ProductType } from '../../tables';
 import { useEffect, useState } from 'react';
 import { read } from '@/hooks/dbUtil.ts';
 import SearchSelect from '@/components/SearchSelect.tsx';
-import { decode } from '@/lib/thanglish/TsciiConverter.ts';
-import MyCache from '@/lib/MyCache.ts';
+import MyCache from '../../MyCache.ts';
 
 export default function ProductSelector(props: {
   productType: ProductType;
@@ -35,7 +34,7 @@ export default function ProductSelector(props: {
       });
       if (response.success && response.data) {
         const productNames = response.data
-          .map((item) => decode(item.name))
+          .map((item) => item.name)
           .sort((a, b) => a.localeCompare(b));
         setProducts(productNames);
         cache.set('products', productNames);

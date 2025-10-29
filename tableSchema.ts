@@ -1,4 +1,5 @@
-import type { TableName } from './tables';
+import type { TableName, Tables } from './tables';
+import { decode, encode } from './thanglish/TsciiConverter.js';
 
 export const TablesSQliteSchema: Record<
   TableName,
@@ -414,3 +415,40 @@ export const TablesSQliteSchema: Record<
     primary: ['address'],
   },
 } as const;
+
+export const decodeRecord = <K extends TableName>(
+  tableName: K,
+  record: Tables[K]['Row']
+): Tables[K]['Row'] => encodeDecodeRecord(tableName, record, 'decode');
+
+export const encodeRecord = <K extends TableName>(
+  tableName: K,
+  record: Tables[K]['Row']
+): Tables[K]['Row'] => encodeDecodeRecord(tableName, record, 'encode');
+
+export function encodeDecodeRecord<K extends TableName>(
+  tableName: K,
+  record: Tables[K]['Row'],
+  type: 'encode' | 'decode'
+): Tables[K]['Row'] {
+  const columnSchema = TablesSQliteSchema[tableName].columns;
+  const encodedKeys = Object.keys(record).filter(
+    (key) => columnSchema[key]?.encoded
+  ) as (keyof Tables[K]['Row'])[];
+
+  if (encodedKeys.length === 0) {
+    return record;
+  }
+
+  const method: <T extends string | null | undefined>(input: T) => T =
+    type === 'encode' ? encode : decode;
+
+  const encodedRecord = { ...record };
+  for (const key of encodedKeys) {
+    encodedRecord[key] = method(
+      record[key] as string
+    ) as Tables[K]['Row'][typeof key];
+  }
+
+  return encodedRecord;
+}

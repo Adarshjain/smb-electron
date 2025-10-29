@@ -2,8 +2,7 @@ import { memo, useEffect, useState } from 'react';
 import CustomerPicker from '@/components/CustomerPicker';
 import type { Tables } from '../../../tables';
 import { read } from '@/hooks/dbUtil.ts';
-import { encode } from '@/lib/thanglish/TsciiConverter.ts';
-import { decodeRecord, toastElectronResponse } from '@/lib/myUtils.tsx';
+import { toastElectronResponse } from '@/lib/myUtils.tsx';
 
 interface LoanCustomerSectionProps {
   selectedCustomer: Tables['customers']['Row'] | null;
@@ -23,10 +22,10 @@ export const LoanCustomerSection = memo(function LoanCustomerSection({
         return;
       }
       const response = await read('areas', {
-        name: encode(selectedCustomer.area ?? ''),
+        name: selectedCustomer.area ?? '',
       });
       if (response.success && response.data?.length) {
-        setSelectedArea(decodeRecord('areas', response.data[0]));
+        setSelectedArea(response.data[0]);
       } else {
         toastElectronResponse(response);
       }

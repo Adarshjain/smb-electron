@@ -34,7 +34,7 @@ export default function CurrentDateCrud() {
   const isHome = useMemo(() => location.pathname === '/', [location.pathname]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [internalDate, setInternalDate] = useState<string>(
-    company?.current_date || currentIsoDate()
+    company?.current_date ?? currentIsoDate()
   );
 
   if (!company) {
@@ -93,7 +93,7 @@ export default function CurrentDateCrud() {
           <div className="flex gap-2 justify-between">
             <Button
               onClick={() =>
-                setCurrentDate(previousIsoDate(company?.current_date))
+                void setCurrentDate(previousIsoDate(company?.current_date))
               }
               variant="outline"
             >
@@ -101,7 +101,9 @@ export default function CurrentDateCrud() {
             </Button>
             <Button variant="link">Cancel</Button>
             <Button
-              onClick={() => setCurrentDate(nextIsoDate(company?.current_date))}
+              onClick={() =>
+                void setCurrentDate(nextIsoDate(company?.current_date))
+              }
             >
               Next Date
               <ArrowRight />

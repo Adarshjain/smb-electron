@@ -7,7 +7,7 @@ import {
   useMemo,
   type ReactNode,
 } from 'react';
-import { toEnglish, toTamil } from '@/lib/thanglish/thanglish.ts';
+import { toEnglish, toTamil } from '../lib/thanglish/thanglish.ts';
 
 interface ThanglishContextType {
   isTamil: boolean;

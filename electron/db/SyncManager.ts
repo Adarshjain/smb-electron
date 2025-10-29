@@ -61,7 +61,7 @@ export class SyncManager {
 
   async start() {
     await this.pushAll();
-    this.timer = setInterval(() => this.pushAll(), this.interval);
+    this.timer = setInterval(() => void this.pushAll(), this.interval);
   }
 
   stop() {

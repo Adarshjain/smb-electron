@@ -2,10 +2,12 @@
   "watch": [
     "dist-electron/electron",
     "dist-electron/tableSchema.js",
+    "dist-electron/thanglish/TsciiConverter.ts",
+    "dist-electron/MyCache.ts",
     "dist-electron/tables.d.ts",
     "dist-electron/shared-types.d.ts"
   ],
-  "ext": "js",
+  "ext": "js,ts",
   "delay": 500,
   "ignore": ["dist-electron/electron/build/**", "node_modules/**"],
   "exec": "electron .",

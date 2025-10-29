@@ -12,7 +12,8 @@ declare global {
         read: <K extends TableName>(
           table: K,
           conditions: Partial<LocalTables<K>>,
-          fields: keyof LocalTables<K> | '*' = '*'
+          fields: keyof LocalTables<K> | '*' = '*',
+          isLikeQuery?: boolean
         ) => Promise<ElectronToReactResponse<LocalTables<K>[] | null>>;
         update: <K extends TableName>(
           table: K,

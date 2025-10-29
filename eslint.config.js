@@ -18,6 +18,8 @@ export default tseslint.config(
       '!eslint.config.js',
       '!vite.config.ts',
       '!tableSchema.js',
+      '!**/thanglish/TsciiConverter.ts',
+      '!MyCache.ts',
     ],
   },
 
