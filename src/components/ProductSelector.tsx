@@ -1,12 +1,8 @@
-import type { MetalType, ProductType } from '../../tables';
 import { useEffect, useState } from 'react';
-import { read } from '@/hooks/dbUtil.ts';
 import SearchSelect from '@/components/SearchSelect.tsx';
-import MyCache from '../../MyCache.ts';
 
 export default function ProductSelector(props: {
-  productType: ProductType;
-  metalType: MetalType;
+  options: string[];
   value?: string;
   inputName?: string;
   placeholder?: string;
@@ -15,35 +11,8 @@ export default function ProductSelector(props: {
   onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
   onFocus?: (event: React.FocusEvent<HTMLInputElement>) => void;
 }) {
-  const [products, setProducts] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [filteredProducts, setFilteredProducts] = useState<string[]>([]);
-
-  useEffect(() => {
-    const run = async () => {
-      const cache = new MyCache<string[]>(
-        `${props.metalType}-${props.productType}`
-      );
-      if (cache.has('products')) {
-        setProducts(cache.get('products') ?? []);
-        return;
-      }
-      const response = await read('products', {
-        metal_type: props.metalType,
-        product_type: props.productType,
-      });
-      if (response.success && response.data) {
-        const productNames = response.data
-          .map((item) => item.name)
-          .sort((a, b) => a.localeCompare(b));
-        setProducts(productNames);
-        cache.set('products', productNames);
-      } else {
-        setProducts([]);
-      }
-    };
-    void run();
-  }, [props.metalType, props.productType]);
 
   useEffect(() => {
     if (!search.trim()) {
@@ -52,16 +21,16 @@ export default function ProductSelector(props: {
     }
     const productNames = [
       ...new Set([
-        ...products.filter((item) =>
+        ...props.options.filter((item) =>
           item.toLowerCase().startsWith(search.toLowerCase())
         ),
-        ...products.filter((item) =>
+        ...props.options.filter((item) =>
           item.toLowerCase().includes(search.toLowerCase())
         ),
       ]),
     ];
     setFilteredProducts(productNames);
-  }, [products, search]);
+  }, [props.options, search]);
 
   return (
     <SearchSelect

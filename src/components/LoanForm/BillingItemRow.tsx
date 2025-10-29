@@ -1,10 +1,12 @@
-import { memo } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { type Control, Controller } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import ProductSelector from '@/components/ProductSelector';
-import type { MetalType } from '@/../tables';
+import type { MetalType, Tables } from '@/../tables';
 import type { Loan } from '@/types/loanForm';
 import { KEYBOARD_SHORTCUTS } from '@/constants/loanForm';
+import MyCache from '../../../MyCache.ts';
+import { read } from '@/hooks/dbUtil.ts';
 
 interface BillingItemRowProps {
   index: number;
@@ -25,6 +27,63 @@ export const BillingItemRow = memo(function BillingItemRow({
   onRemoveItem,
   onNavigateToNext,
 }: BillingItemRowProps) {
+  const [productsTable, setProductsTable] = useState<
+    Tables['products']['Row'][]
+  >([]);
+  const products = useMemo(
+    () =>
+      productsTable
+        .filter(
+          (item) =>
+            item.product_type === 'product' && item.metal_type === metalType
+        )
+        .map((item) => item.name),
+    [metalType, productsTable]
+  );
+
+  const quality = useMemo(
+    () =>
+      productsTable
+        .filter(
+          (item) =>
+            item.product_type === 'quality' && item.metal_type === 'Other'
+        )
+        .map((item) => item.name),
+    [productsTable]
+  );
+
+  const extra = useMemo(
+    () =>
+      productsTable
+        .filter(
+          (item) => item.product_type === 'seal' && item.metal_type === 'Other'
+        )
+        .map((item) => item.name),
+    [productsTable]
+  );
+
+  useEffect(() => {
+    const run = async () => {
+      const cacheKey = 'products';
+      const cache = new MyCache<Tables['products']['Row'][]>(cacheKey);
+      if (cache.has(cacheKey)) {
+        setProductsTable(cache.get(cacheKey) ?? []);
+        return;
+      }
+      const response = await read('products', {});
+      if (response.success && response.data) {
+        const productNames = response.data.sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
+        setProductsTable(productNames);
+        cache.set(cacheKey, productNames);
+      } else {
+        setProductsTable([]);
+      }
+    };
+    void run();
+  }, []);
+
   const handleAddItemKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === KEYBOARD_SHORTCUTS.ADD_BILLING_ITEM) {
       onAddItem();
@@ -56,8 +115,7 @@ export const BillingItemRow = memo(function BillingItemRow({
             onFocus={(e) => {
               e.currentTarget.select();
             }}
-            productType="product"
-            metalType={metalType}
+            options={products}
             inputName={`billing_items.${index}.product`}
             placeholder=""
             triggerWidth="min-w-[280px]"
@@ -75,8 +133,7 @@ export const BillingItemRow = memo(function BillingItemRow({
             onFocus={(e) => {
               e.currentTarget.select();
             }}
-            productType="quality"
-            metalType="Other"
+            options={quality}
             inputName={`billing_items.${index}.quality`}
             placeholder=""
             triggerWidth="min-w-[280px]"
@@ -95,8 +152,7 @@ export const BillingItemRow = memo(function BillingItemRow({
               e.currentTarget.select();
             }}
             onChange={field.onChange}
-            productType="seal"
-            metalType="Other"
+            options={extra}
             inputName={`billing_items.${index}.extra`}
             placeholder=""
             triggerWidth="min-w-[120px] w-[120px] max-w-[120px]"

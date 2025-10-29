@@ -195,13 +195,6 @@ export function read<K extends TableName>(
 
   const whereClause = whereClauses.join(' AND ');
 
-  console.log(
-    `SELECT ${String(fields)}
-         FROM ${table}
-         ${whereClauses.length ? `WHERE ${whereClause}` : ''}`,
-    whereValues
-  );
-
   const stmt = db.prepare(
     `SELECT ${String(fields)}
          FROM ${table}
