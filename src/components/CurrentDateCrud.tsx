@@ -37,6 +37,14 @@ export default function CurrentDateCrud() {
     company?.current_date ?? currentIsoDate()
   );
 
+  const onSet = (e?: React.MouseEvent) => {
+    if (!isValidIsoDate(internalDate)) {
+      e?.preventDefault();
+      return;
+    }
+    void setCurrentDate(internalDate);
+  };
+
   if (!company) {
     return null;
   }
@@ -73,18 +81,14 @@ export default function CurrentDateCrud() {
           <DatePicker
             defaultValue={company.current_date}
             onInputChange={setInternalDate}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                onSet();
+              }
+            }}
           />
           <DialogClose asChild>
-            <Button
-              onClick={(e) => {
-                if (!isValidIsoDate(internalDate)) {
-                  e.preventDefault();
-                  return;
-                }
-                void setCurrentDate(internalDate);
-              }}
-              variant="outline"
-            >
+            <Button onClick={onSet} variant="outline">
               Set
             </Button>
           </DialogClose>
