@@ -15,7 +15,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Input } from '@/components/ui/input.tsx';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
-import { decode } from '@/lib/thanglish/TsciiConverter.ts';
 
 const DefaultStringRenderer = ({ item }: { item: string }) => <div>{item}</div>;
 
@@ -84,7 +83,7 @@ export default function SearchSelect<T = string>({
 
   const defaultRenderRow = (item: T, _isSelected: boolean): React.ReactNode => {
     if (typeof item === 'string') {
-      return <DefaultStringRenderer item={decode(item)} />;
+      return <DefaultStringRenderer item={item} />;
     }
     // For objects, try to display a name property or stringify
     if (item && typeof item === 'object' && 'name' in item) {

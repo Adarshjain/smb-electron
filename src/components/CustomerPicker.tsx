@@ -13,12 +13,10 @@ import {
 import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { query } from '@/hooks/dbUtil.ts';
+import { read } from '@/hooks/dbUtil.ts';
 import type { Tables } from '../../tables';
 import { Input } from '@/components/ui/input.tsx';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
-import { encode } from '@/lib/thanglish/TsciiConverter.ts';
-import { decodeRecord } from '@/lib/myUtils.tsx';
 
 interface SearchableSelectProps {
   onChange?: (value: Tables['customers']['Row']) => void;
@@ -52,16 +50,19 @@ export default function CustomerPicker({
   useEffect(() => {
     let active = true;
     const run = async () => {
-      const res = await query<Tables['customers']['Row'][]>(`SELECT *
-                                                                   FROM customers
-                                                                   WHERE name LIKE '${encode(search)}%'`);
-      if (active) setItems(res.success ? res.data || [] : []);
+      const res = await read(
+        'customers',
+        { name: `${search}%` },
+        undefined,
+        true
+      );
+      if (active) setItems(res.success ? (res.data ?? []) : []);
     };
     if (search.length === 0) {
       setItems([]);
       return;
     }
-    run();
+    void run();
     return () => {
       active = false;
     };
@@ -88,7 +89,7 @@ export default function CustomerPicker({
 
   const handleSelect = (opt: Tables['customers']['Row']) => {
     setSelected(opt);
-    onChange?.(decodeRecord('customers', opt));
+    onChange?.(opt);
     setOpen(false);
     setSearch('');
     setIsKeyboardNavigating(false);
@@ -175,10 +176,7 @@ export default function CustomerPicker({
                 }}
               >
                 {virtualizer.getVirtualItems().map((virtualItem) => {
-                  const opt = decodeRecord(
-                    'customers',
-                    items[virtualItem.index]
-                  );
+                  const opt = items[virtualItem.index];
                   const index = virtualItem.index;
                   return (
                     <CommandItem

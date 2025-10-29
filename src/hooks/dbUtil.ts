@@ -10,9 +10,10 @@ export const create = async <K extends TableName>(
 export const read = async <K extends TableName>(
   table: K,
   conditions: Partial<LocalTables<K>>,
-  fields: keyof LocalTables<K> | '*' = '*'
+  fields: keyof LocalTables<K> | '*' = '*',
+  isLikeQuery = false
 ): Promise<ElectronToReactResponse<LocalTables<K>[] | null>> =>
-  window.api.db.read(table, conditions, fields);
+  window.api.db.read(table, conditions, fields, isLikeQuery);
 
 export const update = async <K extends TableName>(
   table: K,

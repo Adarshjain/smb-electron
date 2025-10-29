@@ -1,11 +1,5 @@
-declare global {
-  type Window = Record<string, any>;
-}
+const internalCache: Record<string, Record<string, any>> = {};
 
-/**
- * A simple cache that stores values in the window object
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 class MyCache<T = any> {
   private readonly cacheKey: string;
 
@@ -18,29 +12,27 @@ class MyCache<T = any> {
    * Initialize the cache in the window object if it doesn't exist
    */
   private initCache(): void {
-    if (typeof window !== 'undefined' && !window[this.cacheKey]) {
-      window[this.cacheKey] = {};
-    }
+    internalCache[this.cacheKey] ??= {};
   }
 
   /**
-   * Get the cache object from window
+   * Get the cache object from internalCache
    */
   private getCacheObject(): Record<string, T> {
-    if (typeof window === 'undefined') {
+    if (typeof internalCache === 'undefined') {
       return {};
     }
-    return window[this.cacheKey] || {};
+    return internalCache[this.cacheKey] ?? {};
   }
 
   /**
    * Set a value in the cache
    */
   set(key: string, value: T): void {
-    if (typeof window !== 'undefined') {
+    if (typeof internalCache !== 'undefined') {
       const cache = this.getCacheObject();
       cache[key] = value;
-      window[this.cacheKey] = cache;
+      internalCache[this.cacheKey] = cache;
     }
   }
 
@@ -56,29 +48,27 @@ class MyCache<T = any> {
    * Get a value with a default fallback
    */
   getOrDefault(key: string, defaultValue: T): T {
-    const value = this.get(key);
-    return value !== undefined ? value : defaultValue;
+    return this.get(key) ?? defaultValue;
   }
 
   /**
    * Check if a key exists in the cache
    */
   has(key: string): boolean {
-    const cache = this.getCacheObject();
-    return key in cache;
+    return key in this.getCacheObject();
   }
 
   /**
    * Delete a specific key from the cache
    */
   delete(key: string): boolean {
-    if (typeof window === 'undefined') {
+    if (typeof internalCache === 'undefined') {
       return false;
     }
     const cache = this.getCacheObject();
     const existed = key in cache;
     delete cache[key];
-    window[this.cacheKey] = cache;
+    internalCache[this.cacheKey] = cache;
     return existed;
   }
 
@@ -86,8 +76,8 @@ class MyCache<T = any> {
    * Clear all values from the cache
    */
   clear(): void {
-    if (typeof window !== 'undefined') {
-      window[this.cacheKey] = {};
+    if (typeof internalCache !== 'undefined') {
+      internalCache[this.cacheKey] = {};
     }
   }
 

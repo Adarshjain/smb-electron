@@ -40,7 +40,7 @@ export default function Toolbar() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <NavigationMenuLink
-                  onClick={() => canGoBack && navigate(-1)}
+                  onClick={() => canGoBack && void navigate(-1)}
                   className={cn(
                     'flex size-8 items-center justify-center p-1.5 rounded-md transition-colors hover:bg-accent hover:text-accent-foreground',
                     canGoBack

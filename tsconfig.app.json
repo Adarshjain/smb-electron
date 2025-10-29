@@ -27,5 +27,5 @@
     "noUncheckedSideEffectImports": true
   },
   "include": ["src"],
-  "exclude": ["electron", "dist-electron", "tableSchema.ts"]
+  "exclude": ["electron", "dist-electron", "tableSchema.ts", "thanglish/TsciiConverter.ts", "MyCache.ts"]
 }

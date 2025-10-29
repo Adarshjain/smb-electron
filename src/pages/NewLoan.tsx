@@ -32,7 +32,6 @@ import { MetalTypeSelector } from '@/components/LoanForm/MetalTypeSelector.tsx';
 import { OldLoanFiller } from '@/components/LoanForm/OldLoanFiller.tsx';
 import DatePicker from '@/components/DatePicker.tsx';
 import { create } from '@/hooks/dbUtil.ts';
-import { encodeRecord } from '@/lib/myUtils.tsx';
 import BillAsLineItem from '@/components/LoanForm/BillAsLineItem.tsx';
 
 export default function NewLoan() {
@@ -166,7 +165,7 @@ export default function NewLoan() {
         toast.error('Please fill in all required fields');
         return;
       }
-      const formattedLoan: Tables['bills']['Insert'] = encodeRecord('bills', {
+      const formattedLoan: Tables['bills']['Insert'] = {
         serial: data.serial,
         loan_no: data.loan_no,
         customer_id: data.customer?.id ?? '',
@@ -178,23 +177,21 @@ export default function NewLoan() {
         metal_type: data.metal_type,
         released: 0,
         company: data.company,
-      });
+      };
       const formatterProduct: Tables['bill_items']['Insert'][] =
-        data.billing_items.map((item): Tables['bill_items']['Insert'] =>
-          encodeRecord('bill_items', {
-            serial: data.serial,
-            loan_no: data.loan_no,
-            gross_weight: parseFloat(item.gross_weight || '0'),
-            ignore_weight: parseFloat(item.ignore_weight || '0'),
-            net_weight:
-              parseFloat(item.gross_weight || '0') +
-              parseFloat(item.ignore_weight || ''),
-            product: item.product,
-            quantity: item.quantity,
-            quality: item.quality,
-            extra: item.extra,
-          })
-        );
+        data.billing_items.map((item): Tables['bill_items']['Insert'] => ({
+          serial: data.serial,
+          loan_no: data.loan_no,
+          gross_weight: parseFloat(item.gross_weight || '0'),
+          ignore_weight: parseFloat(item.ignore_weight || '0'),
+          net_weight:
+            parseFloat(item.gross_weight || '0') +
+            parseFloat(item.ignore_weight || ''),
+          product: item.product,
+          quantity: item.quantity,
+          quality: item.quality,
+          extra: item.extra,
+        }));
       await create('bills', formattedLoan);
       for (const item of formatterProduct) {
         await create('bill_items', item);

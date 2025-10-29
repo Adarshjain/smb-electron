@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { decode } from '@/lib/thanglish/TsciiConverter.ts';
 import { Input } from '@/components/ui/input.tsx';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
 import { TablesSQliteSchema } from '../../tableSchema.ts';
@@ -41,7 +40,7 @@ export default function DataView<K extends TableName>(props: {
     read(props.table, {})
       .then((response) => {
         if (response.success) {
-          setTableData(response.data || []);
+          setTableData(response.data ?? []);
         } else {
           rpcError(response);
         }
@@ -55,11 +54,11 @@ export default function DataView<K extends TableName>(props: {
     }
     const lowerSearch = search.toLowerCase();
     return tableData.filter((record: Tables[K]['Row']) =>
-      Object.entries(columns).some(([col, conf]) => {
+      Object.entries(columns).some(([col]) => {
         const val = record[col as keyof Tables[K]['Row']];
         if (val == null) return false;
         // Convert to string before toLowerCase to handle numbers
-        const strVal = conf.encoded ? decode(String(val)) : String(val);
+        const strVal = String(val);
         return strVal.toLowerCase().includes(lowerSearch);
       })
     );
@@ -98,10 +97,7 @@ export default function DataView<K extends TableName>(props: {
             >
               {Object.entries(record).map(([key, val]) => {
                 if (!(key in columns)) return null;
-                const value = columns[key].encoded
-                  ? decode(String(val))
-                  : String(val ?? '');
-                return <TableCell key={key}>{value}</TableCell>;
+                return <TableCell key={key}>{String(val ?? '')}</TableCell>;
               })}
             </TableRow>
           ))}

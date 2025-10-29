@@ -25,6 +25,8 @@
   "include": [
     "vite.config.ts",
     "tableSchema.ts",
+    "thanglish/TsciiConverter.ts",
+    "MyCache.ts",
     "tables.d.ts",
     "shared-types.d.ts"
   ]

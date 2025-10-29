@@ -13,9 +13,10 @@ contextBridge.exposeInMainWorld('api', {
     read: <K extends TableName>(
       table: K,
       conditions: Partial<LocalTables<K>>,
-      fields: keyof LocalTables<K> | '*' = '*'
+      fields: keyof LocalTables<K> | '*' = '*',
+      isLikeQuery?: boolean
     ): Promise<ElectronToReactResponse<LocalTables<K>[] | null>> =>
-      ipcRenderer.invoke('db:read', table, conditions, fields),
+      ipcRenderer.invoke('db:read', table, conditions, fields, isLikeQuery),
     update: <K extends TableName>(
       table: K,
       record: Tables[K]['Update']

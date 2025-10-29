@@ -66,7 +66,7 @@ const createWindow = () => {
   });
 };
 
-const initSupabase = async () => {
+const initSupabase = () => {
   const supabase = createClient(
     process.env.SUPABASE_URL ?? '',
     process.env.SUPABASE_KEY ?? ''
@@ -93,8 +93,11 @@ const initSupabase = async () => {
 // Set app name before app is ready (important for macOS)
 app.name = 'Sri Mahaveer Bankers';
 
+// Configure remote debugging port for development
+app.commandLine.appendSwitch('remote-debugging-port', '7070');
+
 // Initialize database before creating window
-void app.whenReady().then(async () => {
+void app.whenReady().then(() => {
   // Set dock icon on macOS (use PNG as icns can be problematic)
   if (process.platform === 'darwin' && app.dock) {
     const dockIconPath = path.join(
@@ -110,9 +113,9 @@ void app.whenReady().then(async () => {
     }
   }
   initDatabase();
-  await migrateSchema();
+  migrateSchema();
   createWindow();
-  await initSupabase();
+  initSupabase();
 });
 
 app.on('window-all-closed', () => {
@@ -208,10 +211,14 @@ ipcMain.handle(
     _event: IpcMainInvokeEvent,
     table: K,
     conditions: Partial<LocalTables<K>>,
-    fields: keyof LocalTables<K> | '*' = '*'
+    fields: keyof LocalTables<K> | '*' = '*',
+    isLikeQuery?: boolean
   ): ElectronToReactResponse<LocalTables<K>[] | null> => {
     try {
-      return { success: true, data: read(table, conditions, fields) };
+      return {
+        success: true,
+        data: read(table, conditions, fields, isLikeQuery),
+      };
     } catch (error) {
       return {
         success: false,
