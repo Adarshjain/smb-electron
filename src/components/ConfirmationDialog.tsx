@@ -43,7 +43,7 @@ export default function ConfirmationDialog(props: ConfirmationDialogProps) {
                 ? 'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20'
                 : ''
             }
-            onClick={props.onConfirm}
+            onClick={() => void props.onConfirm()}
           >
             {props.confirmText ?? 'Confirm'}
           </AlertDialogAction>
