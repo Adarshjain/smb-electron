@@ -49,17 +49,21 @@ const createWindow = () => {
     title: 'Sri Mahaveer Bankers',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      webSecurity: false,
+      allowRunningInsecureContent: false,
     },
     icon: iconPath,
   });
 
   // Maximize window to use full available space
   win.maximize();
-
   if (process.env.VITE_DEV_SERVER_URL) {
     void win.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
-    void win.loadFile(path.join(__dirname, '../dist/index.html'));
+    // In production, load the built renderer from app.asar/dist/index.html
+    // __dirname points to app.asar/dist-electron/electron when packaged
+    const prodIndex = path.join(__dirname, '..', '..', 'dist', 'index.html');
+    void win.loadFile(prodIndex);
   }
 
   win.on('closed', () => {
@@ -96,6 +100,8 @@ app.name = 'Sri Mahaveer Bankers';
 
 // Configure remote debugging port for development
 app.commandLine.appendSwitch('remote-debugging-port', '7070');
+// Allow local file URLs to load other local file resources in production
+app.commandLine.appendSwitch('allow-file-access-from-files');
 
 // Initialize database before creating window
 void app.whenReady().then(() => {
