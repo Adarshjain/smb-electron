@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import path from 'path';
 import { closeDatabase, initDatabase } from './db/database';
 import { createClient } from '@supabase/supabase-js';
@@ -8,12 +8,12 @@ import { SyncManager } from './db/SyncManager';
 import {
   create,
   deleteRecord,
-  upsert,
   executeSql,
   migrateSchema,
   read,
   tables,
   update,
+  upsert,
 } from './db/localDB';
 import type { LocalTables, TableName, Tables } from '../tables';
 import type { ElectronToReactResponse } from '../shared-types';
@@ -131,18 +131,34 @@ app.on('before-quit', () => {
 // IPC Handlers
 
 // Testing
-ipcMain.handle('init-seed', (): ElectronToReactResponse<void> => {
-  try {
-    initAllSeedData();
-    return { success: true };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    };
+ipcMain.handle(
+  'init-seed',
+  async (): Promise<ElectronToReactResponse<void>> => {
+    try {
+      const result = await dialog.showOpenDialog({
+        properties: ['openFile'],
+        filters: [
+          { name: 'Access Database Files', extensions: ['mdb'] }, // 👈 restricts to .mdb only
+        ],
+      });
+
+      if (!result.canceled) {
+        const filePath = result.filePaths[0];
+        if (!filePath.endsWith('.mdb')) {
+          throw Error('Invalid File');
+        }
+        initAllSeedData(filePath);
+      }
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+    }
   }
-});
+);
 
 // Sync
 ipcMain.handle('sync-now', async (): Promise<ElectronToReactResponse<void>> => {

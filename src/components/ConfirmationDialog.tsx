@@ -15,7 +15,7 @@ export interface ConfirmationDialogProps {
   description?: string;
   confirmText?: string;
   cancelText?: string;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
   onCancel?: () => void;
   trigger?: React.ReactNode;
   isDestructive?: boolean;
