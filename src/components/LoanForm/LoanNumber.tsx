@@ -9,15 +9,21 @@ import { loadBillWithDeps } from '@/lib/myUtils.tsx';
 
 interface OldLoanFillerProps {
   control: Control<Loan>;
-  onOldLoanLoad: (loan: Tables['full_bill']['Row']) => void;
+  onLoanLoad: (loan: Tables['full_bill']['Row']) => void;
+  serialFieldName: 'serial' | 'old_serial';
+  numberFieldName: 'loan_no' | 'old_loan_no';
+  showButton?: boolean;
 }
 
-export const OldLoanFiller = memo(function OldLoanFiller({
+export const LoanNumber = memo(function LoanNumber({
   control,
-  onOldLoanLoad,
+  onLoanLoad,
+  numberFieldName,
+  serialFieldName,
+  showButton,
 }: OldLoanFillerProps) {
-  const serialValue = useWatch({ control, name: 'old_serial' });
-  const numberValue = useWatch({ control, name: 'old_loan_no' });
+  const serialValue = useWatch({ control, name: serialFieldName });
+  const numberValue = useWatch({ control, name: numberFieldName });
 
   const fillFromOldLoan = async (
     e?: React.MouseEvent<HTMLButtonElement>
@@ -30,33 +36,35 @@ export const OldLoanFiller = memo(function OldLoanFiller({
     if (!loan) {
       return;
     }
-    onOldLoanLoad(loan);
+    onLoanLoad(loan);
   };
 
   return (
     <div className="flex gap-1">
       <SerialNumber
         control={control}
-        serialFieldName="old_serial"
-        numberFieldName="old_loan_no"
+        serialFieldName={serialFieldName}
+        numberFieldName={numberFieldName}
         onNumFieldKeyDown={() => void fillFromOldLoan()}
       />
-      <Button
-        variant="outline"
-        className="!px-4"
-        onClick={() => void fillFromOldLoan()}
-        disabled={
-          !(
-            serialValue?.length &&
-            numberValue &&
-            numberValue > 0 &&
-            numberValue < 10000
-          )
-        }
-      >
-        Fill
-        <ArrowDown />
-      </Button>
+      {showButton && (
+        <Button
+          variant="outline"
+          className="!px-4"
+          onClick={() => void fillFromOldLoan()}
+          disabled={
+            !(
+              serialValue?.length &&
+              numberValue &&
+              numberValue > 0 &&
+              numberValue < 10000
+            )
+          }
+        >
+          Fill
+          <ArrowDown />
+        </Button>
+      )}
     </div>
   );
 });

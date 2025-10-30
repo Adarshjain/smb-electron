@@ -13,7 +13,7 @@ export const newLoanSchema = z.object({
   date: z.string(),
   doc_charges: z.string(),
   customer: z.custom<Tables['customers']['Row']>().nullable(),
-  metal_type: z.enum(['Gold', 'Silver']),
+  metal_type: z.enum(['Gold', 'Silver', 'Other']),
   company: z.string(),
   released: z.union([z.literal(0), z.literal(1)]),
   billing_items: z

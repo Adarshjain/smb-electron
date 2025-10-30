@@ -33,7 +33,7 @@ export default function Toolbar() {
     setCanGoBack((historyState?.idx ?? 0) > 0);
   }, [location]);
   return (
-    <NavigationMenu className="w-full max-w-full border-b py-1">
+    <NavigationMenu className="w-full max-w-full border-b py-2 bg-gray-100">
       <div className="ml-2 w-1/3 flex items-start">
         <NavigationMenuList className="flex-wrap">
           <NavigationMenuItem>
@@ -86,7 +86,7 @@ export default function Toolbar() {
           </div>
         </div>
       ) : null}
-      <div className="flex justify-end mr-4 gap-3 w-1/3">
+      <div className="flex justify-end mr-4 gap-3 w-1/3 items-center">
         <Button
           className={`text-white cursor-pointer py-1 h-7 ${isTamil ? 'bg-blue-600 hover:bg-blue-500' : 'bg-green-600 hover:bg-green-500'}`}
           onClick={() => setIsTamil(!isTamil)}

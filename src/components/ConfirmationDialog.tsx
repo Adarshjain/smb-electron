@@ -9,27 +9,32 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+
 export interface ConfirmationDialogProps {
   title: string;
   description?: string;
-  confirmText: string;
+  confirmText?: string;
   cancelText?: string;
   onConfirm: () => void;
   onCancel?: () => void;
   trigger?: React.ReactNode;
   isDestructive?: boolean;
+  isOpen?: boolean;
+  onChange?: (value: boolean) => void;
+  children?: React.ReactNode;
 }
 export default function ConfirmationDialog(props: ConfirmationDialogProps) {
   return (
-    <AlertDialog>
+    <AlertDialog open={props.isOpen} onOpenChange={props.onChange}>
       <AlertDialogTrigger asChild>{props.trigger}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{props.title}</AlertDialogTitle>
           <AlertDialogDescription>
-            {props.description ?? 'Confirmation dialog'}
+            {props.description ?? ''}
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {props.children}
         <AlertDialogFooter>
           <AlertDialogCancel>{props.cancelText ?? 'Cancel'}</AlertDialogCancel>
           <AlertDialogAction
