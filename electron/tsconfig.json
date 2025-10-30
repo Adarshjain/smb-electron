@@ -10,7 +10,6 @@
     "skipLibCheck": true,
     "types": ["node", "electron"],
     "allowSyntheticDefaultImports": true,
-    "allowImportingTsExtensions": true,
     "noEmit": false,
     "resolveJsonModule": true
   },
