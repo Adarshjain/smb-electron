@@ -8,6 +8,7 @@ import { SyncManager } from './db/SyncManager';
 import {
   create,
   deleteRecord,
+  upsert,
   executeSql,
   migrateSchema,
   read,
@@ -258,6 +259,26 @@ ipcMain.handle(
   ): ElectronToReactResponse<null> => {
     try {
       deleteRecord(table, record);
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+    }
+  }
+);
+
+ipcMain.handle(
+  'db:upsert',
+  <K extends TableName>(
+    _event: IpcMainInvokeEvent,
+    table: K,
+    record: Tables[K]['Row']
+  ): ElectronToReactResponse<null> => {
+    try {
+      upsert(table, record);
       return { success: true };
     } catch (error) {
       return {

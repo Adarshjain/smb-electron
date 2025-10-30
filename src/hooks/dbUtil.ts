@@ -7,6 +7,12 @@ export const create = async <K extends TableName>(
 ): Promise<ElectronToReactResponse<null>> =>
   window.api.db.create(table, record);
 
+export const upsert = async <K extends TableName>(
+  table: K,
+  record: Tables[K]['Row']
+): Promise<ElectronToReactResponse<null>> =>
+  window.api.db.upsert(table, record);
+
 export const read = async <K extends TableName>(
   table: K,
   conditions: Partial<LocalTables<K>>,

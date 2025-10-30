@@ -10,6 +10,11 @@ contextBridge.exposeInMainWorld('api', {
       record: Tables[K]['Row']
     ): Promise<ElectronToReactResponse<null>> =>
       ipcRenderer.invoke('db:create', table, record),
+    upsert: <K extends TableName>(
+      table: K,
+      record: Tables[K]['Row']
+    ): Promise<ElectronToReactResponse<null>> =>
+      ipcRenderer.invoke('db:create', table, record),
     read: <K extends TableName>(
       table: K,
       conditions: Partial<LocalTables<K>>,

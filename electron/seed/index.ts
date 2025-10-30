@@ -21,6 +21,7 @@ const getReader = () => {
 const toSentenceCase = (name: string) => {
   return name
     .toLowerCase()
+    .trim()
     .split(' ')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
@@ -163,7 +164,7 @@ export const initBills = () => {
             product: item.itemdes,
             quality: item.quality,
             extra: item.ituch,
-            quantity: item.quantity ? parseInt(item.qty) : 0,
+            quantity: item.qty ? parseInt(item.qty) : 0,
           });
         } catch (e) {
           console.log(e instanceof Error ? e.message : 'Random Error');

@@ -9,6 +9,10 @@ declare global {
           table: K,
           record: Tables[K]['Row']
         ) => Promise<ElectronToReactResponse<null>>;
+        upsert: <K extends TableName>(
+          table: K,
+          record: Tables[K]['Row']
+        ) => Promise<ElectronToReactResponse<null>>;
         read: <K extends TableName>(
           table: K,
           conditions: Partial<LocalTables<K>>,

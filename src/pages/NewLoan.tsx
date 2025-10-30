@@ -1,12 +1,17 @@
 import { useCompany } from '@/context/CompanyProvider';
-import { type ChangeEvent, useCallback, useEffect, useMemo } from 'react';
+import {
+  type ChangeEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FieldGroup } from '@/components/ui/field';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import type { MetalType, Tables } from '../../tables';
 import { useLoanCalculations } from '@/hooks/useLoanCalculations';
-import { SerialNumber } from '@/components/LoanForm/SerialNumber.tsx';
 import { LoanCustomerSection } from '@/components/LoanForm/LoanCustomerSection';
 import { BillingItemsTable } from '@/components/LoanForm/BillingItemsTable';
 import { LoanAmountSection } from '@/components/LoanForm/LoanAmountSection';
@@ -29,10 +34,13 @@ import { toast } from 'sonner';
 
 import '@/NewLoan.css';
 import { MetalTypeSelector } from '@/components/LoanForm/MetalTypeSelector.tsx';
-import { OldLoanFiller } from '@/components/LoanForm/OldLoanFiller.tsx';
+import { LoanNumber } from '@/components/LoanForm/LoanNumber.tsx';
 import DatePicker from '@/components/DatePicker.tsx';
-import { create } from '@/hooks/dbUtil.ts';
+import { create, deleteRecord, update } from '@/hooks/dbUtil.ts';
 import BillAsLineItem from '@/components/LoanForm/BillAsLineItem.tsx';
+import BottomBar from '@/components/LoanForm/BottomBar.tsx';
+import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
+import { loadBillWithDeps } from '@/lib/myUtils.tsx';
 
 export default function NewLoan() {
   const { company, setNextSerial } = useCompany();
@@ -40,6 +48,7 @@ export default function NewLoan() {
     () => (!company ? '' : company.next_serial).split('-'),
     [company]
   );
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
   const defaultValues = useMemo<Loan>(
     () => ({
@@ -77,6 +86,16 @@ export default function NewLoan() {
   });
 
   const billingItemValues = useWatch({ control, name: 'billing_items' });
+  const enteredSerial = useWatch({ control, name: 'serial' });
+  const enteredNumber = useWatch({ control, name: 'loan_no' });
+
+  const isEditMode = useMemo(
+    () =>
+      !!(
+        company && company.next_serial !== `${enteredSerial}-${enteredNumber}`
+      ),
+    [company, enteredSerial, enteredNumber]
+  );
 
   useEffect(() => {
     billingItemValues.forEach((item, index) => {
@@ -160,11 +179,20 @@ export default function NewLoan() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const onSubmit: (data: Loan) => Promise<void> = async (data: Loan) => {
+    if (!isLoanReadyForSubmit(data)) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    if (isEditMode) {
+      setIsConfirmDialogOpen(true);
+      return;
+    }
+    await onCommitChanges(data);
+  };
+
+  const onCommitChanges = async (data?: Loan) => {
+    data ??= getValues();
     try {
-      if (!isLoanReadyForSubmit(data)) {
-        toast.error('Please fill in all required fields');
-        return;
-      }
       const formattedLoan: Tables['bills']['Insert'] = {
         serial: data.serial,
         loan_no: data.loan_no,
@@ -192,14 +220,33 @@ export default function NewLoan() {
           quality: item.quality,
           extra: item.extra,
         }));
-      await create('bills', formattedLoan);
-      for (const item of formatterProduct) {
-        await create('bill_items', item);
+
+      if (isEditMode) {
+        await update('bills', formattedLoan);
+        await deleteRecord('bill_items', {
+          loan_no: formattedLoan.loan_no,
+          serial: formattedLoan.serial,
+        });
+        for (const item of formatterProduct) {
+          await create('bill_items', item);
+        }
+        const reloadedLoan = await loadBillWithDeps(
+          enteredSerial,
+          enteredNumber
+        );
+        if (reloadedLoan) {
+          handleOnOldLoanLoaded(reloadedLoan);
+        }
+        toast.success('Loan Updated!');
+      } else {
+        await create('bills', formattedLoan);
+        for (const item of formatterProduct) {
+          await create('bill_items', item);
+        }
+        await setNextSerial();
+        next('customer_picker');
+        toast.success('Loan saved');
       }
-      await setNextSerial();
-      queueMicrotask(() => reset(defaultValues));
-      next('customer_picker');
-      toast.success('Loan saved');
     } catch (error) {
       console.error('Error submitting loan:', error);
       toast.error(
@@ -246,7 +293,7 @@ export default function NewLoan() {
     });
   };
 
-  const handleOnOldLoadLoaded = (loan: Tables['full_bill']['Row']) => {
+  const handleOnOldLoanLoaded = (loan: Tables['full_bill']['Row']) => {
     setValue('customer', loan.customer);
     fieldArray.replace(
       loan.bill_items.map((item) => ({
@@ -260,72 +307,128 @@ export default function NewLoan() {
       }))
     );
     setValue('loan_amount', loan.loan_amount.toFixed(2));
+    setValue('interest_rate', loan.interest_rate.toFixed(2));
+    setValue('doc_charges', loan.doc_charges.toFixed(2));
     void performLoanCalculation();
     setTimeout(() => next('loan_amount'), 100);
   };
 
+  const handleEditLoan = (loan: Tables['full_bill']['Row']) => {
+    reset({
+      date: loan.date,
+      loan_amount: loan.loan_amount.toFixed(2),
+      interest_rate: loan.interest_rate.toFixed(2),
+      billing_items: loan.bill_items.map((item) => ({
+        product: item.product,
+        quantity: item.quantity,
+        quality: item.quality,
+        extra: item.extra,
+        gross_weight: item.gross_weight.toFixed(2),
+        ignore_weight: item.ignore_weight.toFixed(2),
+        net_weight: item.net_weight.toFixed(2),
+      })),
+      company: loan.company ?? '',
+      doc_charges: loan.doc_charges.toFixed(2),
+      metal_type: loan.metal_type,
+      released: loan.released,
+      first_month_interest: loan.first_month_interest.toFixed(2),
+      customer: loan.customer,
+      serial: loan.serial,
+      loan_no: loan.loan_no,
+    });
+    setTimeout(() => next('loan_amount'), 100);
+  };
+
   return (
-    <form ref={setFormRef} className="p-4 flex flex-row justify-between">
-      <div className="flex flex-1">
-        <FieldGroup className="gap-3">
-          <div className="flex gap-4">
-            <SerialNumber
-              control={control}
-              serialFieldName="serial"
-              numberFieldName="loan_no"
-            />
-            <Controller
-              name="date"
-              control={control}
-              render={({ field, fieldState }) => (
-                <DatePicker
-                  className="w-27.5"
-                  {...field}
-                  id="date"
-                  name="date"
-                  isError={fieldState.invalid}
-                />
-              )}
-            />
-            <OldLoanFiller
-              control={control}
-              onOldLoanLoad={handleOnOldLoadLoaded}
-            />
-          </div>
+    <div className="h-full">
+      <form
+        ref={setFormRef}
+        className="p-4 flex flex-1 flex-row justify-between"
+      >
+        <div className="flex flex-1">
+          <FieldGroup className="gap-3">
+            <div className="flex gap-4">
+              <LoanNumber
+                control={control}
+                onLoanLoad={handleEditLoan}
+                serialFieldName="serial"
+                numberFieldName="loan_no"
+              />
+              <Controller
+                name="date"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <DatePicker
+                    className="w-27.5"
+                    {...field}
+                    id="date"
+                    name="date"
+                    isError={fieldState.invalid}
+                  />
+                )}
+              />
+              <LoanNumber
+                control={control}
+                onLoanLoad={handleOnOldLoanLoaded}
+                numberFieldName="old_loan_no"
+                serialFieldName="old_serial"
+                showButton
+              />
+            </div>
 
-          <div className="flex gap-6">
-            <LoanCustomerSection
-              selectedCustomer={selectedCustomer}
-              onCustomerChange={(customer: Tables['customers']['Row']) => {
-                setValue('customer', customer);
-              }}
+            <div className="flex gap-6">
+              <LoanCustomerSection
+                selectedCustomer={selectedCustomer}
+                onCustomerChange={(customer: Tables['customers']['Row']) => {
+                  setValue('customer', customer);
+                }}
+              />
+
+              <MetalTypeSelector
+                control={control}
+                onMetalTypeChange={handleMetalTypeChange}
+              />
+            </div>
+            <BillingItemsTable
+              control={control}
+              metalType={metalType}
+              fieldArray={fieldArray}
+              onNavigateToField={(fieldName) => next(fieldName)}
             />
 
-            <MetalTypeSelector
-              control={control}
-              onMetalTypeChange={handleMetalTypeChange}
-            />
-          </div>
-          <BillingItemsTable
+            {selectedCustomer && (
+              <BillAsLineItem customerId={selectedCustomer.id} />
+            )}
+          </FieldGroup>
+        </div>
+        <div>
+          <LoanAmountSection
             control={control}
-            metalType={metalType}
-            fieldArray={fieldArray}
-            onNavigateToField={(fieldName) => next(fieldName)}
+            onLoanAmountChange={handleLoanAmountChange}
+            onInterestChange={handleInterestChange}
+            onDocChargeChange={handleDocChargeChange}
           />
-
-          {selectedCustomer && (
-            <BillAsLineItem customerId={selectedCustomer.id} />
-          )}
-        </FieldGroup>
-      </div>
-      <div>
-        <LoanAmountSection
-          control={control}
-          onLoanAmountChange={handleLoanAmountChange}
-          onInterestChange={handleInterestChange}
-          onDocChargeChange={handleDocChargeChange}
-        />
-      </div>
-    </form>
+        </div>
+      </form>
+      <BottomBar
+        isEditMode={isEditMode}
+        onNewClick={console.log}
+        onNextClick={console.log}
+        onLastClick={console.log}
+        onPrevClick={console.log}
+        onResetClick={console.log}
+        onSaveClick={() => void handleSubmit(onSubmit)()}
+      />
+      <ConfirmationDialog
+        title="Confirm Edit?"
+        onConfirm={() => void onCommitChanges()}
+        isOpen={isConfirmDialogOpen}
+        onChange={setIsConfirmDialogOpen}
+      >
+        <div className="text-xl">
+          Editing Loan Number {enteredSerial} {enteredNumber}
+        </div>
+      </ConfirmationDialog>
+    </div>
   );
 }

@@ -169,7 +169,7 @@ export function markAsSynced<K extends TableName>(
 export function read<K extends TableName>(
   table: K,
   conditions: Partial<LocalTables<K>>,
-  fields: keyof LocalTables<K> | '*' = '*', // TODO: update return type based on the requested fields
+  fields: keyof LocalTables<K> | '*' = '*',
   isLikeQuery = false
 ): LocalTables<K>[] | null {
   if (!db) return null;
