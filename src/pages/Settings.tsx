@@ -2,13 +2,14 @@ import CompanySettings from '@/components/CompanySettings.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
 import { AlertTriangleIcon } from 'lucide-react';
+import { toastElectronResponse } from '@/lib/myUtils.tsx';
 
 export default function Settings() {
   return (
     <div className="p-6 flex flex-col gap-3">
       <div className="text-2xl font-bold tracking-tight">Settings</div>
       <CompanySettings />
-      <div className="text-xl font-medium flex items-center gap-1">
+      <div className="text-xl font-medium flex items-center gap-1 mt-12">
         <AlertTriangleIcon size={20} /> Danger Zone
       </div>
       <ConfirmationDialog
@@ -22,7 +23,9 @@ export default function Settings() {
           </Button>
         }
         title={`Delete all entries and refresh?`}
-        onConfirm={() => void window.api.db.initSeed()}
+        onConfirm={async () =>
+          toastElectronResponse(await window.api.db.initSeed())
+        }
         confirmText="Delete"
         isDestructive
       />

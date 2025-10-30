@@ -1,21 +1,14 @@
 import MDBReader from 'mdb-reader';
 import fs from 'fs';
-import path from 'path';
 import { create, executeSql } from '../db/localDB';
 import { type MetalType, type TableName, type Tables } from '../../tables';
 import { TablesSQliteSchema } from '../../tableSchema';
 
 let reader: MDBReader | null = null;
 
-const getReader = () => {
-  if (reader !== null) {
-    return reader;
-  }
-  // In development: project root, In production: app path
-  const mdbPath = path.join(process.cwd(), 'electron', 'seed', 'smb.mdb');
-  const buffer = fs.readFileSync(mdbPath);
+const initReader = (filePath: string) => {
+  const buffer = fs.readFileSync(filePath);
   reader = new MDBReader(buffer);
-  return reader;
 };
 
 const toSentenceCase = (name: string) => {
@@ -33,7 +26,9 @@ export const deleteAllRecords = () => {
 };
 
 export const initAreas = () => {
-  const reader = getReader();
+  if (!reader) {
+    return;
+  }
   const table = reader.getTable('areamaster');
   const data = table.getData<Record<string, string>>();
 
@@ -52,8 +47,10 @@ export const initAreas = () => {
 };
 
 export const initBalance = () => {
-  const rd = getReader();
-  const table = rd.getTable('balance');
+  if (!reader) {
+    return;
+  }
+  const table = reader.getTable('balance');
   const data = table.getData<Record<string, string>>();
 
   for (const record of data) {
@@ -71,7 +68,9 @@ export const initBalance = () => {
 };
 
 export const initCompanies = () => {
-  const reader = getReader();
+  if (!reader) {
+    return;
+  }
   const table = reader.getTable('companymaster');
   const data = table.getData<Record<string, string>>();
 
@@ -90,7 +89,9 @@ export const initCompanies = () => {
 };
 
 export const initProducts = () => {
-  const reader = getReader();
+  if (!reader) {
+    return;
+  }
   const itemDesMaster = reader.getTable('itemdesmaster');
   const itemDesMasterData = itemDesMaster.getData<Record<string, string>>();
 
@@ -138,7 +139,9 @@ export const initProducts = () => {
 };
 
 export const initBills = () => {
-  const reader = getReader();
+  if (!reader) {
+    return;
+  }
   const billingTable = reader.getTable('billing');
   let billingData = billingTable.getData<Record<string, string>>();
   billingData = billingData.filter(
@@ -204,8 +207,10 @@ export const initBills = () => {
 };
 
 export const initCustomers = () => {
-  const rd = getReader();
-  const table = rd.getTable('customermaster');
+  if (!reader) {
+    return;
+  }
+  const table = reader.getTable('customermaster');
   const data = table.getData<Record<string, string>>();
 
   for (const record of data) {
@@ -282,7 +287,8 @@ export const initIntRates = () => {
   }
 };
 
-export const initAllSeedData = () => {
+export const initAllSeedData = (filePath: string) => {
+  initReader(filePath);
   deleteAllRecords();
   initCompanies();
   initAreas();
