@@ -84,7 +84,7 @@ export default function CompanySettings() {
                     </Button>
                   }
                   title={`Delete ${record.name}?`}
-                  onConfirm={() => void deleteCompany(record)}
+                  onConfirm={() => deleteCompany(record)}
                   confirmText="Delete"
                   isDestructive
                 />
