@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { HashRouter, Route, Routes } from 'react-router-dom';
 import { Home } from './pages/Home.tsx';
 import { Toaster } from '@/components/ui/sonner';
 import { TableView } from '@/pages/TableView.tsx';
@@ -8,7 +8,7 @@ import NewLoan from '@/pages/NewLoan.tsx';
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Toolbar />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -17,7 +17,7 @@ function App() {
         <Route path="/new-loan" element={<NewLoan />} />
       </Routes>
       <Toaster position="bottom-left" richColors theme="light" />
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

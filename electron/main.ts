@@ -47,6 +47,8 @@ const createWindow = () => {
 
   win = new BrowserWindow({
     title: 'Sri Mahaveer Bankers',
+    width: 1280,
+    height: 648,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       webSecurity: false,
@@ -54,15 +56,13 @@ const createWindow = () => {
     },
     icon: iconPath,
   });
-
-  // Maximize window to use full available space
-  win.maximize();
   if (process.env.VITE_DEV_SERVER_URL) {
     void win.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
     // In production, load the built renderer from app.asar/dist/index.html
     // __dirname points to app.asar/dist-electron/electron when packaged
     const prodIndex = path.join(__dirname, '..', '..', 'dist', 'index.html');
+    win.maximize();
     void win.loadFile(prodIndex);
   }
 
