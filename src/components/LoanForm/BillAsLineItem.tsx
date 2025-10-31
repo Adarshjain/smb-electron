@@ -67,20 +67,20 @@ export default function BillAsLineItem(props: { customerId: string }) {
             return (
               <TableRow key={`${bill.serial}-${bill.loan_no}`}>
                 <TableCell className="rounded-bl border-r">{`${bill.serial} ${bill.loan_no}`}</TableCell>
-                <TableCell className="border-r">
+                <TableCell className="border-r tabular-nums">
                   {viewableDate(bill.date)}
                 </TableCell>
-                <TableCell className="text-right border-r">
+                <TableCell className="text-right border-r tabular-nums">
                   ₹{bill.loan_amount.toFixed(2)}
                 </TableCell>
-                <TableCell className="text-right border-r">
+                <TableCell className="text-right border-r tabular-nums">
                   ₹{interest.toFixed(2)}
                 </TableCell>
-                <TableCell className="text-right border-r">
+                <TableCell className="text-right border-r tabular-nums">
                   ₹{(interest + bill.loan_amount).toFixed(2)}
                 </TableCell>
                 <TableCell className="border-r">{description}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right tabular-nums">
                   {weight.toFixed(2)} gms
                 </TableCell>
               </TableRow>
