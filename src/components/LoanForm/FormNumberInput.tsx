@@ -17,8 +17,7 @@ interface FormNumberInputProps<T extends FieldValues> {
   label: string;
   placeholder?: string;
   disabled?: boolean;
-  currency?: string;
-  percent?: boolean;
+  suffix?: string;
   rightAlign?: boolean;
   onCustomChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   onCustomBlur?: (e: FocusEvent<HTMLInputElement>) => void;
@@ -32,8 +31,7 @@ export function FormNumberInput<T extends FieldValues>({
   label,
   placeholder = '',
   disabled = false,
-  currency,
-  percent,
+  suffix,
   rightAlign = true,
   onCustomChange,
   onCustomBlur,
@@ -74,14 +72,9 @@ export function FormNumberInput<T extends FieldValues>({
             className={`${rightAlign ? 'text-right' : ''} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${className}`}
           />
           <InputGroupAddon>{label}</InputGroupAddon>
-          {currency && (
+          {suffix && (
             <InputGroupAddon align="inline-end" className="!pl-0 w-6.5">
-              {currency}
-            </InputGroupAddon>
-          )}
-          {percent && (
-            <InputGroupAddon align="inline-end" className="!pl-0 w-6.5">
-              %
+              {suffix}
             </InputGroupAddon>
           )}
         </InputGroup>

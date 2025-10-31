@@ -2,7 +2,7 @@
 export const FIELD_WIDTHS = {
   SERIAL_INPUT: 'w-14',
   LOAN_NO_INPUT: 'w-24',
-  METAL_TYPE_SELECT: 'w-60',
+  METAL_TYPE_SELECT: 'min-w-60 ml-auto',
   PRODUCT_FIELD: 'w-[280px] min-w-[280px]',
   QUALITY_FIELD: 'w-[280px] min-w-[280px]',
   SEAL_FIELD: 'w-[120px] min-w-[120px] max-w-[120px]',

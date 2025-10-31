@@ -10,7 +10,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { read } from '@/hooks/dbUtil.ts';
@@ -19,20 +18,17 @@ import { Input } from '@/components/ui/input.tsx';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
 
 interface SearchableSelectProps {
-  onChange?: (value: Tables['customers']['Row']) => void;
+  onSelect?: (value: Tables['customers']['Row']) => void;
   placeholder?: string;
 }
 
 export default function CustomerPicker({
-  onChange,
+  onSelect,
   placeholder = 'Customer',
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [items, setItems] = useState<Tables['customers']['Row'][]>([]);
-  const [selected, setSelected] = useState<Tables['customers']['Row'] | null>(
-    null
-  );
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [isKeyboardNavigating, setIsKeyboardNavigating] = useState(false);
   const { convert } = useThanglish();
@@ -88,8 +84,7 @@ export default function CustomerPicker({
   }, [highlightedIndex, virtualizer, items.length]);
 
   const handleSelect = (opt: Tables['customers']['Row']) => {
-    setSelected(opt);
-    onChange?.(opt);
+    onSelect?.(opt);
     setOpen(false);
     setSearch('');
     setIsKeyboardNavigating(false);
@@ -166,7 +161,7 @@ export default function CustomerPicker({
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <Command shouldFilter={false}>
-          <CommandList ref={parentRef} className="max-h-150 overflow-auto">
+          <CommandList ref={parentRef} className="max-h-80 overflow-auto">
             <CommandGroup>
               <div
                 style={{
@@ -195,7 +190,7 @@ export default function CustomerPicker({
                       }}
                       className={cn(
                         index % 2 === 1 && 'bg-accent',
-                        'data-[selected=true]:bg-blue-200 px-2 py-1 text-base',
+                        'data-[selected=true]:bg-blue-200 px-2 py-1',
                         isKeyboardNavigating &&
                           highlightedIndex === index &&
                           'bg-blue-500 text-white data-[selected=true]:text-white data-[selected=true]:bg-blue-500'
@@ -204,10 +199,7 @@ export default function CustomerPicker({
                       <div className="w-[160px]">{opt.name}</div>
                       <div className="w-[30px]">{opt.fhtitle}</div>
                       <div className="w-[160px]">{opt.fhname}</div>
-                      <div className="w-[180px]">{opt.area}</div>
-                      {selected?.id === opt.id && (
-                        <Check className="ml-auto h-4 w-4" />
-                      )}
+                      <div className="w-[200px]">{opt.area}</div>
                     </CommandItem>
                   );
                 })}

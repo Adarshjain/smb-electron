@@ -23,7 +23,7 @@ export const LoanAmountSection = memo(function LoanAmountSection({
         name="loan_amount"
         control={control}
         label="Amount"
-        currency="₹"
+        suffix="₹"
         placeholder="Amount"
         onCustomChange={onLoanAmountChange}
       />
@@ -32,7 +32,7 @@ export const LoanAmountSection = memo(function LoanAmountSection({
         name="interest_rate"
         control={control}
         label="Percent"
-        percent
+        suffix="%"
         placeholder=""
         onCustomChange={onInterestChange}
       />
@@ -41,16 +41,17 @@ export const LoanAmountSection = memo(function LoanAmountSection({
         name="first_month_interest"
         control={control}
         label="Interest"
-        currency="₹"
+        suffix="₹"
         placeholder="FMI"
-        disabled={true}
+        className="!opacity-100"
+        disabled
       />
 
       <FormNumberInput
         name="doc_charges"
         control={control}
         label="Doc Charge"
-        currency="₹"
+        suffix="₹"
         placeholder="FMI"
         onCustomChange={onDocChargeChange}
       />
@@ -59,9 +60,10 @@ export const LoanAmountSection = memo(function LoanAmountSection({
         name="total"
         control={control}
         label="Total"
-        currency="₹"
+        suffix="₹"
         placeholder="Total"
-        disabled={true}
+        className="!opacity-100"
+        disabled
       />
     </div>
   );
