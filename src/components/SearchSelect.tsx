@@ -47,7 +47,7 @@ export default function SearchSelect<T = string>({
   getKey,
   transformInput,
   triggerWidth = 'w-[500px]',
-  popoverWidth = 'w-[610px]',
+  popoverWidth = 'w-[500px]',
   autoFocus = false,
   inputId,
   inputName,
@@ -211,7 +211,7 @@ export default function SearchSelect<T = string>({
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <Command shouldFilter={false}>
-          <CommandList ref={parentRef} className="max-h-80 overflow-auto">
+          <CommandList ref={parentRef} className="max-h-40 overflow-auto">
             <CommandGroup>
               <div
                 style={{
@@ -243,7 +243,7 @@ export default function SearchSelect<T = string>({
                       }}
                       className={cn(
                         index % 2 === 1 && 'bg-accent',
-                        'data-[selected=true]:bg-blue-200 px-2 py-1 text-base',
+                        'data-[selected=true]:bg-blue-200 px-2 py-1',
                         isKeyboardNavigating &&
                           highlightedIndex === index &&
                           'bg-blue-500 text-white data-[selected=true]:text-white data-[selected=true]:bg-blue-500'

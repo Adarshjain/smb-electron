@@ -13,7 +13,6 @@ import { useEnterNavigation } from '@/hooks/useEnterNavigation';
 import type { MetalType, Tables } from '../../tables';
 import { useLoanCalculations } from '@/hooks/useLoanCalculations';
 import { LoanCustomerSection } from '@/components/LoanForm/LoanCustomerSection';
-import { BillingItemsTable } from '@/components/LoanForm/BillingItemsTable';
 import { LoanAmountSection } from '@/components/LoanForm/LoanAmountSection';
 import {
   type BillingItem,
@@ -37,10 +36,11 @@ import { MetalTypeSelector } from '@/components/LoanForm/MetalTypeSelector.tsx';
 import { LoanNumber } from '@/components/LoanForm/LoanNumber.tsx';
 import DatePicker from '@/components/DatePicker.tsx';
 import { create, deleteRecord, update } from '@/hooks/dbUtil.ts';
-import BillAsLineItem from '@/components/LoanForm/BillAsLineItem.tsx';
 import BottomBar from '@/components/LoanForm/BottomBar.tsx';
 import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
 import { loadBillWithDeps } from '@/lib/myUtils.tsx';
+import { BillingItemsTable } from '@/components/LoanForm/BillingItemsTable.tsx';
+import BillAsLineItem from '@/components/LoanForm/BillAsLineItem.tsx';
 
 export default function NewLoan() {
   const { company, setNextSerial } = useCompany();
@@ -287,10 +287,10 @@ export default function NewLoan() {
 
   const handleMetalTypeChange = () => {
     fieldArray.replace([DEFAULT_BILLING_ITEM as BillingItemType]);
-    queueMicrotask(() => {
+    setTimeout(() => {
       next('billing_items.0.product');
       void performLoanCalculation();
-    });
+    }, 200);
   };
 
   const handleOnOldLoanLoaded = (loan: Tables['full_bill']['Row']) => {
@@ -345,48 +345,64 @@ export default function NewLoan() {
         ref={setFormRef}
         className="p-4 flex flex-1 flex-row justify-between"
       >
-        <div className="flex flex-1">
-          <FieldGroup className="gap-3">
+        <FieldGroup>
+          <div className="flex flex-1 flex-col gap-3">
             <div className="flex gap-4">
-              <LoanNumber
-                control={control}
-                onLoanLoad={handleEditLoan}
-                serialFieldName="serial"
-                numberFieldName="loan_no"
-              />
-              <Controller
-                name="date"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <DatePicker
-                    className="w-27.5"
-                    {...field}
-                    id="date"
-                    name="date"
-                    isError={fieldState.invalid}
+              <div className="flex flex-1 flex-col gap-3">
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-4">
+                    <LoanNumber
+                      control={control}
+                      onLoanLoad={handleEditLoan}
+                      serialFieldName="serial"
+                      numberFieldName="loan_no"
+                    />
+                    <Controller
+                      name="date"
+                      control={control}
+                      render={({ field, fieldState }) => (
+                        <DatePicker
+                          className="w-27.5"
+                          {...field}
+                          id="date"
+                          name="date"
+                          isError={fieldState.invalid}
+                        />
+                      )}
+                    />
+                  </div>
+                  <div className="text-xl">
+                    {isEditMode ? 'Edit Loan' : 'Add Loan'}
+                  </div>
+                  <LoanNumber
+                    control={control}
+                    onLoanLoad={handleOnOldLoanLoaded}
+                    numberFieldName="old_loan_no"
+                    serialFieldName="old_serial"
+                    showButton
                   />
-                )}
-              />
-              <LoanNumber
-                control={control}
-                onLoanLoad={handleOnOldLoanLoaded}
-                numberFieldName="old_loan_no"
-                serialFieldName="old_serial"
-                showButton
-              />
-            </div>
+                </div>
+                <div className="flex gap-6">
+                  <LoanCustomerSection
+                    selectedCustomer={selectedCustomer}
+                    onCustomerSelect={(
+                      customer: Tables['customers']['Row']
+                    ) => {
+                      setValue('customer', customer);
+                    }}
+                  />
 
-            <div className="flex gap-6">
-              <LoanCustomerSection
-                selectedCustomer={selectedCustomer}
-                onCustomerChange={(customer: Tables['customers']['Row']) => {
-                  setValue('customer', customer);
-                }}
-              />
-
-              <MetalTypeSelector
+                  <MetalTypeSelector
+                    control={control}
+                    onMetalTypeChange={handleMetalTypeChange}
+                  />
+                </div>
+              </div>
+              <LoanAmountSection
                 control={control}
-                onMetalTypeChange={handleMetalTypeChange}
+                onLoanAmountChange={handleLoanAmountChange}
+                onInterestChange={handleInterestChange}
+                onDocChargeChange={handleDocChargeChange}
               />
             </div>
             <BillingItemsTable
@@ -399,16 +415,8 @@ export default function NewLoan() {
             {selectedCustomer && (
               <BillAsLineItem customerId={selectedCustomer.id} />
             )}
-          </FieldGroup>
-        </div>
-        <div>
-          <LoanAmountSection
-            control={control}
-            onLoanAmountChange={handleLoanAmountChange}
-            onInterestChange={handleInterestChange}
-            onDocChargeChange={handleDocChargeChange}
-          />
-        </div>
+          </div>
+        </FieldGroup>
       </form>
       <BottomBar
         isEditMode={isEditMode}
@@ -421,7 +429,7 @@ export default function NewLoan() {
       />
       <ConfirmationDialog
         title="Confirm Edit?"
-        onConfirm={() => void onCommitChanges()}
+        onConfirm={() => onCommitChanges()}
         isOpen={isConfirmDialogOpen}
         onChange={setIsConfirmDialogOpen}
       >

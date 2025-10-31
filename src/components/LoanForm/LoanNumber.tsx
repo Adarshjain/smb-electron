@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowDown } from 'lucide-react';
 import type { Tables } from '../../../tables';
 import { loadBillWithDeps } from '@/lib/myUtils.tsx';
+import { cn } from '@/lib/utils.ts';
 
 interface OldLoanFillerProps {
   control: Control<Loan>;
@@ -13,6 +14,7 @@ interface OldLoanFillerProps {
   serialFieldName: 'serial' | 'old_serial';
   numberFieldName: 'loan_no' | 'old_loan_no';
   showButton?: boolean;
+  className?: string;
 }
 
 export const LoanNumber = memo(function LoanNumber({
@@ -21,6 +23,7 @@ export const LoanNumber = memo(function LoanNumber({
   numberFieldName,
   serialFieldName,
   showButton,
+  className,
 }: OldLoanFillerProps) {
   const serialValue = useWatch({ control, name: serialFieldName });
   const numberValue = useWatch({ control, name: numberFieldName });
@@ -40,7 +43,7 @@ export const LoanNumber = memo(function LoanNumber({
   };
 
   return (
-    <div className="flex gap-1">
+    <div className={cn('flex gap-1', className)}>
       <SerialNumber
         control={control}
         serialFieldName={serialFieldName}

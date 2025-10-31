@@ -6,12 +6,12 @@ import { toastElectronResponse } from '@/lib/myUtils.tsx';
 
 interface LoanCustomerSectionProps {
   selectedCustomer: Tables['customers']['Row'] | null;
-  onCustomerChange: (customer: Tables['customers']['Row']) => void;
+  onCustomerSelect: (customer: Tables['customers']['Row']) => void;
 }
 
 export const LoanCustomerSection = memo(function LoanCustomerSection({
   selectedCustomer,
-  onCustomerChange,
+  onCustomerSelect,
 }: LoanCustomerSectionProps) {
   const [selectedArea, setSelectedArea] = useState<
     Tables['areas']['Row'] | null
@@ -34,29 +34,31 @@ export const LoanCustomerSection = memo(function LoanCustomerSection({
   }, [selectedCustomer]);
   return (
     <div>
-      <CustomerPicker onChange={onCustomerChange} />
-      {selectedCustomer && (
-        <div className="pl-3 pb-6 pt-1">
-          <div>
-            {selectedCustomer.name} {selectedCustomer.fhtitle}{' '}
-            {selectedCustomer.fhname}
-          </div>
-          <div>
-            {selectedCustomer.door_no} {selectedCustomer.address1},
-          </div>
-          <div>{selectedCustomer.address2}</div>
-          <div>
-            {selectedCustomer.area},
-            {selectedArea && (
-              <div>
-                {selectedArea.post ? `Post: ${selectedArea.post}` : ''}{' '}
-                {selectedArea.town} {selectedArea.pincode}
-              </div>
-            )}
-          </div>
-          <div>{selectedCustomer.phone_no}</div>
-        </div>
-      )}
+      <CustomerPicker onSelect={onCustomerSelect} />
+      <div className="pl-3 py-2 min-h-[136px]">
+        {selectedCustomer && (
+          <>
+            <div>
+              {selectedCustomer.name} {selectedCustomer.fhtitle}{' '}
+              {selectedCustomer.fhname}
+            </div>
+            <div>
+              {selectedCustomer.door_no} {selectedCustomer.address1},
+            </div>
+            <div>{selectedCustomer.address2}</div>
+            <div>
+              {selectedCustomer.area},
+              {selectedArea && (
+                <div>
+                  {selectedArea.post ? `Post: ${selectedArea.post}` : ''}{' '}
+                  {selectedArea.town} {selectedArea.pincode}
+                </div>
+              )}
+            </div>
+            <div>{selectedCustomer.phone_no}</div>
+          </>
+        )}
+      </div>
     </div>
   );
 });
