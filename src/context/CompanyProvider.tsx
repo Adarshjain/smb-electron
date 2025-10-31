@@ -3,6 +3,7 @@ import {
   type ReactNode,
   useContext,
   useEffect,
+  useCallback,
   useState,
 } from 'react';
 import type { Tables } from '../../tables';
@@ -68,7 +69,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const fetchCompanies = () => {
+  const fetchCompanies = useCallback(() => {
     read('companies', {})
       .then((response) => {
         if (response.success && response.data && response.data.length > 0) {
@@ -81,9 +82,11 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         }
       })
       .catch(toast.error);
-  };
+  }, []);
 
-  useEffect(() => fetchCompanies, []);
+  useEffect(() => {
+    fetchCompanies();
+  }, [fetchCompanies]);
 
   return (
     <CompanyContext.Provider
