@@ -26,6 +26,7 @@ export const LoanAmountSection = memo(function LoanAmountSection({
         suffix="₹"
         placeholder="Amount"
         onCustomChange={onLoanAmountChange}
+        className="tabular-nums"
       />
 
       <FormNumberInput
@@ -35,6 +36,7 @@ export const LoanAmountSection = memo(function LoanAmountSection({
         suffix="%"
         placeholder=""
         onCustomChange={onInterestChange}
+        className="tabular-nums"
       />
 
       <FormNumberInput
@@ -43,7 +45,7 @@ export const LoanAmountSection = memo(function LoanAmountSection({
         label="Interest"
         suffix="₹"
         placeholder="FMI"
-        className="!opacity-100"
+        className="!opacity-100 tabular-nums"
         disabled
       />
 
@@ -54,6 +56,7 @@ export const LoanAmountSection = memo(function LoanAmountSection({
         suffix="₹"
         placeholder="FMI"
         onCustomChange={onDocChargeChange}
+        className="tabular-nums"
       />
 
       <FormNumberInput
@@ -62,7 +65,7 @@ export const LoanAmountSection = memo(function LoanAmountSection({
         label="Total"
         suffix="₹"
         placeholder="Total"
-        className="!opacity-100"
+        className="!opacity-100 tabular-nums"
         disabled
       />
     </div>
