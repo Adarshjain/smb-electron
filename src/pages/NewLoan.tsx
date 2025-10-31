@@ -41,6 +41,7 @@ import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
 import { loadBillWithDeps } from '@/lib/myUtils.tsx';
 import { BillingItemsTable } from '@/components/LoanForm/BillingItemsTable.tsx';
 import BillAsLineItem from '@/components/LoanForm/BillAsLineItem.tsx';
+import { cn } from '@/lib/utils.ts';
 
 export default function NewLoan() {
   const { company, setNextSerial } = useCompany();
@@ -49,6 +50,11 @@ export default function NewLoan() {
     [company]
   );
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [loadedLoan, setLoadedLoan] = useState<
+    Tables['full_bill']['Row'] | null
+  >(null);
+  const isEditMode = useMemo(() => loadedLoan !== null, [loadedLoan]);
+  const [isDeleteConfirmation, setIsDeleteConfirmation] = useState(false);
 
   const defaultValues = useMemo<Loan>(
     () => ({
@@ -89,13 +95,30 @@ export default function NewLoan() {
   const enteredSerial = useWatch({ control, name: 'serial' });
   const enteredNumber = useWatch({ control, name: 'loan_no' });
 
-  const isEditMode = useMemo(
-    () =>
-      !!(
-        company && company.next_serial !== `${enteredSerial}-${enteredNumber}`
-      ),
-    [company, enteredSerial, enteredNumber]
-  );
+  const { title, isIncorrect } = useMemo((): {
+    title: string;
+    isIncorrect: boolean;
+  } => {
+    const typedSerial = `${enteredSerial}-${enteredNumber}`;
+    const loadedLoanSerial = `${loadedLoan?.serial}-${loadedLoan?.loan_no}`;
+    if (isEditMode) {
+      return typedSerial === loadedLoanSerial
+        ? { title: 'Edit Loan', isIncorrect: false }
+        : typedSerial === company?.next_serial
+          ? { title: 'Click on New Loan', isIncorrect: true }
+          : { title: 'Click on Load Loan', isIncorrect: true };
+    }
+    return typedSerial === company?.next_serial
+      ? { title: 'New Loan', isIncorrect: false }
+      : { title: 'Click on Load Loan', isIncorrect: true };
+  }, [
+    company?.next_serial,
+    enteredNumber,
+    enteredSerial,
+    isEditMode,
+    loadedLoan?.loan_no,
+    loadedLoan?.serial,
+  ]);
 
   useEffect(() => {
     billingItemValues.forEach((item, index) => {
@@ -177,14 +200,40 @@ export default function NewLoan() {
     [getValues, setValue, recalculateTotalFromDocCharges]
   );
 
+  const onNewClick = () => {
+    reset(defaultValues);
+    setLoadedLoan(null);
+  };
+
+  const deleteLoan = async () => {
+    if (isIncorrect) {
+      toast.error('Loaded incorrect loan');
+      return;
+    }
+    await deleteRecord('bill_items', {
+      loan_no: enteredNumber,
+      serial: enteredSerial,
+    });
+    await deleteRecord('bills', {
+      loan_no: enteredNumber,
+      serial: enteredSerial,
+    });
+    onNewClick();
+  };
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const onSubmit: (data: Loan) => Promise<void> = async (data: Loan) => {
     if (!isLoanReadyForSubmit(data)) {
       toast.error('Please fill in all required fields');
       return;
     }
+    if (isIncorrect) {
+      toast.error('Loaded incorrect loan');
+      return;
+    }
     if (isEditMode) {
       setIsConfirmDialogOpen(true);
+      setIsDeleteConfirmation(false);
       return;
     }
     await onCommitChanges(data);
@@ -336,6 +385,7 @@ export default function NewLoan() {
       serial: loan.serial,
       loan_no: loan.loan_no,
     });
+    setLoadedLoan(loan);
     setTimeout(() => next('loan_amount'), 100);
   };
 
@@ -371,8 +421,13 @@ export default function NewLoan() {
                       )}
                     />
                   </div>
-                  <div className="text-xl">
-                    {isEditMode ? 'Edit Loan' : 'Add Loan'}
+                  <div
+                    className={cn(
+                      'text-xl',
+                      isIncorrect ? 'text-destructive' : ''
+                    )}
+                  >
+                    {title}
                   </div>
                   <LoanNumber
                     control={control}
@@ -420,21 +475,27 @@ export default function NewLoan() {
       </form>
       <BottomBar
         isEditMode={isEditMode}
-        onNewClick={console.log}
+        onNewClick={onNewClick}
         onNextClick={console.log}
         onLastClick={console.log}
         onPrevClick={console.log}
-        onResetClick={console.log}
         onSaveClick={() => void handleSubmit(onSubmit)()}
+        onDeleteClick={() => {
+          setIsConfirmDialogOpen(true);
+          setIsDeleteConfirmation(true);
+        }}
       />
       <ConfirmationDialog
-        title="Confirm Edit?"
-        onConfirm={() => onCommitChanges()}
+        title={isDeleteConfirmation ? 'Confirm Delete?' : 'Confirm Edit?'}
+        onConfirm={() =>
+          isDeleteConfirmation ? void deleteLoan() : void onCommitChanges()
+        }
         isOpen={isConfirmDialogOpen}
         onChange={setIsConfirmDialogOpen}
+        isDestructive={isDeleteConfirmation}
       >
-        <div className="text-xl">
-          Editing Loan Number {enteredSerial} {enteredNumber}
+        <div className="text-lg">
+          Loan Number {enteredSerial} {enteredNumber}
         </div>
       </ConfirmationDialog>
     </div>
