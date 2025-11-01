@@ -161,9 +161,15 @@ export const initBills = () => {
           create('bill_items', {
             serial: record.serial,
             loan_no: parseInt(record.nos),
-            gross_weight: item.grossw ? parseFloat(item.grossw) : 0,
-            ignore_weight: item.ignorew ? parseFloat(item.ignorew) : 0,
-            net_weight: item.netw ? parseFloat(item.netw) : 0,
+            gross_weight: Number(
+              ((item.grossw as unknown as number) ?? 0).toFixed(2)
+            ),
+            ignore_weight: Number(
+              ((item.ignorew as unknown as number) ?? 0).toFixed(2)
+            ),
+            net_weight: Number(
+              ((item.netw as unknown as number) ?? 0).toFixed(2)
+            ),
             product: item.itemdes,
             quality: item.quality,
             extra: item.ituch,

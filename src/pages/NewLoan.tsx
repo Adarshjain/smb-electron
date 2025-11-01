@@ -127,11 +127,12 @@ export default function NewLoan() {
 
   useEffect(() => {
     billingItemValues.forEach((item, index) => {
-      const total =
+      const total = (
         parseFloat(item.ignore_weight || '0') +
-        parseFloat(item.net_weight || '0');
-      if (total !== parseFloat(item.gross_weight)) {
-        setValue(`billing_items.${index}.gross_weight`, total.toFixed(2));
+        parseFloat(item.net_weight || '0')
+      ).toFixed(DECIMAL_PRECISION);
+      if (total !== parseFloat(item.gross_weight).toFixed(DECIMAL_PRECISION)) {
+        setValue(`billing_items.${index}.gross_weight`, total);
       }
     });
   }, [billingItemValues, setValue]);
@@ -272,6 +273,7 @@ export default function NewLoan() {
       return;
     }
     handleOnOldLoanLoaded(loan);
+    setLoadedLoan(loan);
   };
 
   const onCommitChanges = async (data?: Loan) => {

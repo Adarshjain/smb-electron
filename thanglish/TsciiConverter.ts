@@ -329,7 +329,7 @@ const encodeMap: Record<string, string> = {
   ஃ: '∙',
   அ: '«',
   ஆ: '¬',
-  இ: '­',
+  இ: 'þ',
   ஈ: '®',
   உ: '¯',
   ஊ: '°',
