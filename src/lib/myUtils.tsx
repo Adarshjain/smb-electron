@@ -109,7 +109,7 @@ export async function getRate(
 }
 
 export function getInterest(principal: number, intRate: number, months = 1) {
-  return +(principal * (intRate / 100) * months).toFixed(2);
+  return Math.round(+(principal * (intRate / 100) * months).toFixed(2));
 }
 
 export function monthDiff(from: string, to?: string) {
@@ -138,7 +138,6 @@ export async function loadBillWithDeps(
   serial: string,
   loanNo: number
 ): Promise<Tables['full_bill']['Row'] | null> {
-  debugger;
   const loan = await read('bills', {
     serial: serial.toUpperCase(),
     loan_no: loanNo,
@@ -221,7 +220,7 @@ export function mergeBillItems(billItems: Tables['bill_items']['Row'][]): {
     description.push(
       `${bill.quality} ${bill.product} ${bill.extra} - ${bill.quantity}`
     );
-    weight += bill.net_weight;
+    weight += bill.gross_weight;
   }
   return {
     description: description.join(', '),

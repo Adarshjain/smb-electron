@@ -27,6 +27,7 @@ import {
 } from '@/types/loanFormHelpers';
 import {
   BILLING_ITEM_FIELDS,
+  DECIMAL_PRECISION,
   DEFAULT_BILLING_ITEM,
 } from '@/constants/loanForm';
 import { toast } from 'sonner';
@@ -103,7 +104,6 @@ export default function NewLoan() {
     title: string;
     isIncorrect: boolean;
   } => {
-    debugger;
     const typedSerial = `${enteredSerial}-${enteredNumber}`;
     const loadedLoanSerial = `${loadedLoan?.serial}-${loadedLoan?.loan_no}`;
     if (isEditMode) {
@@ -129,9 +129,9 @@ export default function NewLoan() {
     billingItemValues.forEach((item, index) => {
       const total =
         parseFloat(item.ignore_weight || '0') +
-        parseFloat(item.gross_weight || '0');
-      if (total !== parseFloat(item.net_weight)) {
-        setValue(`billing_items.${index}.net_weight`, total.toFixed(2));
+        parseFloat(item.net_weight || '0');
+      if (total !== parseFloat(item.gross_weight)) {
+        setValue(`billing_items.${index}.gross_weight`, total.toFixed(2));
       }
     });
   }, [billingItemValues, setValue]);
@@ -139,11 +139,12 @@ export default function NewLoan() {
   const { calculateLoanAmounts, recalculateTotalFromDocCharges } =
     useLoanCalculations();
 
+  // TODO: Do we really need this?
   useEffect(() => {
-    if (company) {
+    if (company && !loadedLoan) {
       reset(defaultValues);
     }
-  }, [company, defaultValues, reset]);
+  }, [company, defaultValues, reset, loadedLoan]);
 
   const performLoanCalculation = useCallback(
     async (
@@ -154,18 +155,24 @@ export default function NewLoan() {
       } = {}
     ) => {
       const result = await calculateLoanAmounts(
-        getValues('loan_amount'),
+        parseFloat(getValues('loan_amount')),
         getValues('metal_type'),
         options
       );
 
       if (result) {
         if (!options.customInterestRate) {
-          setValue('interest_rate', result.interestRate);
+          setValue(
+            'interest_rate',
+            result.interestRate.toFixed(DECIMAL_PRECISION)
+          );
         }
-        setValue('first_month_interest', result.firstMonthInterest);
-        setValue('doc_charges', result.docCharges);
-        setValue('total', result.total);
+        setValue(
+          'first_month_interest',
+          result.firstMonthInterest.toFixed(DECIMAL_PRECISION)
+        );
+        setValue('doc_charges', result.docCharges.toFixed(DECIMAL_PRECISION));
+        setValue('total', result.total.toFixed(DECIMAL_PRECISION));
       }
     },
     [calculateLoanAmounts, getValues, setValue]
@@ -344,7 +351,7 @@ export default function NewLoan() {
         createBillingItemFieldName(i, BILLING_ITEM_FIELDS.EXTRA),
         createBillingItemFieldName(i, BILLING_ITEM_FIELDS.QUANTITY),
         createBillingItemFieldName(i, BILLING_ITEM_FIELDS.IGNORE_WEIGHT),
-        createBillingItemFieldName(i, BILLING_ITEM_FIELDS.GROSS_WEIGHT),
+        createBillingItemFieldName(i, BILLING_ITEM_FIELDS.NET_WEIGHT),
       ])
       .flat();
   }, [fieldArray.fields]);
@@ -371,7 +378,6 @@ export default function NewLoan() {
   };
 
   const handleOnOldLoanLoaded = (loan: Tables['full_bill']['Row']) => {
-    debugger;
     setValue('serial', loan.serial);
     setValue('loan_no', loan.loan_no);
     setValue('customer', loan.customer);
@@ -424,7 +430,7 @@ export default function NewLoan() {
     <div className="h-full">
       <form
         ref={setFormRef}
-        className="p-4 flex flex-1 flex-row justify-between"
+        className="p-4 flex flex-1 flex-row justify-between pb-24"
       >
         <FieldGroup>
           <div className="flex flex-1 flex-col gap-3">

@@ -11,10 +11,10 @@ export interface LoanCalculationOptions {
 }
 
 export interface LoanCalculationResult {
-  interestRate: string;
-  firstMonthInterest: string;
-  docCharges: string;
-  total: string;
+  interestRate: number;
+  firstMonthInterest: number;
+  docCharges: number;
+  total: number;
 }
 
 export interface BillingItem {
@@ -33,7 +33,7 @@ export function useLoanCalculations() {
    */
   const calculateLoanAmounts = useCallback(
     async (
-      currentLoanAmount: string,
+      currentLoanAmount: number,
       currentMetalType: MetalType,
       options: LoanCalculationOptions = {}
     ): Promise<LoanCalculationResult | null> => {
@@ -46,8 +46,7 @@ export function useLoanCalculations() {
           metalType: newMetalType,
         } = options;
 
-        const loanAmount =
-          newLoanAmount ?? parseFloat(currentLoanAmount || '0');
+        const loanAmount = newLoanAmount ?? currentLoanAmount;
         const metalType = newMetalType ?? currentMetalType;
 
         const rateConfig = await getRate(loanAmount, metalType);
@@ -74,10 +73,10 @@ export function useLoanCalculations() {
         const total = loanAmount - fmi - docCharges;
 
         return {
-          interestRate: interestRate.toFixed(DECIMAL_PRECISION.RATE),
-          firstMonthInterest: fmi.toFixed(DECIMAL_PRECISION.AMOUNT),
-          docCharges: docCharges.toFixed(DECIMAL_PRECISION.AMOUNT),
-          total: total.toFixed(DECIMAL_PRECISION.AMOUNT),
+          interestRate: interestRate,
+          firstMonthInterest: fmi,
+          docCharges: docCharges,
+          total: total,
         };
       } catch (error) {
         console.error('Error calculating loan amounts:', error);
@@ -97,7 +96,7 @@ export function useLoanCalculations() {
     const grossWeight = parseFloat(item.gross_weight || '0');
     const ignoreWeight = parseFloat(item.ignore_weight || '0');
     const netWeight = Math.max(0, grossWeight - ignoreWeight);
-    return netWeight.toFixed(DECIMAL_PRECISION.WEIGHT);
+    return netWeight.toFixed(DECIMAL_PRECISION);
   }, []);
 
   /**
@@ -109,7 +108,7 @@ export function useLoanCalculations() {
         const netWeight = parseFloat(calculateNetWeight(item) || '0');
         return sum + netWeight;
       }, 0);
-      return total.toFixed(DECIMAL_PRECISION.WEIGHT);
+      return total.toFixed(DECIMAL_PRECISION);
     },
     [calculateNetWeight]
   );
@@ -123,7 +122,7 @@ export function useLoanCalculations() {
         const grossWeight = parseFloat(item.gross_weight || '0');
         return sum + grossWeight;
       }, 0);
-      return total.toFixed(DECIMAL_PRECISION.WEIGHT);
+      return total.toFixed(DECIMAL_PRECISION);
     },
     []
   );
@@ -140,7 +139,7 @@ export function useLoanCalculations() {
       const loan = parseFloat(loanAmount || '0');
       const fmi = parseFloat(firstMonthInterest || '0');
       const total = loan - fmi - docCharges;
-      return total.toFixed(DECIMAL_PRECISION.AMOUNT);
+      return total.toFixed(DECIMAL_PRECISION);
     },
     []
   );

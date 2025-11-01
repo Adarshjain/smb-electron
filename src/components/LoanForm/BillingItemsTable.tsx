@@ -51,12 +51,12 @@ export const BillingItemsTable = memo(function BillingItemsTable({
           <FieldLabel
             className={`block px-3 py-1 ${FIELD_WIDTHS.WEIGHT_FIELD} text-right`}
           >
-            Gross Wt
+            Net Wt
           </FieldLabel>
           <FieldLabel
             className={`block px-3 py-1 ${FIELD_WIDTHS.WEIGHT_FIELD} text-right`}
           >
-            Net Wt
+            Gross Wt
           </FieldLabel>
         </div>
 

@@ -204,7 +204,7 @@ export const BillingItemRow = memo(function BillingItemRow({
       />
 
       <Controller
-        name={`billing_items.${index}.gross_weight`}
+        name={`billing_items.${index}.net_weight`}
         control={control}
         render={({ field }) => (
           <div>
@@ -220,8 +220,8 @@ export const BillingItemRow = memo(function BillingItemRow({
               onBlur={() => {
                 field.onChange(parseFloat(field.value || '0').toFixed(2));
               }}
-              id={`billing_items.${index}.gross_weight`}
-              name={`billing_items.${index}.gross_weight`}
+              id={`billing_items.${index}.net_weight`}
+              name={`billing_items.${index}.net_weight`}
               type="number"
               placeholder=""
               className="w-24 text-right tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -231,7 +231,7 @@ export const BillingItemRow = memo(function BillingItemRow({
       />
 
       <Controller
-        name={`billing_items.${index}.net_weight`}
+        name={`billing_items.${index}.gross_weight`}
         control={control}
         render={({ field }) => (
           <div>
