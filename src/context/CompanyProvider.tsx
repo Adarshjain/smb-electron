@@ -8,7 +8,7 @@ import {
 } from 'react';
 import type { Tables } from '../../tables';
 import { read, update } from '../hooks/dbUtil.ts';
-import { toastElectronResponse } from '@/lib/myUtils.tsx';
+import { getNextSerial, toastElectronResponse } from '@/lib/myUtils.tsx';
 import { toast } from 'sonner';
 
 interface CompanyContextType {
@@ -45,21 +45,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     if (company) {
       if (!next_serial) {
         const [serial, loanNo] = company.next_serial.split('-');
-        let number = parseInt(loanNo, 10);
-        let charCode = serial.charCodeAt(0);
-
-        number += 1;
-
-        if (number > 10000) {
-          number = 1;
-          charCode += 1;
-
-          // Wrap from Z → A if needed
-          if (charCode > 90) charCode = 65;
-        }
-
-        const newLetter = String.fromCharCode(charCode);
-        next_serial = `${newLetter}-${number}`;
+        next_serial = getNextSerial(serial, loanNo).join('-');
       }
       await update('companies', {
         next_serial,

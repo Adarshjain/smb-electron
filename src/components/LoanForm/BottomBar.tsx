@@ -8,6 +8,7 @@ export default function BottomBar({
   onPrevClick,
   onNextClick,
   onDeleteClick,
+  canGoNext,
 }: {
   isEditMode: boolean;
   onSaveClick: () => void;
@@ -16,6 +17,7 @@ export default function BottomBar({
   onNextClick: () => void;
   onNewClick: () => void;
   onDeleteClick: () => void;
+  canGoNext: boolean;
 }) {
   return (
     <div className="flex justify-between w-full fixed bottom-0 py-3 border-t bg-gray-100 border-gray-200">
@@ -38,6 +40,7 @@ export default function BottomBar({
           variant="outline"
           className="border-black rounded-l-none"
           onClick={onNextClick}
+          disabled={!canGoNext}
         >
           Next
         </Button>

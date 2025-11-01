@@ -138,6 +138,7 @@ export async function loadBillWithDeps(
   serial: string,
   loanNo: number
 ): Promise<Tables['full_bill']['Row'] | null> {
+  debugger;
   const loan = await read('bills', {
     serial: serial.toUpperCase(),
     loan_no: loanNo,
@@ -226,4 +227,46 @@ export function mergeBillItems(billItems: Tables['bill_items']['Row'][]): {
     description: description.join(', '),
     weight,
   };
+}
+
+export function getNextSerial(
+  serial: string,
+  loanNo: string
+): [string, number] {
+  let number = parseInt(loanNo, 10);
+  let charCode = serial.charCodeAt(0);
+
+  number += 1;
+
+  if (number > 10000) {
+    number = 1;
+    charCode += 1;
+
+    // Wrap from Z → A if needed
+    if (charCode > 90) charCode = 65;
+  }
+
+  const newLetter = String.fromCharCode(charCode);
+  return [newLetter, number];
+}
+
+export function getPrevSerial(
+  serial: string,
+  loanNo: string
+): [string, number] {
+  let number = parseInt(loanNo, 10);
+  let charCode = serial.charCodeAt(0);
+
+  number -= 1;
+
+  if (number < 1) {
+    number = 10000;
+    charCode -= 1;
+
+    // Wrap from A → Z if needed
+    if (charCode < 65) charCode = 90;
+  }
+
+  const newLetter = String.fromCharCode(charCode);
+  return [newLetter, number];
 }

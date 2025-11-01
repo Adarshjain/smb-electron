@@ -38,7 +38,11 @@ import DatePicker from '@/components/DatePicker.tsx';
 import { create, deleteRecord, update } from '@/hooks/dbUtil.ts';
 import BottomBar from '@/components/LoanForm/BottomBar.tsx';
 import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
-import { loadBillWithDeps } from '@/lib/myUtils.tsx';
+import {
+  getNextSerial,
+  getPrevSerial,
+  loadBillWithDeps,
+} from '@/lib/myUtils.tsx';
 import { BillingItemsTable } from '@/components/LoanForm/BillingItemsTable.tsx';
 import BillAsLineItem from '@/components/LoanForm/BillAsLineItem.tsx';
 import { cn } from '@/lib/utils.ts';
@@ -99,6 +103,7 @@ export default function NewLoan() {
     title: string;
     isIncorrect: boolean;
   } => {
+    debugger;
     const typedSerial = `${enteredSerial}-${enteredNumber}`;
     const loadedLoanSerial = `${loadedLoan?.serial}-${loadedLoan?.loan_no}`;
     if (isEditMode) {
@@ -239,6 +244,29 @@ export default function NewLoan() {
     await onCommitChanges(data);
   };
 
+  const onLastClick = async () => {
+    const [s, l] = getPrevSerial(serial, loanNo);
+    await handleLoanNavigation(s, l);
+  };
+
+  const onPrevClick = async () => {
+    const [s, l] = getPrevSerial(enteredSerial, '' + enteredNumber);
+    await handleLoanNavigation(s, l);
+  };
+
+  const onNextClick = async () => {
+    const [s, l] = getNextSerial(enteredSerial, '' + enteredNumber);
+    await handleLoanNavigation(s, l);
+  };
+
+  const handleLoanNavigation = async (serial: string, loanNo: number) => {
+    const loan = await loadBillWithDeps(serial, loanNo);
+    if (!loan) {
+      return;
+    }
+    handleOnOldLoanLoaded(loan);
+  };
+
   const onCommitChanges = async (data?: Loan) => {
     data ??= getValues();
     try {
@@ -343,6 +371,9 @@ export default function NewLoan() {
   };
 
   const handleOnOldLoanLoaded = (loan: Tables['full_bill']['Row']) => {
+    debugger;
+    setValue('serial', loan.serial);
+    setValue('loan_no', loan.loan_no);
     setValue('customer', loan.customer);
     fieldArray.replace(
       loan.bill_items.map((item) => ({
@@ -475,10 +506,11 @@ export default function NewLoan() {
       </form>
       <BottomBar
         isEditMode={isEditMode}
+        canGoNext={`${enteredSerial}-${enteredNumber}` !== company?.next_serial}
         onNewClick={onNewClick}
-        onNextClick={console.log}
-        onLastClick={console.log}
-        onPrevClick={console.log}
+        onNextClick={() => void onNextClick()}
+        onLastClick={() => void onLastClick()}
+        onPrevClick={() => void onPrevClick()}
         onSaveClick={() => void handleSubmit(onSubmit)()}
         onDeleteClick={() => {
           setIsConfirmDialogOpen(true);
