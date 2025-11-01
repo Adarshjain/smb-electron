@@ -15,6 +15,7 @@ import { useThanglish } from '@/context/ThanglishProvider.tsx';
 import { TablesSQliteSchema } from '../../tableSchema.ts';
 import { cn } from '@/lib/utils.ts';
 import { toast } from 'sonner';
+import { toastStyles } from '@/constants/loanForm.ts';
 
 export default function DataView<K extends TableName>(props: {
   table: K;
@@ -45,7 +46,7 @@ export default function DataView<K extends TableName>(props: {
           rpcError(response);
         }
       })
-      .catch(toast.error);
+      .catch((e) => toast.error(e, { className: toastStyles.error }));
   }, [props.table]);
 
   const filteredData = useMemo(() => {
