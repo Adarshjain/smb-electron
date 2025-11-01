@@ -1,6 +1,6 @@
 import MDBReader from 'mdb-reader';
 import fs from 'fs';
-import { create, executeSql } from '../db/localDB';
+import { createBatched, executeSql } from '../db/localDB';
 import { type MetalType, type TableName, type Tables } from '../../tables';
 import { TablesSQliteSchema } from '../../tableSchema';
 
@@ -32,17 +32,20 @@ export const initAreas = () => {
   const table = reader.getTable('areamaster');
   const data = table.getData<Record<string, string>>();
 
+  const createAreas: Tables['areas']['Row'][] = [];
+
   for (const record of data) {
-    try {
-      create('areas', {
-        name: record.name,
-        pincode: record.pincode,
-        post: record.post,
-        town: record.town,
-      });
-    } catch (e) {
-      console.log(e instanceof Error ? e.message : 'Random Error');
-    }
+    createAreas.push({
+      name: record.name,
+      pincode: record.pincode,
+      post: record.post,
+      town: record.town,
+    });
+  }
+  try {
+    createBatched('areas', createAreas);
+  } catch (e) {
+    console.log(e instanceof Error ? e.message : 'Random Error');
   }
 };
 
@@ -53,17 +56,20 @@ export const initBalance = () => {
   const table = reader.getTable('balance');
   const data = table.getData<Record<string, string>>();
 
+  const createBalances: Tables['balances']['Row'][] = [];
+
   for (const record of data) {
-    try {
-      create('balances', {
-        date: new Date(record.cl_date).toISOString().split('T')[0], //.split(" at ")[0]
-        opening: 0,
-        closing: parseFloat(record.cl_bal),
-        company: toSentenceCase(record.company),
-      });
-    } catch (e) {
-      console.log(e instanceof Error ? e.message : 'Random Error');
-    }
+    createBalances.push({
+      date: new Date(record.cl_date).toISOString().split('T')[0], //.split(" at ")[0]
+      opening: 0,
+      closing: parseFloat(record.cl_bal),
+      company: toSentenceCase(record.company),
+    });
+  }
+  try {
+    createBatched('balances', createBalances);
+  } catch (e) {
+    console.log(e instanceof Error ? e.message : 'Random Error');
   }
 };
 
@@ -74,17 +80,20 @@ export const initCompanies = () => {
   const table = reader.getTable('companymaster');
   const data = table.getData<Record<string, string>>();
 
+  const createCompanies: Tables['companies']['Row'][] = [];
+
   for (const record of data) {
-    try {
-      create('companies', {
-        name: toSentenceCase(record.NAME),
-        next_serial: 'A-1',
-        is_default: 0,
-        current_date: new Date().toISOString().split('T')[0],
-      });
-    } catch (e) {
-      console.log(e instanceof Error ? e.message : 'Random Error');
-    }
+    createCompanies.push({
+      name: toSentenceCase(record.NAME),
+      next_serial: 'A-1',
+      is_default: 0,
+      current_date: new Date().toISOString().split('T')[0],
+    });
+  }
+  try {
+    createBatched('companies', createCompanies);
+  } catch (e) {
+    console.log(e instanceof Error ? e.message : 'Random Error');
   }
 };
 
@@ -101,40 +110,35 @@ export const initProducts = () => {
   const goldQuality1Table = reader.getTable('quality1');
   const goldQuality1Data = goldQuality1Table.getData<Record<string, string>>();
 
+  const createProducts: Tables['products']['Row'][] = [];
+
   for (const record of itemDesMasterData) {
-    try {
-      create('products', {
-        name: record.name,
-        product_type: 'product',
-        metal_type: toSentenceCase(record.itemtype) as MetalType,
-      });
-    } catch (e) {
-      console.log(e instanceof Error ? e.message : 'Random Error');
-    }
+    createProducts.push({
+      name: record.name,
+      product_type: 'product',
+      metal_type: toSentenceCase(record.itemtype) as MetalType,
+    });
   }
 
   for (const record of goldQualityData) {
-    try {
-      create('products', {
-        name: record.quality,
-        product_type: 'quality',
-        metal_type: 'Other',
-      });
-    } catch (e) {
-      console.log(e instanceof Error ? e.message : 'Random Error');
-    }
+    createProducts.push({
+      name: record.quality,
+      product_type: 'quality',
+      metal_type: 'Other',
+    });
   }
 
   for (const record of goldQuality1Data) {
-    try {
-      create('products', {
-        name: record.quality,
-        product_type: 'seal',
-        metal_type: 'Other',
-      });
-    } catch (e) {
-      console.log(e instanceof Error ? e.message : 'Random Error');
-    }
+    createProducts.push({
+      name: record.quality,
+      product_type: 'seal',
+      metal_type: 'Other',
+    });
+  }
+  try {
+    createBatched('products', createProducts);
+  } catch (e) {
+    console.log(e instanceof Error ? e.message : 'Random Error');
   }
 };
 
@@ -151,64 +155,68 @@ export const initBills = () => {
   const itemDesTable = reader.getTable('itemdes');
   const itemDesData = itemDesTable.getData<Record<string, string>>();
 
+  const createBillItems: Tables['bill_items']['Row'][] = [];
+  const createBills: Tables['bills']['Row'][] = [];
+  const createReleases: Tables['releases']['Row'][] = [];
+
   for (const record of billingData) {
     itemDesData
       .filter(
         (item) => item.serial === record.serial && item.loanno === record.nos
       )
-      .map((item) => {
-        try {
-          create('bill_items', {
-            serial: record.serial,
-            loan_no: parseInt(record.nos),
-            gross_weight: Number(
-              ((item.grossw as unknown as number) ?? 0).toFixed(2)
-            ),
-            ignore_weight: Number(
-              ((item.ignorew as unknown as number) ?? 0).toFixed(2)
-            ),
-            net_weight: Number(
-              ((item.netw as unknown as number) ?? 0).toFixed(2)
-            ),
-            product: item.itemdes,
-            quality: item.quality,
-            extra: item.ituch,
-            quantity: item.qty ? parseInt(item.qty) : 0,
-          });
-        } catch (e) {
-          console.log(e instanceof Error ? e.message : 'Random Error');
-        }
+      .forEach((item) => {
+        createBillItems.push({
+          serial: record.serial,
+          loan_no: parseInt(record.nos),
+          gross_weight: Number(
+            ((item.grossw as unknown as number) ?? 0).toFixed(2)
+          ),
+          ignore_weight: Number(
+            ((item.ignorew as unknown as number) ?? 0).toFixed(2)
+          ),
+          net_weight: Number(
+            ((item.netw as unknown as number) ?? 0).toFixed(2)
+          ),
+          product: item.itemdes,
+          quality: item.quality,
+          extra: item.ituch,
+          quantity: item.qty ? parseInt(item.qty) : 0,
+        });
       });
     const loanAmount = parseFloat(record.loan || '0');
     const interestPaid = parseFloat(record.totint || '0');
     const interestDiscount = parseFloat(record.dis || '0');
-    try {
-      create('bills', {
+    createBills.push({
+      serial: record.serial,
+      loan_no: parseInt(record.nos),
+      date: new Date(record.date).toISOString().split('T')[0],
+      company: toSentenceCase(record.company),
+      metal_type: toSentenceCase(record.items) as MetalType,
+      customer_id: record.code,
+      doc_charges: parseFloat(record.otchgrs || '0'),
+      first_month_interest: parseFloat(record.intamt || '0'),
+      interest_rate: parseFloat(record.intrate || '0'),
+      loan_amount: loanAmount,
+      released: record.STATUS === 'Redeemed' ? 1 : 0,
+    });
+    if (record.STATUS === 'Redeemed') {
+      createReleases.push({
         serial: record.serial,
         loan_no: parseInt(record.nos),
-        date: new Date(record.date).toISOString().split('T')[0],
-        company: toSentenceCase(record.company),
-        metal_type: toSentenceCase(record.items) as MetalType,
-        customer_id: record.code,
-        doc_charges: parseFloat(record.otchgrs || '0'),
-        first_month_interest: parseFloat(record.intamt || '0'),
-        interest_rate: parseFloat(record.intrate || '0'),
+        date: new Date(record.redate).toISOString().split('T')[0],
         loan_amount: loanAmount,
-        released: record.STATUS === 'Redeemed' ? 1 : 0,
+        interest_amount: interestPaid,
+        total_amount: loanAmount + interestPaid - interestDiscount,
       });
-      if (record.STATUS === 'Redeemed') {
-        create('releases', {
-          serial: record.serial,
-          loan_no: parseInt(record.nos),
-          date: new Date(record.redate).toISOString().split('T')[0],
-          loan_amount: loanAmount,
-          interest_amount: interestPaid,
-          total_amount: loanAmount + interestPaid - interestDiscount,
-        });
-      }
-    } catch (e) {
-      console.log(e instanceof Error ? e.message : 'Random Error');
     }
+  }
+
+  try {
+    createBatched('bill_items', createBillItems);
+    createBatched('bills', createBills);
+    createBatched('releases', createReleases);
+  } catch (e) {
+    console.log(e instanceof Error ? e.message : 'Random Error');
   }
 };
 
@@ -219,24 +227,39 @@ export const initCustomers = () => {
   const table = reader.getTable('customermaster');
   const data = table.getData<Record<string, string>>();
 
+  const addresses = new Set<string>();
+  const createCustomers: Tables['customers']['Row'][] = [];
+
   for (const record of data) {
-    try {
-      create('customers', {
-        id: record.code,
-        name: record.name,
-        fhname: record.fhname,
-        fhtitle: record.fhtitle,
-        door_no: record.CUST_DNO,
-        address1: record.address1,
-        address2: record.address2,
-        area: record.area,
-        phone_no: record.cell,
-        id_proof: record.id,
-        id_proof_value: record.id_det,
-      });
-    } catch (e) {
-      console.log(e instanceof Error ? e.message : 'Random Error');
+    if (record.address1.trim()) {
+      addresses.add(record.address1);
     }
+    if (record.address2.trim()) {
+      addresses.add(record.address2);
+    }
+    createCustomers.push({
+      id: record.code,
+      name: record.name,
+      fhname: record.fhname,
+      fhtitle: record.fhtitle,
+      door_no: record.CUST_DNO,
+      address1: record.address1,
+      address2: record.address2,
+      area: record.area,
+      phone_no: record.cell,
+      id_proof: record.id,
+      id_proof_value: record.id_det,
+    });
+  }
+  const createAddressLines: Tables['address_lines']['Row'][] = [
+    ...addresses,
+  ].map((addr) => ({ address: addr }));
+
+  try {
+    createBatched('customers', createCustomers);
+    createBatched('address_lines', createAddressLines);
+  } catch (e) {
+    console.log(e instanceof Error ? e.message : 'Random Error');
   }
 };
 
@@ -284,12 +307,10 @@ export const initIntRates = () => {
     },
   ];
 
-  for (const rate of rates) {
-    try {
-      create('interest_rates', rate);
-    } catch (e) {
-      console.log(e instanceof Error ? e.message : 'Random Error');
-    }
+  try {
+    createBatched('interest_rates', rates);
+  } catch (e) {
+    console.log(e instanceof Error ? e.message : 'Random Error');
   }
 };
 
