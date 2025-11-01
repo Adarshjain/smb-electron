@@ -264,6 +264,10 @@ export default function NewLoan() {
 
   const onNextClick = async () => {
     const [s, l] = getNextSerial(enteredSerial, '' + enteredNumber);
+    if (`${s}-${l}` === company?.next_serial) {
+      onNewClick();
+      return;
+    }
     await handleLoanNavigation(s, l);
   };
 
@@ -379,9 +383,14 @@ export default function NewLoan() {
     }, 200);
   };
 
-  const handleOnOldLoanLoaded = (loan: Tables['full_bill']['Row']) => {
-    setValue('serial', loan.serial);
-    setValue('loan_no', loan.loan_no);
+  const handleOnOldLoanLoaded = (
+    loan: Tables['full_bill']['Row'],
+    skipSerial = false
+  ) => {
+    if (!skipSerial) {
+      setValue('serial', loan.serial);
+      setValue('loan_no', loan.loan_no);
+    }
     setValue('customer', loan.customer);
     fieldArray.replace(
       loan.bill_items.map((item) => ({
@@ -470,7 +479,7 @@ export default function NewLoan() {
                   </div>
                   <LoanNumber
                     control={control}
-                    onLoanLoad={handleOnOldLoanLoaded}
+                    onLoanLoad={(loan) => handleOnOldLoanLoaded(loan, true)}
                     numberFieldName="old_loan_no"
                     serialFieldName="old_serial"
                     showButton
