@@ -1,10 +1,12 @@
 .input-matrix {
   input {
     border-radius: 0;
+    border-left-width: 0;
   }
 
   div:last-child div:first-child input {
     border-bottom-left-radius: calc(var(--radius) - 2px);
+    border-left-width: 1px;
   }
 
   div:last-child div:last-child input {
@@ -20,13 +22,13 @@
     border-right-color: var(--input);
     border-right-style: solid;
     border-right-width: 1px;
-    border-left-color: var(--input);
-    border-left-style: solid;
-    border-left-width: 1px;
   }
 
   label:first-child {
     border-top-left-radius: calc(var(--radius) - 2px);
+    border-left-color: var(--input);
+    border-left-style: solid;
+    border-left-width: 1px;
   }
 
   label:last-child {
