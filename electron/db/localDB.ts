@@ -140,6 +140,56 @@ export function create<K extends TableName>(
   return null;
 }
 
+export function createMultiple<K extends TableName>(
+  table: K,
+  records: Tables[K]['Row'][]
+): null {
+  if (!db || !records.length) return null;
+
+  // Validate and encode all records
+  const encodedRecords = records.map((record) => {
+    validate(table, record);
+    return encodeRecord<K>(table, record);
+  });
+
+  // Assume all records have same keys (should be consistent schema)
+  const keys = Object.keys(encodedRecords[0]);
+  const placeholders = `(${keys.map(() => '?').join(', ')}, 0)`;
+
+  // Flatten all record values
+  const values: (string | number | null)[] = [];
+  for (const record of encodedRecords) {
+    values.push(...Object.values(record));
+  }
+
+  // Build the SQL with multiple value groups
+  const sql = `
+    INSERT INTO ${table} (${keys.join(', ')}, synced)
+    VALUES ${encodedRecords.map(() => placeholders).join(', ')}
+  `;
+
+  const stmt = db.prepare(sql);
+  stmt.run(...values);
+
+  return null;
+}
+
+export function createBatched<K extends TableName>(
+  table: K,
+  records: Tables[K]['Row'][]
+): void {
+  if (!db || !records.length) return;
+
+  const cols = Object.keys(records[0]).length;
+  const MAX_VARS = 999;
+  const BATCH_SIZE = Math.floor(MAX_VARS / cols);
+
+  for (let i = 0; i < records.length; i += BATCH_SIZE) {
+    const batch = records.slice(i, i + BATCH_SIZE);
+    createMultiple(table, batch); // your existing function
+  }
+}
+
 export function markAsSynced<K extends TableName>(
   table: K,
   record: Tables[K]['Row']
