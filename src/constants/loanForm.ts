@@ -20,11 +20,7 @@ export const KEYBOARD_SHORTCUTS = {
 } as const;
 
 // Default decimal precision
-export const DECIMAL_PRECISION = {
-  WEIGHT: 2,
-  AMOUNT: 2,
-  RATE: 2,
-} as const;
+export const DECIMAL_PRECISION = 2;
 
 // Form field names for type safety
 export const FORM_FIELDS = {
