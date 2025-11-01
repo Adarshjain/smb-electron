@@ -4,6 +4,7 @@ import type { Tables } from '../../../tables';
 import { read } from '@/hooks/dbUtil.ts';
 import { toastElectronResponse } from '@/lib/myUtils.tsx';
 import { toast } from 'sonner';
+import { toastStyles } from '@/constants/loanForm.ts';
 
 interface LoanCustomerSectionProps {
   selectedCustomer: Tables['customers']['Row'] | null;
@@ -29,7 +30,7 @@ export const LoanCustomerSection = memo(function LoanCustomerSection({
         if (response.data?.length) {
           setSelectedArea(response.data[0]);
         } else {
-          toast.error('Area not Found!');
+          toast.error('Area not Found!', { className: toastStyles.error });
         }
       } else {
         toastElectronResponse(response);

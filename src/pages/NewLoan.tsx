@@ -29,6 +29,7 @@ import {
   BILLING_ITEM_FIELDS,
   DECIMAL_PRECISION,
   DEFAULT_BILLING_ITEM,
+  toastStyles,
 } from '@/constants/loanForm';
 import { toast } from 'sonner';
 
@@ -220,7 +221,7 @@ export default function NewLoan() {
 
   const deleteLoan = async () => {
     if (isIncorrect) {
-      toast.error('Loaded incorrect loan');
+      toast.error('Loaded incorrect loan', { className: toastStyles.error });
       return;
     }
     await deleteRecord('bill_items', {
@@ -237,11 +238,13 @@ export default function NewLoan() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const onSubmit: (data: Loan) => Promise<void> = async (data: Loan) => {
     if (!isLoanReadyForSubmit(data)) {
-      toast.error('Please fill in all required fields');
+      toast.error('Please fill in all required fields', {
+        className: toastStyles.error,
+      });
       return;
     }
     if (isIncorrect) {
-      toast.error('Loaded incorrect loan');
+      toast.error('Loaded incorrect loan', { className: toastStyles.error });
       return;
     }
     if (isEditMode) {
@@ -258,6 +261,8 @@ export default function NewLoan() {
   };
 
   const onPrevClick = async () => {
+    toast.success('Success', { className: toastStyles.success });
+    return;
     const [s, l] = getPrevSerial(enteredSerial, '' + enteredNumber);
     await handleLoanNavigation(s, l);
   };
@@ -327,7 +332,7 @@ export default function NewLoan() {
         if (reloadedLoan) {
           handleOnOldLoanLoaded(reloadedLoan);
         }
-        toast.success('Loan Updated!');
+        toast.success('Loan Updated!', { className: toastStyles.success });
       } else {
         await create('bills', formattedLoan);
         for (const item of formatterProduct) {
@@ -335,12 +340,13 @@ export default function NewLoan() {
         }
         await setNextSerial();
         next('customer_picker');
-        toast.success('Loan saved');
+        toast.success('Loan saved', { className: toastStyles.success });
       }
     } catch (error) {
       console.error('Error submitting loan:', error);
       toast.error(
-        error instanceof Error ? error.message : 'Failed to save loan'
+        error instanceof Error ? error.message : 'Failed to save loan',
+        { className: toastStyles.error }
       );
     }
   };

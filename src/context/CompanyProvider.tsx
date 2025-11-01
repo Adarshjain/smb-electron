@@ -10,6 +10,7 @@ import type { Tables } from '../../tables';
 import { read, update } from '../hooks/dbUtil.ts';
 import { getNextSerial, toastElectronResponse } from '@/lib/myUtils.tsx';
 import { toast } from 'sonner';
+import { toastStyles } from '@/constants/loanForm.ts';
 
 interface CompanyContextType {
   company: Tables['companies']['Row'] | null;
@@ -67,7 +68,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
           setCompany(companyMatch);
         }
       })
-      .catch(toast.error);
+      .catch((e) => toast.error(e, { className: toastStyles.error }));
   }, []);
 
   useEffect(() => {

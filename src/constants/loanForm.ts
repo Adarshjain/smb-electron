@@ -69,3 +69,10 @@ export const DEFAULT_BILLING_ITEM = {
   net_weight: '0.00',
   ignore_weight: '0.00',
 } as const;
+
+export const toastStyles = {
+  success: '!bg-green-600 !text-white !border-green-700',
+  error: '!bg-red-600 !text-white !border-red-700',
+  warning: '!bg-amber-500 !text-white !border-amber-600',
+  info: '!bg-blue-600 !text-white !border-blue-700',
+};

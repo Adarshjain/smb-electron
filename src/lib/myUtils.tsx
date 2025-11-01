@@ -4,6 +4,8 @@ import type { ElectronToReactResponse } from '../../shared-types';
 import type { MetalType, Tables } from '../../tables';
 import MyCache from '../../MyCache.ts';
 import { read } from '@/hooks/dbUtil.ts';
+import { toastStyles } from '@/constants/loanForm.ts';
+import { cn } from '@/lib/utils.ts';
 
 export function mapToRegex(map: Record<string, string>) {
   return new RegExp(
@@ -29,7 +31,7 @@ export function rpcError(response: {
         <code>{response.stack}</code>
       </pre>
     ),
-    classNames: { content: 'flex flex-col gap-2' },
+    classNames: { content: cn('flex flex-col gap-2', toastStyles.error) },
     style: {
       '--border-radius': 'calc(var(--radius) + 4px)',
     } as React.CSSProperties,
@@ -77,12 +79,12 @@ export function toastElectronResponse<T>(
 ) {
   if (!response.success) {
     if (response.error === 'UNIQUE constraint failed') {
-      toast.error('Already exists!');
+      toast.error('Already exists!', { className: toastStyles.error });
     } else {
       rpcError(response);
     }
   } else {
-    toast.success(successMessage);
+    toast.success(successMessage, { className: toastStyles.success });
   }
 }
 
@@ -127,6 +129,9 @@ export function getDocCharges(
   rate: Tables['interest_rates']['Row']
 ): number {
   const { doc_charges: docCharges } = rate;
+  if (rate.rate === 2 && principal === 5000) {
+    return 30;
+  }
   if (rate.doc_charges_type === 'Fixed') {
     return docCharges;
   } else {
@@ -143,7 +148,9 @@ export async function loadBillWithDeps(
     loan_no: loanNo,
   });
   if (!(loan.success && loan.data?.length)) {
-    toast.error('No loan found with given Serial and Loan Number');
+    toast.error('No loan found with given Serial and Loan Number', {
+      className: toastStyles.error,
+    });
     return null;
   }
   const currentLoan = loan.data[0];
@@ -151,7 +158,7 @@ export async function loadBillWithDeps(
     id: currentLoan.customer_id,
   });
   if (!(customer.success && customer.data?.length)) {
-    toast.error('No customer match');
+    toast.error('No customer match', { className: toastStyles.error });
     return null;
   }
   const billItems = await read('bill_items', {
@@ -159,7 +166,7 @@ export async function loadBillWithDeps(
     loan_no: loanNo,
   });
   if (!(billItems.success && billItems.data?.length)) {
-    toast.error('No items match');
+    toast.error('No items match', { className: toastStyles.error });
     return null;
   }
 

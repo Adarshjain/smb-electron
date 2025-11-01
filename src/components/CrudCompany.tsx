@@ -32,6 +32,7 @@ import { format } from 'date-fns';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
 import { create, update } from '@/hooks/dbUtil.ts';
 import { toastElectronResponse } from '@/lib/myUtils.tsx';
+import { toastStyles } from '@/constants/loanForm.ts';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -113,7 +114,8 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
         toastElectronResponse(response);
       } catch (e) {
         toast.error(
-          e instanceof Error ? e.message : 'An unknown error occurred'
+          e instanceof Error ? e.message : 'An unknown error occurred',
+          { className: toastStyles.error }
         );
       } finally {
         toast.dismiss(toastId);
