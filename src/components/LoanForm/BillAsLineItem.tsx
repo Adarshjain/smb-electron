@@ -21,6 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils.ts';
 
 export default function BillAsLineItem(props: { customerId: string }) {
   const [enrichedBills, setEnrichedBills] = useState<
@@ -110,7 +111,16 @@ export default function BillAsLineItem(props: { customerId: string }) {
               <TableCell className="border-r">
                 {viewableDate(bill.date)}
               </TableCell>
-              <TableCell className="border-r">{bill.months} + 1</TableCell>
+              <TableCell
+                className={cn(
+                  'border-r',
+                  bill.months > 18
+                    ? 'bg-destructive text-white border-destructive'
+                    : ''
+                )}
+              >
+                {bill.months} + 1
+              </TableCell>
               <TableCell className="text-right border-r">
                 ₹{bill.loan_amount.toFixed(2)}
               </TableCell>
