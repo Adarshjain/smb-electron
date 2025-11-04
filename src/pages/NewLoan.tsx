@@ -10,7 +10,7 @@ import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FieldGroup } from '@/components/ui/field';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
-import type { MetalType, Tables } from '../../tables';
+import type { FullCustomer, MetalType, Tables } from '../../tables';
 import { useLoanCalculations } from '@/hooks/useLoanCalculations';
 import { LoanCustomerSection } from '@/components/LoanForm/LoanCustomerSection';
 import { LoanAmountSection } from '@/components/LoanForm/LoanAmountSection';
@@ -261,8 +261,6 @@ export default function NewLoan() {
   };
 
   const onPrevClick = async () => {
-    toast.success('Success', { className: toastStyles.success });
-    return;
     const [s, l] = getPrevSerial(enteredSerial, '' + enteredNumber);
     await handleLoanNavigation(s, l);
   };
@@ -291,7 +289,7 @@ export default function NewLoan() {
       const formattedLoan: Tables['bills']['Insert'] = {
         serial: data.serial,
         loan_no: data.loan_no,
-        customer_id: data.customer?.id ?? '',
+        customer_id: data.customer?.customer.id ?? '',
         date: data.date,
         loan_amount: parseInt(data.loan_amount || '0'),
         interest_rate: parseFloat(data.interest_rate || '0'),
@@ -397,7 +395,7 @@ export default function NewLoan() {
       setValue('serial', loan.serial);
       setValue('loan_no', loan.loan_no);
     }
-    setValue('customer', loan.customer);
+    setValue('customer', loan.full_customer);
     fieldArray.replace(
       loan.bill_items.map((item) => ({
         product: item.product,
@@ -435,7 +433,7 @@ export default function NewLoan() {
       metal_type: loan.metal_type,
       released: loan.released,
       first_month_interest: loan.first_month_interest.toFixed(2),
-      customer: loan.customer,
+      customer: loan.full_customer,
       serial: loan.serial,
       loan_no: loan.loan_no,
     });
@@ -454,8 +452,8 @@ export default function NewLoan() {
             <div className="flex gap-4">
               <div className="flex flex-1 flex-col gap-3">
                 <div className="flex justify-between items-center">
-                  <div className="flex gap-4">
-                    <LoanNumber
+                  <div className="flex gap-4 items-center">
+                    <LoanNumber<Loan>
                       control={control}
                       onLoanLoad={handleEditLoan}
                       serialFieldName="serial"
@@ -474,6 +472,12 @@ export default function NewLoan() {
                         />
                       )}
                     />
+                    {isEditMode && (
+                      <div>
+                        **{getValues('released') === 0 ? 'Active' : 'Redeemed'}
+                        **
+                      </div>
+                    )}
                   </div>
                   <div
                     className={cn(
@@ -483,7 +487,7 @@ export default function NewLoan() {
                   >
                     {title}
                   </div>
-                  <LoanNumber
+                  <LoanNumber<Loan>
                     control={control}
                     onLoanLoad={(loan) => handleOnOldLoanLoaded(loan, true)}
                     numberFieldName="old_loan_no"
@@ -494,9 +498,7 @@ export default function NewLoan() {
                 <div className="flex gap-6">
                   <LoanCustomerSection
                     selectedCustomer={selectedCustomer}
-                    onCustomerSelect={(
-                      customer: Tables['customers']['Row']
-                    ) => {
+                    onCustomerSelect={(customer: FullCustomer) => {
                       setValue('customer', customer);
                     }}
                   />
@@ -507,7 +509,7 @@ export default function NewLoan() {
                   />
                 </div>
               </div>
-              <LoanAmountSection
+              <LoanAmountSection<Loan>
                 control={control}
                 onLoanAmountChange={handleLoanAmountChange}
                 onInterestChange={handleInterestChange}
@@ -520,9 +522,8 @@ export default function NewLoan() {
               fieldArray={fieldArray}
               onNavigateToField={(fieldName) => next(fieldName)}
             />
-
             {selectedCustomer && (
-              <BillAsLineItem customerId={selectedCustomer.id} />
+              <BillAsLineItem customerId={selectedCustomer.customer.id} />
             )}
           </div>
         </FieldGroup>

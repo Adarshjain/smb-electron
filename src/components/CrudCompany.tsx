@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import DatePicker from '@/components/DatePicker.tsx';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { Tables } from '../../tables';
+import type { Tables } from '@/../tables';
 import { toast } from 'sonner';
 import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';

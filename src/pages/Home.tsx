@@ -8,8 +8,8 @@ export function Home() {
       <Button variant="outline" asChild>
         <Link to="/new-loan">New Loan</Link>
       </Button>
-      <Button variant="outline" disabled>
-        <Link to="/new-loan">Release Loan</Link>
+      <Button variant="outline">
+        <Link to="/release-loan">Release Loan</Link>
       </Button>
       <Button variant="outline" asChild>
         <Link to="/table-view">Table View</Link>

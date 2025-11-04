@@ -49,7 +49,7 @@ export interface Tables {
       id: string;
       address1: string | null;
       address2: string | null;
-      area: string | null;
+      area: string;
       phone_no: string | null;
       fhtitle: string;
       fhname: string;
@@ -161,10 +161,15 @@ export interface Tables {
 
   full_bill: {
     Row: Tables['bills']['Row'] & {
-      customer: Tables['customers']['Row'];
+      full_customer: FullCustomer;
       bill_items: Tables['bill_items']['Row'][];
     };
   };
+}
+
+export interface FullCustomer {
+  customer: Tables['customers']['Row'];
+  area: Tables['areas']['Row'];
 }
 
 export type LocalTables<K extends TableName> = Tables[K]['Row'] & {

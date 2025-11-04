@@ -5,6 +5,7 @@ import { TableView } from '@/pages/TableView.tsx';
 import Toolbar from '@/components/Toolbar.tsx';
 import Settings from '@/pages/Settings.tsx';
 import NewLoan from '@/pages/NewLoan.tsx';
+import ReleaseLoan from '@/pages/ReleaseLoan.tsx';
 
 function App() {
   return (
@@ -15,12 +16,12 @@ function App() {
         <Route path="/table-view" element={<TableView />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/new-loan" element={<NewLoan />} />
+        <Route path="/release-loan" element={<ReleaseLoan />} />
       </Routes>
       <Toaster
         position="bottom-left"
         theme="light"
         toastOptions={{
-          duration: 300000,
           style: {
             background: '#ffffff',
             color: '#1a1a1a',

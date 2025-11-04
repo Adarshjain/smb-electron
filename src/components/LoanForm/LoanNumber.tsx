@@ -1,35 +1,40 @@
-import { memo } from 'react';
-import { type Control, useWatch } from 'react-hook-form';
-import type { Loan } from '@/types/loanForm';
+import {
+  type Control,
+  type FieldPath,
+  type FieldValues,
+  useWatch,
+} from 'react-hook-form';
 import { SerialNumber } from '@/components/LoanForm/SerialNumber.tsx';
 import { Button } from '@/components/ui/button';
 import { ArrowDown } from 'lucide-react';
-import type { Tables } from '../../../tables';
+import type { Tables } from '@/../tables';
 import { loadBillWithDeps } from '@/lib/myUtils.tsx';
 import { cn } from '@/lib/utils.ts';
 
-interface OldLoanFillerProps {
-  control: Control<Loan>;
-  onLoanLoad: (loan: Tables['full_bill']['Row']) => void;
-  serialFieldName: 'serial' | 'old_serial';
-  numberFieldName: 'loan_no' | 'old_loan_no';
+interface LoanNumberProps<T extends FieldValues> {
+  control: Control<T>;
+  onLoanLoad: (loan: Tables['full_bill']['Row']) => void | Promise<void>;
+  serialFieldName: FieldPath<T>;
+  numberFieldName: FieldPath<T>;
   showButton?: boolean;
   className?: string;
+  autoFocus?: boolean;
 }
 
-export const LoanNumber = memo(function LoanNumber({
+export function LoanNumber<T extends FieldValues>({
   control,
   onLoanLoad,
   numberFieldName,
   serialFieldName,
   showButton,
   className,
-}: OldLoanFillerProps) {
+  autoFocus,
+}: LoanNumberProps<T>) {
   const serialValue = useWatch({ control, name: serialFieldName });
   const numberValue = useWatch({ control, name: numberFieldName });
 
   const fillFromOldLoan = async (
-    e?: React.MouseEvent<HTMLButtonElement>
+    e?: React.KeyboardEvent<HTMLInputElement>
   ): Promise<void> => {
     if (e) e.preventDefault();
     if (!serialValue || !numberValue) {
@@ -39,7 +44,7 @@ export const LoanNumber = memo(function LoanNumber({
     if (!loan) {
       return;
     }
-    onLoanLoad(loan);
+    void onLoanLoad(loan);
   };
 
   return (
@@ -48,7 +53,8 @@ export const LoanNumber = memo(function LoanNumber({
         control={control}
         serialFieldName={serialFieldName}
         numberFieldName={numberFieldName}
-        onNumFieldKeyDown={() => void fillFromOldLoan()}
+        onNumFieldKeyDown={(e) => void fillFromOldLoan(e)}
+        autoFocus={autoFocus}
       />
       {showButton && (
         <Button
@@ -70,4 +76,4 @@ export const LoanNumber = memo(function LoanNumber({
       )}
     </div>
   );
-});
+}

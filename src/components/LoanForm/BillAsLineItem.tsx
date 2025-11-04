@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import {
   fetchBillsByCustomer,
   getInterest,
+  getMonthDiff,
   mergeBillItems,
-  monthDiff,
   viewableDate,
 } from '@/lib/myUtils.tsx';
-import type { Tables } from '../../../tables';
+import type { Tables } from '@/../tables';
 import {
   Table,
   TableBody,
@@ -52,7 +52,7 @@ export default function BillAsLineItem(props: { customerId: string }) {
       // Precompute all async values before rendering
       const processed = await Promise.all(
         fetchedBills.map(async (bill) => {
-          const months = monthDiff(bill.date);
+          const months = getMonthDiff(bill.date);
           const interest = getInterest(
             bill.loan_amount,
             bill.interest_rate,
@@ -119,7 +119,7 @@ export default function BillAsLineItem(props: { customerId: string }) {
                     : ''
                 )}
               >
-                {bill.months} + 1
+                {bill.months}
               </TableCell>
               <TableCell className="text-right border-r">
                 ₹{bill.loan_amount.toFixed(2)}

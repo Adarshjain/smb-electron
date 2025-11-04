@@ -1,7 +1,7 @@
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import type { ElectronToReactResponse } from '../../shared-types';
-import type { MetalType, Tables } from '../../tables';
+import type { FullCustomer, MetalType, Tables } from '../../tables';
 import MyCache from '../../MyCache.ts';
 import { read } from '@/hooks/dbUtil.ts';
 import { toastStyles } from '@/constants/loanForm.ts';
@@ -38,8 +38,8 @@ export function rpcError(response: {
   });
 }
 
-export function viewableDate(dateStr: string): string {
-  return format(new Date(dateStr), 'dd/MM/yyyy');
+export function viewableDate(dateStr?: string | Date): string {
+  return format(dateStr ? new Date(dateStr) : new Date(), 'dd/MM/yyyy');
 }
 
 export function isToday(dateStr: string): boolean {
@@ -114,7 +114,7 @@ export function getInterest(principal: number, intRate: number, months = 1) {
   return Math.round(+(principal * (intRate / 100) * months).toFixed(2));
 }
 
-export function monthDiff(from: string, to?: string) {
+export function getMonthDiff(from: string, to?: string) {
   const now = to ? new Date(to) : new Date();
   const start = new Date(from);
   let months =
@@ -154,13 +154,13 @@ export async function loadBillWithDeps(
     return null;
   }
   const currentLoan = loan.data[0];
-  const customer = await read('customers', {
-    id: currentLoan.customer_id,
-  });
-  if (!(customer.success && customer.data?.length)) {
-    toast.error('No customer match', { className: toastStyles.error });
+
+  const fullCustomer = await fetchFullCustomer(currentLoan.customer_id);
+  if (!fullCustomer) {
+    toast.error('No fullCustomer match', { className: toastStyles.error });
     return null;
   }
+
   const billItems = await read('bill_items', {
     serial: serial.toUpperCase(),
     loan_no: loanNo,
@@ -172,8 +172,32 @@ export async function loadBillWithDeps(
 
   return {
     ...currentLoan,
-    customer: customer.data[0],
+    full_customer: fullCustomer,
     bill_items: billItems.data,
+  };
+}
+
+export async function fetchFullCustomer(
+  customerId: string
+): Promise<FullCustomer | null> {
+  const customerPromise = await read('customers', {
+    id: customerId,
+  });
+  if (!(customerPromise.success && customerPromise.data?.length)) {
+    toast.error('No customerPromise match', { className: toastStyles.error });
+    return null;
+  }
+  const customer = customerPromise.data[0];
+  const areaResponse = await read('areas', {
+    name: customer.area,
+  });
+  if (!(areaResponse.success && areaResponse.data?.length)) {
+    toast.error('No area match', { className: toastStyles.error });
+    return null;
+  }
+  return {
+    customer: customer,
+    area: areaResponse.data[0],
   };
 }
 
@@ -181,24 +205,12 @@ export async function fetchBillsByCustomer(
   customerId: string,
   skipReleased = true
 ): Promise<Tables['full_bill']['Row'][] | undefined> {
-  const billsPromise = read('bills', {
+  const billsResponse = await read('bills', {
     customer_id: customerId,
     released: skipReleased ? 0 : undefined,
   });
-  const customerPromise = read('customers', {
-    id: customerId,
-  });
-  const [customerResponse, billsResponse] = await Promise.all([
-    customerPromise,
-    billsPromise,
-  ]);
-  if (
-    customerResponse.success &&
-    billsResponse.success &&
-    customerResponse.data?.length &&
-    billsResponse.data?.length
-  ) {
-    const customer = customerResponse.data[0];
+  const fullCustomer = await fetchFullCustomer(customerId);
+  if (fullCustomer && billsResponse.success && billsResponse.data?.length) {
     const fullBills: Tables['full_bill']['Row'][] = [];
     for (const bill of billsResponse.data) {
       const billItemsResponse = await read('bill_items', {
@@ -208,7 +220,7 @@ export async function fetchBillsByCustomer(
       if (billItemsResponse.success && billItemsResponse.data?.length) {
         fullBills.push({
           ...bill,
-          customer: customer,
+          full_customer: fullCustomer,
           bill_items: billItemsResponse.data,
         });
       }

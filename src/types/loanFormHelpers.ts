@@ -1,5 +1,5 @@
 import type { BillingItem, BillingItemFieldName, Loan } from './loanForm';
-import type { Tables } from '../../tables';
+import type { Tables } from '@/../tables';
 
 /**
  * Type guard to check if a customer is valid (not null)

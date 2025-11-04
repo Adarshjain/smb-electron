@@ -14,7 +14,7 @@ interface SerialNumberInputProps<T extends FieldValues> {
   numberFieldName: FieldPath<T>;
   autoFocus?: boolean;
   defaultNumberValue?: number;
-  onNumFieldKeyDown?: () => void;
+  onNumFieldKeyDown?: (e?: React.KeyboardEvent<HTMLInputElement>) => void;
   onChange?: {
     serial?: (value: string) => void;
     number?: (value: number) => void;
@@ -70,7 +70,7 @@ export const SerialNumber = memo(function SerialNumberInput<
             aria-invalid={fieldState.invalid}
             className={`${FIELD_WIDTHS.LOAN_NO_INPUT} rounded-l-none border-l-0 text-center focus-visible:z-10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') onNumFieldKeyDown?.();
+              if (e.key === 'Enter') onNumFieldKeyDown?.(e);
             }}
             onFocus={(e) => {
               e.currentTarget.select();
