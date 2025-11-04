@@ -6,7 +6,7 @@ import {
   useCallback,
   useState,
 } from 'react';
-import type { Tables } from '../../tables';
+import type { Tables } from '@/../tables';
 import { read, update } from '../hooks/dbUtil.ts';
 import { getNextSerial, toastElectronResponse } from '@/lib/myUtils.tsx';
 import { toast } from 'sonner';

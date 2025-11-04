@@ -3,16 +3,18 @@ import { useCallback, useEffect, useRef } from 'react';
 interface UseEnterNavigationOptions<T> {
   fields: (T | string)[]; // ordered list of field "name" attributes
   onSubmit?: () => void; // optional submit callback
+  submitField?: T | string;
 }
 
 export function useEnterNavigation<T = string>({
   fields,
   onSubmit,
+  submitField,
 }: UseEnterNavigationOptions<T>) {
   const formRef = useRef<HTMLFormElement>(null);
 
   const next = useCallback(
-    (name?: string, shiftKey = false) => {
+    (name?: T, shiftKey = false) => {
       const form = formRef.current;
       if (!form) return;
       if (name) {
@@ -24,6 +26,11 @@ export function useEnterNavigation<T = string>({
 
       const fieldName = activeElement.getAttribute('name');
       if (!fieldName) return;
+
+      if (fieldName === submitField) {
+        if (onSubmit) onSubmit();
+        else form.requestSubmit?.();
+      }
 
       const currentIndex = fields.indexOf(fieldName);
       if (currentIndex === -1) return;

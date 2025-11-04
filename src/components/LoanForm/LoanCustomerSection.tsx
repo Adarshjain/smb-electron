@@ -1,72 +1,52 @@
-import { memo, useEffect, useState } from 'react';
+import { memo } from 'react';
 import CustomerPicker from '@/components/CustomerPicker';
-import type { Tables } from '../../../tables';
+import type { FullCustomer, Tables } from '@/../tables';
+import CustomerInfo from '@/components/LoanForm/CustomerInfo.tsx';
 import { read } from '@/hooks/dbUtil.ts';
-import { toastElectronResponse } from '@/lib/myUtils.tsx';
 import { toast } from 'sonner';
 import { toastStyles } from '@/constants/loanForm.ts';
 
 interface LoanCustomerSectionProps {
-  selectedCustomer: Tables['customers']['Row'] | null;
-  onCustomerSelect: (customer: Tables['customers']['Row']) => void;
+  selectedCustomer: FullCustomer | null;
+  onCustomerSelect: (customer: FullCustomer) => void;
 }
 
-export const LoanCustomerSection = memo(function LoanCustomerSection({
-  selectedCustomer,
-  onCustomerSelect,
-}: LoanCustomerSectionProps) {
-  const [selectedArea, setSelectedArea] = useState<
-    Tables['areas']['Row'] | null
-  >(null);
-  useEffect(() => {
-    const run = async () => {
-      if (!selectedCustomer) {
-        return;
-      }
-      const response = await read('areas', {
-        name: selectedCustomer.area ?? '',
+export const LoanCustomerSection = memo(function LoanCustomerSection(
+  props: LoanCustomerSectionProps
+) {
+  const onCustomerSelect = async (customer: Tables['customers']['Row']) => {
+    const areaResponse = await read('areas', {
+      name: customer.area,
+    });
+    if (areaResponse.success && areaResponse.data?.length) {
+      props.onCustomerSelect({
+        customer,
+        area: areaResponse.data[0],
       });
-      if (response.success) {
-        if (response.data?.length) {
-          setSelectedArea(response.data[0]);
-        } else {
-          toast.error('Area not Found!', { className: toastStyles.error });
-        }
-      } else {
-        toastElectronResponse(response);
-      }
-    };
-    void run();
-  }, [selectedCustomer]);
+      return;
+    }
+    toast.error('No area match', { className: toastStyles.error });
+    props.onCustomerSelect({
+      customer,
+      area: {
+        name: customer.area,
+        town: null,
+        post: null,
+        pincode: null,
+      },
+    });
+  };
+
   return (
     <div>
       <CustomerPicker onSelect={onCustomerSelect} />
-      <div className="pl-3 py-2 min-h-[136px]">
-        {selectedCustomer && (
-          <>
-            <div>
-              {selectedCustomer.name} {selectedCustomer.fhtitle}{' '}
-              {selectedCustomer.fhname}
-            </div>
-            {selectedCustomer.address1 && selectedCustomer.address1 !== '.' && (
-              <div>
-                {selectedCustomer.door_no} {selectedCustomer.address1},
-              </div>
-            )}
-            <div>{selectedCustomer.address2}</div>
-            <div>
-              {selectedCustomer.area},
-              {selectedArea && (
-                <div>
-                  {selectedArea.post ? `Post: ${selectedArea.post}` : ''}{' '}
-                  {selectedArea.town} {selectedArea.pincode}
-                </div>
-              )}
-            </div>
-            <div>{selectedCustomer.phone_no}</div>
-          </>
-        )}
-      </div>
+      {props.selectedCustomer && (
+        <CustomerInfo
+          className="pl-3 py-2 min-h-[136px]"
+          customer={props.selectedCustomer.customer}
+          area={props.selectedCustomer.area}
+        />
+      )}
     </div>
   );
 });

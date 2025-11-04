@@ -71,7 +71,7 @@ export function FormNumberInput<T extends FieldValues>({
             placeholder={placeholder}
             className={`${rightAlign ? 'text-right' : ''} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${className}`}
           />
-          <InputGroupAddon>{label}</InputGroupAddon>
+          <InputGroupAddon className="text-gray-600">{label}</InputGroupAddon>
           {suffix && (
             <InputGroupAddon align="inline-end" className="!pl-0 w-6.5">
               {suffix}

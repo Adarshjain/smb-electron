@@ -13,7 +13,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { read } from '@/hooks/dbUtil.ts';
-import type { Tables } from '../../tables';
+import type { Tables } from '@/../tables';
 import { Input } from '@/components/ui/input.tsx';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
 

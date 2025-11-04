@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button.tsx';
 import { CrudCompany } from '@/components/CrudCompany.tsx';
 import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
 import { deleteRecord } from '@/hooks/dbUtil.ts';
-import type { Tables } from '../../tables';
+import type { Tables } from '@/../tables';
 
 export default function CompanySettings() {
   const { allCompanies, refetch } = useCompany();

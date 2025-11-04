@@ -1,5 +1,5 @@
 import * as z from 'zod';
-import type { Tables } from '@/../tables';
+import type { FullCustomer } from '@/../tables';
 
 export const newLoanSchema = z.object({
   serial: z.string().length(1),
@@ -12,7 +12,7 @@ export const newLoanSchema = z.object({
   total: z.string(),
   date: z.string(),
   doc_charges: z.string(),
-  customer: z.custom<Tables['customers']['Row']>().nullable(),
+  customer: z.custom<FullCustomer>().nullable(),
   metal_type: z.enum(['Gold', 'Silver', 'Other']),
   company: z.string(),
   released: z.union([z.literal(0), z.literal(1)]),
@@ -40,3 +40,16 @@ export type BillingItemFieldName = keyof BillingItem;
 export type FormFieldName =
   | LoanFieldName
   | `billing_items.${number}.${BillingItemFieldName}`;
+
+export const releaseLoanSchema = z.object({
+  serial: z.string().length(1),
+  loan_no: z.number(),
+  date: z.string(),
+  loan_amount: z.string(),
+  interest_amount: z.string(),
+  interest_rate: z.string(),
+  total_amount: z.string(),
+  released: z.number(),
+  total_months: z.number(),
+});
+export type ReleaseLoan = z.infer<typeof releaseLoanSchema>;
