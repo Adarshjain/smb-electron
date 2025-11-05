@@ -198,7 +198,7 @@ export default function ReleaseLoan() {
                     className="w-27.5 opacity-100"
                     id="date"
                     name="date"
-                    defaultValue={loadedLoan.date}
+                    value={loadedLoan.date}
                     disabled
                   />
                 </div>

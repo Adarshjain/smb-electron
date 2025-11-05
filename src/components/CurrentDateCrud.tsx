@@ -79,7 +79,7 @@ export default function CurrentDateCrud() {
         </DialogHeader>
         <div className="flex gap-2">
           <DatePicker
-            defaultValue={company.current_date}
+            value={company.current_date}
             onInputChange={setInternalDate}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
