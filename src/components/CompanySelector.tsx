@@ -25,7 +25,10 @@ export default function CompanySelector(props: {
       value={company?.name ?? ''}
       disabled={props.disabled}
     >
-      <SelectTrigger className={cn('w-full', props.className)}>
+      <SelectTrigger
+        className={cn('w-full', props.className)}
+        name="company-switcher"
+      >
         <SelectValue placeholder="Select Company" />
       </SelectTrigger>
       <SelectContent>
