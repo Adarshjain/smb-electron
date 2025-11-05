@@ -207,6 +207,7 @@ export const initBills = () => {
         loan_amount: loanAmount,
         interest_amount: interestPaid,
         total_amount: loanAmount + interestPaid - interestDiscount,
+        company: toSentenceCase(record.company),
       });
     }
   }

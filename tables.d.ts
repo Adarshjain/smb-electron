@@ -87,7 +87,7 @@ export interface Tables {
       doc_charges: number;
       metal_type: MetalType;
       released: 0 | 1;
-      company: string | null;
+      company: string;
     };
     Insert: Tables['bills']['Row'];
     Update: Partial<Tables['bills']['Row']>;
@@ -119,6 +119,7 @@ export interface Tables {
       loan_amount: number;
       interest_amount: number;
       total_amount: number;
+      company: string;
     };
     Insert: Tables['releases']['Row'];
     Update: Partial<Tables['releases']['Row']>;

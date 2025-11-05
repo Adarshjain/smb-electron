@@ -5,15 +5,26 @@ import { Button } from '@/components/ui/button.tsx';
 export function Home() {
   return (
     <div className="flex flex-col gap-3 p-6 w-[300px]">
-      <Button variant="outline" asChild>
-        <Link to="/new-loan">New Loan</Link>
-      </Button>
-      <Button variant="outline">
-        <Link to="/release-loan">Release Loan</Link>
-      </Button>
-      <Button variant="outline" asChild>
-        <Link to="/table-view">Table View</Link>
-      </Button>
+      <Link to="/new-loan">
+        <Button variant="outline" className="w-full">
+          New Loan
+        </Button>
+      </Link>
+      <Link to="/release-loan">
+        <Button variant="outline" className="w-full">
+          Release Loan
+        </Button>
+      </Link>
+      <Link to="/daily-summary">
+        <Button variant="outline" className="w-full">
+          Daily Summary
+        </Button>
+      </Link>
+      <Link to="/table-view">
+        <Button variant="outline" className="w-full">
+          Table View
+        </Button>
+      </Link>
       <CompanySelector />
     </div>
   );

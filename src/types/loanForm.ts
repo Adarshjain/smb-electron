@@ -51,5 +51,6 @@ export const releaseLoanSchema = z.object({
   total_amount: z.string(),
   released: z.number(),
   total_months: z.number(),
+  company: z.string(),
 });
 export type ReleaseLoan = z.infer<typeof releaseLoanSchema>;

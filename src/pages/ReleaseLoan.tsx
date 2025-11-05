@@ -31,10 +31,11 @@ export default function ReleaseLoan() {
       loan_amount: '',
       total_amount: '',
       interest_rate: '',
+      company: company?.name ?? '',
       released: 0,
       total_months: 0,
     }),
-    [company?.current_date]
+    [company?.current_date, company?.name]
   );
   const [loadedLoan, setLoadedLoan] = useState<
     Tables['full_bill']['Row'] | null
@@ -56,6 +57,7 @@ export default function ReleaseLoan() {
         loan_amount: parseFloat(data.loan_amount ?? 0),
         interest_amount: parseFloat(data.interest_amount ?? 0),
         total_amount: parseFloat(data.total_amount ?? 0),
+        company: data.company,
       });
       await update('bills', {
         serial: data.serial,
@@ -72,6 +74,7 @@ export default function ReleaseLoan() {
         interest_rate: data.interest_rate,
         total_amount: data.total_amount,
         total_months: data.total_months,
+        company: data.company,
       });
     } else {
       await deleteRecord('releases', {
@@ -93,6 +96,7 @@ export default function ReleaseLoan() {
         interest_rate: data.interest_rate,
         total_amount: data.total_amount,
         total_months: data.total_months,
+        company: data.company,
       });
     }
     next('loan_no');
