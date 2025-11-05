@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/select';
 import { useCompany } from '../context/CompanyProvider.tsx';
 import { cn } from '@/lib/utils.ts';
+import { Kbd } from '@/components/ui/kbd';
 
 export default function CompanySelector(props: {
   className?: string;
@@ -26,9 +27,10 @@ export default function CompanySelector(props: {
       disabled={props.disabled}
     >
       <SelectTrigger
-        className={cn('w-full', props.className)}
+        className={cn('w-full cursor-pointer', props.className)}
         name="company-switcher"
       >
+        <Kbd className="">F1</Kbd>
         <SelectValue placeholder="Select Company" />
       </SelectTrigger>
       <SelectContent>

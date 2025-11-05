@@ -2,6 +2,7 @@ import CompanySelector from '@/components/CompanySelector.tsx';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button.tsx';
 import { useEffect } from 'react';
+import { Kbd } from '@/components/ui/kbd';
 
 const shortCutMapping: {
   shortcutKey: string;
@@ -46,35 +47,31 @@ export function Home() {
 
   return (
     <div className="flex flex-col gap-3 p-6 w-[300px]">
+      <CompanySelector />
       <Button
         variant="outline"
-        className="w-full"
+        className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
         onClick={() => void navigate('/new-loan')}
       >
-        New Loan
+        <Kbd className="justify-self-start col-start-1">F2</Kbd>
+        <div className="justify-self-center col-start-2">New Loan</div>
       </Button>
       <Button
         variant="outline"
-        className="w-full"
+        className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
         onClick={() => void navigate('/release-loan')}
       >
-        Release Loan
+        <Kbd className="justify-self-start col-start-1">F3</Kbd>
+        <div className="justify-self-center col-start-2">Release Loan</div>
       </Button>
       <Button
         variant="outline"
-        className="w-full"
+        className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
         onClick={() => void navigate('/day-book')}
       >
-        Day Book
+        <Kbd className="justify-self-start col-start-1">F8</Kbd>
+        <div className="justify-self-center col-start-2">Day Book</div>
       </Button>
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={() => void navigate('/table-view')}
-      >
-        Table View
-      </Button>
-      <CompanySelector />
     </div>
   );
 }
