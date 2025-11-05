@@ -336,6 +336,10 @@ export const TablesSQliteSchema: Record<
         schema: 'REAL NOT NULL',
         encoded: false,
       },
+      company: {
+        schema: 'TEXT',
+        encoded: false,
+      },
       synced: {
         schema: 'BOOLEAN NOT NULL DEFAULT 0',
         encoded: false,
