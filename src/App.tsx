@@ -18,7 +18,7 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/new-loan" element={<NewLoan />} />
         <Route path="/release-loan" element={<ReleaseLoan />} />
-        <Route path="/daily-summary" element={<DailySummary />} />
+        <Route path="/day-book" element={<DailySummary />} />
       </Routes>
       <Toaster
         position="bottom-left"

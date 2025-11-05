@@ -136,7 +136,6 @@ export default function DailySummary() {
   return (
     <div className="p-3">
       <div className="flex justify-around mb-4">
-        {/*<div className="text-xl text-center">Daily Summary</div>*/}
         <div className="text-xl">Loans</div>
         <DatePicker
           className="w-27.5"

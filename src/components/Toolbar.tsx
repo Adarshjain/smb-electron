@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { ArrowLeftIcon, HomeIcon, SettingsIcon } from 'lucide-react';
+import { HomeIcon, RotateCw, SettingsIcon } from 'lucide-react';
 
 import {
   NavigationMenu,
@@ -7,7 +6,7 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from '@/components/ui/navigation-menu';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import {
@@ -18,45 +17,42 @@ import {
 import { cn } from '@/lib/utils.ts';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import CurrentDateCrud from '@/components/CurrentDateCrud.tsx';
+import { useEffect, useState } from 'react';
 
 export default function Toolbar() {
   const { isTamil, setIsTamil } = useThanglish();
   const location = useLocation();
-  const navigate = useNavigate();
   const { company } = useCompany();
-  const [canGoBack, setCanGoBack] = React.useState(false);
+  const [title, setTitle] = useState('');
 
-  React.useEffect(() => {
-    // React Router stores the current history index in window.history.state.idx
-    // If idx > 0, there's history to go back to
-    const historyState = window.history.state as { idx?: number } | null;
-    setCanGoBack((historyState?.idx ?? 0) > 0);
+  useEffect(() => {
+    switch (location.pathname) {
+      case '/':
+      default:
+        setTitle('');
+        break;
+      case '/settings':
+        setTitle('Settings');
+        break;
+      case '/new-loan':
+        setTitle('Loan Editor');
+        break;
+      case '/release-loan':
+        setTitle('Release Loans');
+        break;
+      case '/table-view':
+        setTitle('Table View');
+        break;
+      case '/day-book':
+        setTitle('Day Book');
+        break;
+    }
   }, [location]);
+
   return (
     <NavigationMenu className="w-full max-w-full border-b py-2 bg-gray-100">
-      <div className="ml-2 w-1/3 flex items-start">
+      <div className="ml-2 w-1/3 flex items-center">
         <NavigationMenuList className="flex-wrap">
-          <NavigationMenuItem>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <NavigationMenuLink
-                  onClick={() => canGoBack && void navigate(-1)}
-                  className={cn(
-                    'flex size-8 items-center justify-center p-1.5 rounded-md transition-colors hover:bg-accent hover:text-accent-foreground',
-                    canGoBack
-                      ? 'cursor-pointer'
-                      : 'opacity-50 cursor-not-allowed'
-                  )}
-                >
-                  <ArrowLeftIcon size={20} aria-hidden={true} />
-                  <span className="sr-only">Back</span>
-                </NavigationMenuLink>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="px-2 py-1 text-xs">
-                <p>Back</p>
-              </TooltipContent>
-            </Tooltip>
-          </NavigationMenuItem>
           <NavigationMenuItem>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -77,7 +73,30 @@ export default function Toolbar() {
               </TooltipContent>
             </Tooltip>
           </NavigationMenuItem>
+          <NavigationMenuItem>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <NavigationMenuLink asChild>
+                  <div
+                    onClick={() => {
+                      window.location.reload();
+                    }}
+                    className={cn(
+                      'flex size-8 items-center justify-center p-1.5 rounded-md transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer'
+                    )}
+                  >
+                    <RotateCw size={20} aria-hidden={true} />
+                    <span className="sr-only">Refresh</span>
+                  </div>
+                </NavigationMenuLink>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="px-2 py-1 text-xs">
+                <p>Refresh</p>
+              </TooltipContent>
+            </Tooltip>
+          </NavigationMenuItem>
         </NavigationMenuList>
+        <div className="ml-12 font-bold">{title}</div>
       </div>
       {company ? (
         <div className="w-1/3  flex justify-center">
