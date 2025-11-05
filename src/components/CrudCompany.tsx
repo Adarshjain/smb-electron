@@ -198,6 +198,7 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
             {renderField('current_date', 'Current Date', (field, invalid) => (
               <DatePicker
                 {...field}
+                value={field.value}
                 id="current_date"
                 name="current_date"
                 isError={invalid}

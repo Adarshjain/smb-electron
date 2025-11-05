@@ -140,8 +140,9 @@ export default function DailySummary() {
         <div className="text-xl">Loans</div>
         <DatePicker
           className="w-27.5"
-          defaultValue={date}
+          value={date}
           onInputChange={setDate}
+          navigated
         />
         <div className="text-xl">Releases</div>
       </div>
