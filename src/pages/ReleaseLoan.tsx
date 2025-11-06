@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
@@ -40,6 +41,7 @@ export default function ReleaseLoan() {
   const [loadedLoan, setLoadedLoan] = useState<
     Tables['full_bill']['Row'] | null
   >(null);
+  const nextRef = useRef<((name?: keyof ReleaseLoan) => void) | null>(null);
 
   const { control, handleSubmit, getValues, reset, setValue } =
     useForm<ReleaseLoan>({
@@ -47,63 +49,69 @@ export default function ReleaseLoan() {
       defaultValues,
     });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const onSubmit = async (data: ReleaseLoan) => {
-    if (loadedLoan?.released === 0) {
-      await create('releases', {
-        serial: data.serial,
-        loan_no: data.loan_no,
-        date: company?.current_date ?? viewableDate(),
-        loan_amount: parseFloat(data.loan_amount ?? 0),
-        interest_amount: parseFloat(data.interest_amount ?? 0),
-        total_amount: parseFloat(data.total_amount ?? 0),
-        company: data.company,
-      });
-      await update('bills', {
-        serial: data.serial,
-        loan_no: data.loan_no,
-        released: 1,
-      });
-      reset({
-        date: data.date,
-        loan_no: data.loan_no,
-        serial: data.serial,
-        released: 1,
-        loan_amount: data.loan_amount,
-        interest_amount: data.interest_amount,
-        interest_rate: data.interest_rate,
-        total_amount: data.total_amount,
-        total_months: data.total_months,
-        company: data.company,
-      });
-    } else {
-      await deleteRecord('releases', {
-        serial: data.serial,
-        loan_no: data.loan_no,
-      });
-      await update('bills', {
-        serial: data.serial,
-        loan_no: data.loan_no,
-        released: 0,
-      });
-      reset({
-        date: data.date,
-        loan_no: data.loan_no,
-        serial: data.serial,
-        released: 0,
-        loan_amount: data.loan_amount,
-        interest_amount: data.interest_amount,
-        interest_rate: data.interest_rate,
-        total_amount: data.total_amount,
-        total_months: data.total_months,
-        company: data.company,
-      });
-    }
-    next('loan_no');
-  };
+  const onSubmit = useCallback(
+    async (data: ReleaseLoan) => {
+      if (loadedLoan?.released === 0) {
+        await create('releases', {
+          serial: data.serial,
+          loan_no: data.loan_no,
+          date: company?.current_date ?? viewableDate(),
+          loan_amount: parseFloat(data.loan_amount ?? 0),
+          interest_amount: parseFloat(data.interest_amount ?? 0),
+          total_amount: parseFloat(data.total_amount ?? 0),
+          company: data.company,
+        });
+        await update('bills', {
+          serial: data.serial,
+          loan_no: data.loan_no,
+          released: 1,
+        });
+        reset({
+          date: data.date,
+          loan_no: data.loan_no,
+          serial: data.serial,
+          released: 1,
+          loan_amount: data.loan_amount,
+          interest_amount: data.interest_amount,
+          interest_rate: data.interest_rate,
+          total_amount: data.total_amount,
+          total_months: data.total_months,
+          company: data.company,
+        });
+      } else {
+        await deleteRecord('releases', {
+          serial: data.serial,
+          loan_no: data.loan_no,
+        });
+        await update('bills', {
+          serial: data.serial,
+          loan_no: data.loan_no,
+          released: 0,
+        });
+        reset({
+          date: data.date,
+          loan_no: data.loan_no,
+          serial: data.serial,
+          released: 0,
+          loan_amount: data.loan_amount,
+          interest_amount: data.interest_amount,
+          interest_rate: data.interest_rate,
+          total_amount: data.total_amount,
+          total_months: data.total_months,
+          company: data.company,
+        });
+      }
+      nextRef.current?.('loan_no');
+    },
+    [loadedLoan, company, reset]
+  );
 
   const handleFormSubmit = useCallback(() => {
-    void handleSubmit(onSubmit)();
+    void handleSubmit(onSubmit, (errors) => {
+      console.log(getValues());
+      // Log validation errors for debugging
+      console.error('Form validation errors:', errors);
+    })();
   }, [handleSubmit, onSubmit]);
 
   const { setFormRef, next } = useEnterNavigation<keyof ReleaseLoan>({
@@ -111,6 +119,11 @@ export default function ReleaseLoan() {
     onSubmit: handleFormSubmit,
     submitField: 'interest_amount',
   });
+
+  // Store next in ref so onSubmit can access it
+  useEffect(() => {
+    nextRef.current = next;
+  }, [next]);
 
   const interestAmount = useWatch({ control, name: 'interest_amount' });
 
@@ -145,6 +158,7 @@ export default function ReleaseLoan() {
           interest_rate: loan.interest_rate.toFixed(2),
           total_amount: release.total_amount.toFixed(2),
           total_months: monthDiff,
+          company: loan.company,
         });
       }
       setLoadedLoan(loan);
@@ -167,6 +181,7 @@ export default function ReleaseLoan() {
       interest_amount: interestAmount.toFixed(2),
       total_amount: (loan.loan_amount + interestAmount).toFixed(2),
       total_months: monthDiff,
+      company: loan.company,
     });
     setLoadedLoan(loan);
     setTimeout(() => next('interest_amount'), 20);
