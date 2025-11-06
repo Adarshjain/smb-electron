@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { formatCurrency } from '@/lib/myUtils.tsx';
 
 interface AggregatedBills {
   loan: {
@@ -169,10 +170,10 @@ export default function DailySummary() {
                   <TableRow key={name}>
                     <TableCell className="border-r">{name}</TableCell>
                     <TableCell className="border-r text-right tabular-nums">
-                      {value.loan.principalTotal.toFixed(2)}
+                      {formatCurrency(value.loan.principalTotal, true)}
                     </TableCell>
                     <TableCell className="border-r text-right tabular-nums">
-                      {value.loan.interestTotal.toFixed(2)}
+                      {formatCurrency(value.loan.interestTotal, true)}
                     </TableCell>
                     <TableCell className="border-r text-right tabular-nums">
                       {value.loans.length}
@@ -183,10 +184,10 @@ export default function DailySummary() {
             <TableRow>
               <TableCell className="border-r">Total</TableCell>
               <TableCell className="border-r text-right tabular-nums">
-                {totals.loanPrincipalTotal.toFixed(2)}
+                {formatCurrency(totals.loanPrincipalTotal)}
               </TableCell>
               <TableCell className="border-r text-right tabular-nums">
-                {totals.loanInterestTotal.toFixed(2)}
+                {formatCurrency(totals.loanInterestTotal)}
               </TableCell>
             </TableRow>
           </TableBody>
@@ -213,10 +214,10 @@ export default function DailySummary() {
                   <TableRow key={name}>
                     <TableCell className="border-r">{name}</TableCell>
                     <TableCell className="border-r text-right tabular-nums">
-                      {value.release.principalTotal.toFixed(2)}
+                      {formatCurrency(value.release.principalTotal, true)}
                     </TableCell>
                     <TableCell className="border-r text-right tabular-nums">
-                      {value.release.interestTotal.toFixed(2)}
+                      {formatCurrency(value.release.interestTotal, true)}
                     </TableCell>
                     <TableCell className="border-r text-right tabular-nums">
                       {value.releases.length}
@@ -227,10 +228,10 @@ export default function DailySummary() {
             <TableRow>
               <TableCell className="border-r">Total</TableCell>
               <TableCell className="border-r text-right tabular-nums">
-                {totals.releasePrincipalTotal.toFixed(2)}
+                {formatCurrency(totals.releasePrincipalTotal)}
               </TableCell>
               <TableCell className="border-r text-right tabular-nums">
-                {totals.releaseInterestTotal.toFixed(2)}
+                {formatCurrency(totals.releaseInterestTotal)}
               </TableCell>
             </TableRow>
           </TableBody>
@@ -268,26 +269,26 @@ export default function DailySummary() {
                       <TableRow key={`${loan.serial}-${loan.loan_no}`}>
                         <TableCell className="border-r">{`${loan.serial} ${loan.loan_no}`}</TableCell>
                         <TableCell className="border-r text-right tabular-nums">
-                          {loan.loan_amount.toFixed(2)}
+                          {formatCurrency(loan.loan_amount, true)}
                         </TableCell>
                         <TableCell className="border-r text-right tabular-nums">
-                          {loan.interest.toFixed(2)}
+                          {formatCurrency(loan.interest, true)}
                         </TableCell>
                         <TableCell className="border-r text-right tabular-nums">
-                          {loan.total.toFixed(2)}
+                          {formatCurrency(loan.total, true)}
                         </TableCell>
                       </TableRow>
                     ))}
                     <TableRow>
                       <TableCell className="border-r">Total</TableCell>
                       <TableCell className="border-r text-right tabular-nums">
-                        ₹{value.loan.principalTotal.toFixed(2)}
+                        {formatCurrency(value.loan.principalTotal)}
                       </TableCell>
                       <TableCell className="border-r text-right tabular-nums">
-                        ₹{value.loan.interestTotal.toFixed(2)}
+                        {formatCurrency(value.loan.interestTotal)}
                       </TableCell>
                       <TableCell className="border-r text-right tabular-nums">
-                        ₹{value.loan.total.toFixed(2)}
+                        {formatCurrency(value.loan.total)}
                       </TableCell>
                     </TableRow>
                   </TableBody>
@@ -313,26 +314,26 @@ export default function DailySummary() {
                       <TableRow key={`${release.serial}-${release.loan_no}`}>
                         <TableCell className="border-r">{`${release.serial} ${release.loan_no}`}</TableCell>
                         <TableCell className="border-r text-right tabular-nums">
-                          {release.loan_amount.toFixed(2)}
+                          {formatCurrency(release.loan_amount, true)}
                         </TableCell>
                         <TableCell className="border-r text-right tabular-nums">
-                          {release.interest_amount.toFixed(2)}
+                          {formatCurrency(release.interest_amount, true)}
                         </TableCell>
                         <TableCell className="border-r text-right tabular-nums">
-                          {release.total_amount.toFixed(2)}
+                          {formatCurrency(release.total_amount, true)}
                         </TableCell>
                       </TableRow>
                     ))}
                     <TableRow>
                       <TableCell className="border-r">Total</TableCell>
                       <TableCell className="border-r text-right tabular-nums">
-                        ₹{value.release.principalTotal.toFixed(2)}
+                        {formatCurrency(value.release.principalTotal)}
                       </TableCell>
                       <TableCell className="border-r text-right tabular-nums">
-                        ₹{value.release.interestTotal.toFixed(2)}
+                        {formatCurrency(value.release.interestTotal)}
                       </TableCell>
                       <TableCell className="border-r text-right tabular-nums">
-                        ₹{value.release.total.toFixed(2)}
+                        {formatCurrency(value.release.total)}
                       </TableCell>
                     </TableRow>
                   </TableBody>

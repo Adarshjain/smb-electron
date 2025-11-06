@@ -337,7 +337,7 @@ export default function NewLoan() {
           await create('bill_items', item);
         }
         await setNextSerial();
-        next('customer_picker');
+        next('customer_picker' as FormFieldName);
         toast.success('Loan saved', { className: toastStyles.success });
       }
     } catch (error) {
@@ -509,7 +509,7 @@ export default function NewLoan() {
                   />
                 </div>
               </div>
-              <LoanAmountSection<Loan>
+              <LoanAmountSection
                 control={control}
                 onLoanAmountChange={handleLoanAmountChange}
                 onInterestChange={handleInterestChange}
@@ -520,7 +520,9 @@ export default function NewLoan() {
               control={control}
               metalType={metalType}
               fieldArray={fieldArray}
-              onNavigateToField={(fieldName) => next(fieldName)}
+              onNavigateToField={(fieldName) =>
+                next(fieldName as FormFieldName)
+              }
             />
             {selectedCustomer && (
               <BillAsLineItem customerId={selectedCustomer.customer.id} />
