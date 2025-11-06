@@ -46,32 +46,35 @@ export function Home() {
   }, [navigate]);
 
   return (
-    <div className="flex flex-col gap-3 p-6 w-[300px]">
-      <CompanySelector />
-      <Button
-        variant="outline"
-        className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
-        onClick={() => void navigate('/new-loan')}
-      >
-        <Kbd className="justify-self-start col-start-1">F2</Kbd>
-        <div className="justify-self-center col-start-2">New Loan</div>
-      </Button>
-      <Button
-        variant="outline"
-        className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
-        onClick={() => void navigate('/release-loan')}
-      >
-        <Kbd className="justify-self-start col-start-1">F3</Kbd>
-        <div className="justify-self-center col-start-2">Release Loan</div>
-      </Button>
-      <Button
-        variant="outline"
-        className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
-        onClick={() => void navigate('/day-book')}
-      >
-        <Kbd className="justify-self-start col-start-1">F8</Kbd>
-        <div className="justify-self-center col-start-2">Day Book</div>
-      </Button>
+    <div className="flex">
+      <div className="flex-1"></div>
+      <div className="flex flex-col gap-3 p-6 w-[300px]">
+        <CompanySelector />
+        <Button
+          variant="outline"
+          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
+          onClick={() => void navigate('/new-loan')}
+        >
+          <Kbd className="justify-self-start col-start-1">F2</Kbd>
+          <div className="justify-self-center col-start-2">New Loan</div>
+        </Button>
+        <Button
+          variant="outline"
+          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
+          onClick={() => void navigate('/release-loan')}
+        >
+          <Kbd className="justify-self-start col-start-1">F3</Kbd>
+          <div className="justify-self-center col-start-2">Release Loan</div>
+        </Button>
+        <Button
+          variant="outline"
+          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
+          onClick={() => void navigate('/day-book')}
+        >
+          <Kbd className="justify-self-start col-start-1">F8</Kbd>
+          <div className="justify-self-center col-start-2">Day Book</div>
+        </Button>
+      </div>
     </div>
   );
 }

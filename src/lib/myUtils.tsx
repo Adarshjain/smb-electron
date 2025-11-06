@@ -73,6 +73,15 @@ export function isValidIsoDate(dateStr: string): boolean {
   return isoDateRegex.test(dateStr);
 }
 
+export function formatCurrency(value: number, skipSymbol = false): string {
+  return new Intl.NumberFormat(
+    'en-IN',
+    skipSymbol
+      ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+      : { style: 'currency', currency: 'INR' }
+  ).format(value);
+}
+
 export function toastElectronResponse<T>(
   response: ElectronToReactResponse<T>,
   successMessage = 'Success'

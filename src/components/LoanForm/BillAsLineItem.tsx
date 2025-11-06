@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   fetchBillsByCustomer,
+  formatCurrency,
   getInterest,
   getMonthDiff,
   mergeBillItems,
@@ -90,7 +91,7 @@ export default function BillAsLineItem(props: { customerId: string }) {
   if (!enrichedBills.length) return null;
 
   return (
-    <div className="border rounded-md">
+    <div className="border rounded-md tabular-nums">
       <Table className="table-auto">
         <TableHeader>
           <TableRow>
@@ -105,66 +106,62 @@ export default function BillAsLineItem(props: { customerId: string }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {enrichedBills.map((bill) => (
-            <TableRow key={`${bill.serial}-${bill.loan_no}`}>
-              <TableCell className="border-r">{`${bill.serial} ${bill.loan_no}`}</TableCell>
-              <TableCell className="border-r">
-                {viewableDate(bill.date)}
-              </TableCell>
-              <TableCell
-                className={cn(
-                  'border-r',
-                  bill.months > 18
-                    ? 'bg-destructive text-white border-destructive'
-                    : ''
-                )}
-              >
-                {bill.months}
-              </TableCell>
-              <TableCell className="text-right border-r">
-                ₹{bill.loan_amount.toFixed(2)}
-              </TableCell>
-              <TableCell className="text-right border-r">
-                <Tooltip>
-                  <TooltipTrigger>₹{bill.interest.toFixed(2)}</TooltipTrigger>
-                  <TooltipContent side="right" className="px-2 py-1 text-xs">
-                    {bill.interest === 0
-                      ? `₹${(
-                          bill.interest +
-                          bill.firstMonthInterest +
-                          bill.docCharges
-                        ).toFixed(2)}`
-                      : `₹${bill.interest.toFixed(2)} + ₹
-                    ${(bill.firstMonthInterest + bill.docCharges).toFixed(2)} = ₹
-                    ${(
-                      bill.interest +
-                      bill.firstMonthInterest +
-                      bill.docCharges
-                    ).toFixed(2)}`}
-                  </TooltipContent>
-                </Tooltip>
-              </TableCell>
-              <TableCell className="text-right border-r">
-                ₹{(bill.interest + bill.loan_amount).toFixed(2)}
-              </TableCell>
-              <TableCell className="border-r">{bill.description}</TableCell>
-              <TableCell className="text-right border-r">
-                {bill.weight.toFixed(2)} gms
-              </TableCell>
-            </TableRow>
-          ))}
+          {enrichedBills.map((bill) => {
+            const total =
+              bill.interest + bill.firstMonthInterest + bill.docCharges;
+            return (
+              <TableRow key={`${bill.serial}-${bill.loan_no}`}>
+                <TableCell className="border-r">{`${bill.serial} ${bill.loan_no}`}</TableCell>
+                <TableCell className="border-r">
+                  {viewableDate(bill.date)}
+                </TableCell>
+                <TableCell
+                  className={cn(
+                    'border-r',
+                    bill.months > 18
+                      ? 'bg-destructive text-white border-destructive'
+                      : ''
+                  )}
+                >
+                  {bill.months}
+                </TableCell>
+                <TableCell className="text-right border-r tabular-nums">
+                  {formatCurrency(bill.loan_amount)}
+                </TableCell>
+                <TableCell className="text-right border-r tabular-nums">
+                  <Tooltip>
+                    <TooltipTrigger>
+                      {formatCurrency(bill.interest)}
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="px-2 py-1 text-xs">
+                      {bill.interest === 0
+                        ? formatCurrency(total)
+                        : `${formatCurrency(bill.interest)} + ${formatCurrency(bill.firstMonthInterest + bill.docCharges)} = ${formatCurrency(total)}`}
+                    </TooltipContent>
+                  </Tooltip>
+                </TableCell>
+                <TableCell className="text-right border-r tabular-nums">
+                  {formatCurrency(bill.interest + bill.loan_amount)}
+                </TableCell>
+                <TableCell className="border-r">{bill.description}</TableCell>
+                <TableCell className="text-right border-r">
+                  {bill.weight.toFixed(2)} gms
+                </TableCell>
+              </TableRow>
+            );
+          })}
           <TableRow>
             <TableCell />
             <TableCell />
             <TableCell />
             <TableCell className="text-right border-l">
-              ₹{totals.principle.toFixed(2)}
+              {formatCurrency(totals.principle)}
             </TableCell>
             <TableCell className="text-right border-x">
-              ₹{totals.interest.toFixed(2)}
+              {formatCurrency(totals.interest)}
             </TableCell>
             <TableCell className="text-right border-r">
-              ₹{totals.total.toFixed(2)}
+              {formatCurrency(totals.total)}
             </TableCell>
             <TableCell />
             <TableCell />
