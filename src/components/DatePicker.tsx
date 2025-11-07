@@ -37,7 +37,7 @@ export default function DatePicker({
         onInputChange?.(e.currentTarget.value);
       }}
       className={cn(
-        `tabular-nums selection:bg-primary selection:text-primary-foreground !opacity-100 ${isInternalError || isError ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50 focus-visible:ring-[3px]' : 'border-input focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]'} h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm aria-invalid:ring-destructive/20 aria-invalid:border-destructive [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none`,
+        `selection:bg-primary selection:text-primary-foreground !opacity-100 ${isInternalError || isError ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50 focus-visible:ring-[3px]' : 'border-input focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]'} h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm aria-invalid:ring-destructive/20 aria-invalid:border-destructive [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none`,
         navigated ? 'rounded-none' : '',
         className
       )}

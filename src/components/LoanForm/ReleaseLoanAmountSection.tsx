@@ -29,7 +29,7 @@ export const ReleaseLoanAmountSection = memo(function ReleaseLoanAmountSection({
         label="Amount"
         suffix="₹"
         placeholder="Amount"
-        className="!opacity-100 tabular-nums"
+        className="!opacity-100"
         disabled
       />
 
@@ -39,7 +39,7 @@ export const ReleaseLoanAmountSection = memo(function ReleaseLoanAmountSection({
         label="Percent"
         suffix="%"
         placeholder=""
-        className="!opacity-100 tabular-nums"
+        className="!opacity-100"
         disabled
       />
 
@@ -49,7 +49,7 @@ export const ReleaseLoanAmountSection = memo(function ReleaseLoanAmountSection({
         label="Interest"
         suffix="₹"
         placeholder="Interest"
-        className="!opacity-100 tabular-nums"
+        className="!opacity-100"
         onCustomChange={onInterestChange}
       />
 
@@ -59,7 +59,7 @@ export const ReleaseLoanAmountSection = memo(function ReleaseLoanAmountSection({
         label="Total"
         suffix="₹"
         placeholder="Total"
-        className="!opacity-100 tabular-nums"
+        className="!opacity-100"
         disabled
       />
     </div>

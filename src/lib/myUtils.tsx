@@ -237,11 +237,22 @@ export async function fetchBillsByCustomer(
         serial: bill.serial,
         loan_no: bill.loan_no,
       });
+      let release: Tables['releases']['Row'] | undefined;
+      if (!skipReleased && bill.released === 1) {
+        const releaseResponse = await read('releases', {
+          serial: bill.serial,
+          loan_no: bill.loan_no,
+        });
+        if (releaseResponse.success && releaseResponse.data?.length) {
+          release = releaseResponse.data[0];
+        }
+      }
       if (billItemsResponse.success && billItemsResponse.data?.length) {
         fullBills.push({
           ...bill,
           full_customer: fullCustomer,
           bill_items: billItemsResponse.data,
+          releasedEntry: release,
         });
       }
     }

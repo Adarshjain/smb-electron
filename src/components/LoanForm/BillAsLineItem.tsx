@@ -23,22 +23,30 @@ import { useEffect, useState } from 'react';
 import type { Tables } from '@/../tables';
 import { useLoanCalculations } from '@/hooks/useLoanCalculations.ts';
 
+type EnrichedBill = Tables['full_bill']['Row'] & {
+  months: number;
+  interest: number;
+  firstMonthInterest: number;
+  docCharges: number;
+  description: string;
+  weight: number;
+};
+
 export default function BillAsLineItem({
   bills,
 }: {
   bills: Tables['full_bill']['Row'][];
 }) {
-  const [enrichedBills, setEnrichedBills] = useState<
-    (Tables['full_bill']['Row'] & {
-      months: number;
-      interest: number;
-      firstMonthInterest: number;
-      docCharges: number;
-      description: string;
-      weight: number;
-    })[]
+  const [enrichedBills, setEnrichedBills] = useState<EnrichedBill[]>([]);
+  const [enrichedBillsReleased, setEnrichedBillsReleased] = useState<
+    EnrichedBill[]
   >([]);
   const [totals, setTotals] = useState({
+    principle: 0,
+    total: 0,
+    interest: 0,
+  });
+  const [totalsReleased, setTotalsReleased] = useState({
     principle: 0,
     total: 0,
     interest: 0,
@@ -46,13 +54,24 @@ export default function BillAsLineItem({
   const { calculateLoanAmounts } = useLoanCalculations();
 
   useEffect(() => {
-    const run = async () => {
-      const tempTotal = { principle: 0, total: 0, interest: 0 };
+    setTotals({
+      principle: 0,
+      total: 0,
+      interest: 0,
+    });
+    setTotalsReleased({
+      principle: 0,
+      total: 0,
+      interest: 0,
+    });
+  }, [bills]);
 
+  useEffect(() => {
+    const run = async () => {
       // Precompute all async values before rendering
       const processed = await Promise.all(
         bills.map(async (bill) => {
-          const months = getMonthDiff(bill.date);
+          const months = getMonthDiff(bill.date, bill.releasedEntry?.date);
           const interest = getInterest(
             bill.loan_amount,
             bill.interest_rate,
@@ -64,9 +83,19 @@ export default function BillAsLineItem({
               customInterestRate: bill.interest_rate,
             })) ?? { firstMonthInterest: 0, docCharges: 0 };
 
-          tempTotal.principle += bill.loan_amount;
-          tempTotal.interest += interest;
-          tempTotal.total += interest + bill.loan_amount;
+          if (bill.releasedEntry?.date !== undefined) {
+            setTotalsReleased((tempTotal) => ({
+              principle: tempTotal.principle + bill.loan_amount,
+              interest: tempTotal.interest + interest,
+              total: tempTotal.total + interest + bill.loan_amount,
+            }));
+          } else {
+            setTotals((tempTotal) => ({
+              principle: tempTotal.principle + bill.loan_amount,
+              interest: tempTotal.interest + interest,
+              total: tempTotal.total + interest + bill.loan_amount,
+            }));
+          }
 
           return {
             ...bill,
@@ -80,93 +109,195 @@ export default function BillAsLineItem({
         })
       );
 
-      setEnrichedBills(processed);
-      setTotals(tempTotal);
+      const unReleased: EnrichedBill[] = [];
+      const released: EnrichedBill[] = [];
+      processed.forEach((bill) => {
+        if (bill.releasedEntry?.date !== undefined) {
+          released.push(bill);
+        } else {
+          unReleased.push(bill);
+        }
+      });
+
+      setEnrichedBills(unReleased);
+      setEnrichedBillsReleased(released);
     };
 
     void run();
   }, [bills, calculateLoanAmounts]);
 
-  if (!enrichedBills.length) return null;
+  if (!enrichedBills.length && !enrichedBillsReleased.length)
+    return <div>No Loans</div>;
 
   return (
-    <div className="border rounded-md tabular-nums">
-      <Table className="table-auto">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="border-r">Loan No</TableHead>
-            <TableHead className="border-r">Date</TableHead>
-            <TableHead className="border-r">Months</TableHead>
-            <TableHead className="text-right border-r">Amount</TableHead>
-            <TableHead className="text-right border-r">Interest</TableHead>
-            <TableHead className="text-right border-r">Total</TableHead>
-            <TableHead className="border-r">Items</TableHead>
-            <TableHead className="text-right border-r">Weight</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {enrichedBills.map((bill) => {
-            const total =
-              bill.interest + bill.firstMonthInterest + bill.docCharges;
-            return (
-              <TableRow key={`${bill.serial}-${bill.loan_no}`}>
-                <TableCell className="border-r">{`${bill.serial} ${bill.loan_no}`}</TableCell>
-                <TableCell className="border-r">
-                  {viewableDate(bill.date)}
+    <>
+      {enrichedBills.length ? (
+        <div className="border rounded-md">
+          <Table className="table-auto">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="border-r">Loan No</TableHead>
+                <TableHead className="border-r">Date</TableHead>
+                <TableHead className="border-r">Months</TableHead>
+                <TableHead className="border-r">Items</TableHead>
+                <TableHead className="text-right border-r">Weight</TableHead>
+                <TableHead className="text-right border-r">Amount</TableHead>
+                <TableHead className="text-right border-r">Interest</TableHead>
+                <TableHead className="text-right border-r">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {enrichedBills.map((bill) => {
+                const total =
+                  bill.interest + bill.firstMonthInterest + bill.docCharges;
+                return (
+                  <TableRow key={`${bill.serial}-${bill.loan_no}`}>
+                    <TableCell className="border-r">{`${bill.serial} ${bill.loan_no}`}</TableCell>
+                    <TableCell className="border-r">
+                      {viewableDate(bill.date)}
+                    </TableCell>
+                    <TableCell
+                      className={cn(
+                        'border-r',
+                        bill.months > 18
+                          ? 'bg-destructive text-white border-destructive'
+                          : ''
+                      )}
+                    >
+                      {bill.months}
+                    </TableCell>
+
+                    <TableCell className="border-r">
+                      {bill.description}
+                    </TableCell>
+                    <TableCell className="text-right border-r">
+                      {bill.weight.toFixed(2)} gms
+                    </TableCell>
+                    <TableCell className="text-right border-r">
+                      {formatCurrency(bill.loan_amount)}
+                    </TableCell>
+                    <TableCell className="text-right border-r">
+                      <Tooltip>
+                        <TooltipTrigger>
+                          {formatCurrency(bill.interest)}
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="right"
+                          className="px-2 py-1 text-xs"
+                        >
+                          {bill.interest === 0
+                            ? formatCurrency(total)
+                            : `${formatCurrency(bill.interest)} + ${formatCurrency(bill.firstMonthInterest + bill.docCharges)} = ${formatCurrency(total)}`}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell className="text-right border-r">
+                      {formatCurrency(bill.interest + bill.loan_amount)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              <TableRow>
+                <TableCell colSpan={5} />
+                <TableCell className="text-right border-l">
+                  {formatCurrency(totals.principle)}
                 </TableCell>
-                <TableCell
-                  className={cn(
-                    'border-r',
-                    bill.months > 18
-                      ? 'bg-destructive text-white border-destructive'
-                      : ''
-                  )}
-                >
-                  {bill.months}
+                <TableCell className="text-right border-x">
+                  {formatCurrency(totals.interest)}
                 </TableCell>
-                <TableCell className="text-right border-r tabular-nums">
-                  {formatCurrency(bill.loan_amount)}
-                </TableCell>
-                <TableCell className="text-right border-r tabular-nums">
-                  <Tooltip>
-                    <TooltipTrigger>
-                      {formatCurrency(bill.interest)}
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="px-2 py-1 text-xs">
-                      {bill.interest === 0
-                        ? formatCurrency(total)
-                        : `${formatCurrency(bill.interest)} + ${formatCurrency(bill.firstMonthInterest + bill.docCharges)} = ${formatCurrency(total)}`}
-                    </TooltipContent>
-                  </Tooltip>
-                </TableCell>
-                <TableCell className="text-right border-r tabular-nums">
-                  {formatCurrency(bill.interest + bill.loan_amount)}
-                </TableCell>
-                <TableCell className="border-r">{bill.description}</TableCell>
                 <TableCell className="text-right border-r">
-                  {bill.weight.toFixed(2)} gms
+                  {formatCurrency(totals.total)}
                 </TableCell>
               </TableRow>
-            );
-          })}
-          <TableRow>
-            <TableCell />
-            <TableCell />
-            <TableCell />
-            <TableCell className="text-right border-l">
-              {formatCurrency(totals.principle)}
-            </TableCell>
-            <TableCell className="text-right border-x">
-              {formatCurrency(totals.interest)}
-            </TableCell>
-            <TableCell className="text-right border-r">
-              {formatCurrency(totals.total)}
-            </TableCell>
-            <TableCell />
-            <TableCell />
-          </TableRow>
-        </TableBody>
-      </Table>
-    </div>
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="w-[fit-content] px-2 py-1 rounded bg-green-200">
+          No Active Loans!
+        </div>
+      )}
+      {enrichedBillsReleased.length ? (
+        <>
+          <div>Released</div>
+          <div className="border rounded-md">
+            <Table className="table-auto">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="border-r">Loan No</TableHead>
+                  <TableHead className="border-r">Date</TableHead>
+                  <TableHead className="border-r">Release Date</TableHead>
+                  <TableHead className="border-r">Months</TableHead>
+                  <TableHead className="border-r">Items</TableHead>
+                  <TableHead className="text-right border-r">Weight</TableHead>
+                  <TableHead className="text-right border-r">Amount</TableHead>
+                  <TableHead className="text-right border-r">
+                    Interest
+                  </TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {enrichedBillsReleased.map((bill) => {
+                  const total =
+                    bill.interest + bill.firstMonthInterest + bill.docCharges;
+                  return (
+                    <TableRow key={`${bill.serial}-${bill.loan_no}`}>
+                      <TableCell className="border-r">{`${bill.serial} ${bill.loan_no}`}</TableCell>
+                      <TableCell className="border-r">
+                        {viewableDate(bill.date)}
+                      </TableCell>
+                      <TableCell className="border-r">
+                        {viewableDate(bill.releasedEntry?.date)}
+                      </TableCell>
+                      <TableCell className="border-r">{bill.months}</TableCell>
+                      <TableCell className="border-r">
+                        {bill.description}
+                      </TableCell>
+                      <TableCell className="text-right border-r">
+                        {bill.weight.toFixed(2)} gms
+                      </TableCell>
+                      <TableCell className="text-right border-r">
+                        {formatCurrency(bill.loan_amount)}
+                      </TableCell>
+                      <TableCell className="text-right border-r">
+                        <Tooltip>
+                          <TooltipTrigger>
+                            {formatCurrency(bill.interest)}
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="right"
+                            className="px-2 py-1 text-xs"
+                          >
+                            {bill.interest === 0
+                              ? formatCurrency(total)
+                              : `${formatCurrency(bill.interest)} + ${formatCurrency(bill.firstMonthInterest + bill.docCharges)} = ${formatCurrency(total)}`}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(bill.interest + bill.loan_amount)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                <TableRow>
+                  <TableCell colSpan={6} />
+                  <TableCell className="text-right border-l">
+                    {formatCurrency(totalsReleased.principle)}
+                  </TableCell>
+                  <TableCell className="text-right border-l">
+                    {formatCurrency(totalsReleased.interest)}
+                  </TableCell>
+                  <TableCell className="text-right border-l">
+                    {formatCurrency(totalsReleased.total)}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      ) : null}
+    </>
   );
 }

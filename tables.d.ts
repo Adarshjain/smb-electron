@@ -164,6 +164,7 @@ export interface Tables {
     Row: Tables['bills']['Row'] & {
       full_customer: FullCustomer;
       bill_items: Tables['bill_items']['Row'][];
+      releasedEntry?: Tables['releases']['Row'];
     };
   };
 }

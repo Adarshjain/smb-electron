@@ -177,7 +177,7 @@ export const BillingItemRow = memo(function BillingItemRow({
             name={`billing_items.${index}.quantity`}
             type="number"
             placeholder=""
-            className="w-16 text-right tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-16 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         )}
       />
@@ -198,7 +198,7 @@ export const BillingItemRow = memo(function BillingItemRow({
             name={`billing_items.${index}.ignore_weight`}
             type="number"
             placeholder=""
-            className="w-24 text-right tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         )}
       />
@@ -224,7 +224,7 @@ export const BillingItemRow = memo(function BillingItemRow({
               name={`billing_items.${index}.net_weight`}
               type="number"
               placeholder=""
-              className="w-24 text-right tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
         )}
@@ -242,7 +242,7 @@ export const BillingItemRow = memo(function BillingItemRow({
               name={`billing_items.${index}.gross_weight`}
               type="number"
               placeholder=""
-              className="w-24 !opacity-100 text-right tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-24 !opacity-100 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
         )}

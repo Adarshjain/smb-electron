@@ -34,13 +34,18 @@ export const initAreas = () => {
 
   const createAreas: Tables['areas']['Row'][] = [];
 
+  const map: Record<string, boolean> = {};
+
   for (const record of data) {
-    createAreas.push({
-      name: record.name,
-      pincode: record.pincode,
-      post: record.post,
-      town: record.town,
-    });
+    if (!map[record.name]) {
+      createAreas.push({
+        name: record.name,
+        pincode: record.pincode,
+        post: record.post,
+        town: record.town,
+      });
+      map[record.name] = true;
+    }
   }
   try {
     createBatched('areas', createAreas);
@@ -205,7 +210,7 @@ export const initBills = () => {
         loan_no: parseInt(record.nos),
         date: new Date(record.redate).toISOString().split('T')[0],
         loan_amount: loanAmount,
-        interest_amount: interestPaid,
+        interest_amount: interestPaid - interestDiscount,
         total_amount: loanAmount + interestPaid - interestDiscount,
         company: toSentenceCase(record.company),
       });
