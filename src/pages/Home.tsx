@@ -32,6 +32,11 @@ export function Home() {
         if (companySwitcher.length) {
           companySwitcher[0].click();
         }
+      } else if (e.key === 'F6') {
+        const customerPicker = document.getElementsByName('customer_picker');
+        if (customerPicker.length) {
+          customerPicker[0].focus();
+        }
       }
       const match = shortCutMapping.find((sc) => sc.shortcutKey === e.key);
       if (match) {
