@@ -11,7 +11,7 @@ export function useEnterNavigation<T = string>({
   onSubmit,
   submitField,
 }: UseEnterNavigationOptions<T>) {
-  const formRef = useRef<HTMLFormElement>(null);
+  const formRef = useRef<HTMLElement>(null);
 
   const next = useCallback(
     (name?: T, shiftKey = false) => {
@@ -29,7 +29,6 @@ export function useEnterNavigation<T = string>({
 
       if (fieldName === submitField) {
         if (onSubmit) onSubmit();
-        else form.requestSubmit?.();
       }
 
       const currentIndex = fields.indexOf(fieldName);
@@ -46,7 +45,6 @@ export function useEnterNavigation<T = string>({
       } else {
         // When last field is reached, submit
         if (onSubmit) onSubmit();
-        else form.requestSubmit?.();
       }
     },
     [fields, onSubmit]
@@ -65,7 +63,7 @@ export function useEnterNavigation<T = string>({
   );
 
   const setFormRef = useCallback(
-    (element: HTMLFormElement | null) => {
+    (element: HTMLElement | null) => {
       if (formRef.current) {
         formRef.current.removeEventListener('keydown', handleKeyDown);
       }

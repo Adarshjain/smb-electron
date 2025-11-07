@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react';
 import {
-  fetchBillsByCustomer,
   formatCurrency,
   getInterest,
   getMonthDiff,
   mergeBillItems,
   viewableDate,
 } from '@/lib/myUtils.tsx';
-import type { Tables } from '@/../tables';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils.ts';
 import {
   Table,
   TableBody,
@@ -16,15 +19,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table.tsx';
+import { useEffect, useState } from 'react';
+import type { Tables } from '@/../tables';
 import { useLoanCalculations } from '@/hooks/useLoanCalculations.ts';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils.ts';
 
-export default function BillAsLineItem(props: { customerId: string }) {
+export default function BillAsLineItem({
+  bills,
+}: {
+  bills: Tables['full_bill']['Row'][];
+}) {
   const [enrichedBills, setEnrichedBills] = useState<
     (Tables['full_bill']['Row'] & {
       months: number;
@@ -40,19 +43,15 @@ export default function BillAsLineItem(props: { customerId: string }) {
     total: 0,
     interest: 0,
   });
-
   const { calculateLoanAmounts } = useLoanCalculations();
 
   useEffect(() => {
     const run = async () => {
-      const fetchedBills = await fetchBillsByCustomer(props.customerId);
-      if (!fetchedBills) return;
-
       const tempTotal = { principle: 0, total: 0, interest: 0 };
 
       // Precompute all async values before rendering
       const processed = await Promise.all(
-        fetchedBills.map(async (bill) => {
+        bills.map(async (bill) => {
           const months = getMonthDiff(bill.date);
           const interest = getInterest(
             bill.loan_amount,
@@ -86,7 +85,7 @@ export default function BillAsLineItem(props: { customerId: string }) {
     };
 
     void run();
-  }, [props.customerId, calculateLoanAmounts]);
+  }, [bills, calculateLoanAmounts]);
 
   if (!enrichedBills.length) return null;
 

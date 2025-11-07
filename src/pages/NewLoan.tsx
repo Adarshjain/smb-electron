@@ -46,7 +46,7 @@ import {
   loadBillWithDeps,
 } from '@/lib/myUtils.tsx';
 import { BillingItemsTable } from '@/components/LoanForm/BillingItemsTable.tsx';
-import BillAsLineItem from '@/components/LoanForm/BillAsLineItem.tsx';
+import BillsByCustomer from '@/components/LoanForm/BillsByCustomer.tsx';
 import { cn } from '@/lib/utils.ts';
 
 export default function NewLoan() {
@@ -525,7 +525,7 @@ export default function NewLoan() {
               }
             />
             {selectedCustomer && (
-              <BillAsLineItem customerId={selectedCustomer.customer.id} />
+              <BillsByCustomer customerId={selectedCustomer.customer.id} />
             )}
           </div>
         </FieldGroup>

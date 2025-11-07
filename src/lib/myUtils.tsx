@@ -84,17 +84,21 @@ export function formatCurrency(value: number, skipSymbol = false): string {
 
 export function toastElectronResponse<T>(
   response: ElectronToReactResponse<T>,
-  successMessage = 'Success'
-) {
+  successMessage = 'Success',
+  onlyError = false
+): boolean {
   if (!response.success) {
     if (response.error === 'UNIQUE constraint failed') {
       toast.error('Already exists!', { className: toastStyles.error });
     } else {
       rpcError(response);
     }
-  } else {
+    return false;
+  }
+  if (!onlyError) {
     toast.success(successMessage, { className: toastStyles.success });
   }
+  return true;
 }
 
 export async function getRate(
@@ -214,10 +218,17 @@ export async function fetchBillsByCustomer(
   customerId: string,
   skipReleased = true
 ): Promise<Tables['full_bill']['Row'][] | undefined> {
-  const billsResponse = await read('bills', {
-    customer_id: customerId,
-    released: skipReleased ? 0 : undefined,
-  });
+  const billsResponse = await read(
+    'bills',
+    skipReleased
+      ? {
+          customer_id: customerId,
+          released: 0,
+        }
+      : {
+          customer_id: customerId,
+        }
+  );
   const fullCustomer = await fetchFullCustomer(customerId);
   if (fullCustomer && billsResponse.success && billsResponse.data?.length) {
     const fullBills: Tables['full_bill']['Row'][] = [];

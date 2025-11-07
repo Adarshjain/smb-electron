@@ -39,7 +39,7 @@ export const LoanCustomerSection = memo(function LoanCustomerSection(
 
   return (
     <div>
-      <CustomerPicker onSelect={onCustomerSelect} />
+      <CustomerPicker onSelect={() => void onCustomerSelect} autofocus />
       {props.selectedCustomer && (
         <CustomerInfo
           className="pl-3 py-2 min-h-[136px]"
