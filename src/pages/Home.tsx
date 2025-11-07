@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button.tsx';
 import { useEffect } from 'react';
 import { Kbd } from '@/components/ui/kbd';
+import QuickView from '@/components/QuickView.tsx';
 
 const shortCutMapping: {
   shortcutKey: string;
@@ -47,7 +48,9 @@ export function Home() {
 
   return (
     <div className="flex">
-      <div className="flex-1"></div>
+      <div className="flex-1 p-4">
+        <QuickView />
+      </div>
       <div className="flex flex-col gap-3 p-6 w-[300px]">
         <CompanySelector />
         <Button

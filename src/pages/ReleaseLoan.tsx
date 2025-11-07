@@ -107,11 +107,7 @@ export default function ReleaseLoan() {
   );
 
   const handleFormSubmit = useCallback(() => {
-    void handleSubmit(onSubmit, (errors) => {
-      console.log(getValues());
-      // Log validation errors for debugging
-      console.error('Form validation errors:', errors);
-    })();
+    void handleSubmit(onSubmit)();
   }, [handleSubmit, onSubmit]);
 
   const { setFormRef, next } = useEnterNavigation<keyof ReleaseLoan>({

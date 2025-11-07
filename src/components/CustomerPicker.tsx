@@ -1,3 +1,8 @@
+import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupAddon,
+} from '@/components/ui/input-group';
 import { cn } from '@/lib/utils';
 import {
   Command,
@@ -14,17 +19,21 @@ import { useEffect, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { read } from '@/hooks/dbUtil.ts';
 import type { Tables } from '@/../tables';
-import { Input } from '@/components/ui/input.tsx';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
+import { Kbd } from '@/components/ui/kbd';
 
 interface SearchableSelectProps {
   onSelect?: (value: Tables['customers']['Row']) => void;
   placeholder?: string;
+  inputClassName?: string;
+  autofocus?: boolean;
 }
 
 export default function CustomerPicker({
   onSelect,
   placeholder = 'Customer',
+  inputClassName,
+  autofocus = false,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -135,11 +144,11 @@ export default function CustomerPicker({
           e.preventDefault();
         }}
       >
-        <div>
-          <Input
+        <InputGroup>
+          <InputGroupInput
             ref={inputRef}
             value={search}
-            autoFocus
+            autoFocus={autofocus}
             id="customer_picker"
             name="customer_picker"
             onChange={(e) => {
@@ -153,8 +162,12 @@ export default function CustomerPicker({
             }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
+            className={inputClassName}
           />
-        </div>
+          <InputGroupAddon align="inline-end">
+            <Kbd>F6</Kbd>
+          </InputGroupAddon>
+        </InputGroup>
       </PopoverTrigger>
       <PopoverContent
         className="p-0 w-[610px]"

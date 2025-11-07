@@ -10,6 +10,7 @@ import { ArrowDown } from 'lucide-react';
 import type { Tables } from '@/../tables';
 import { loadBillWithDeps } from '@/lib/myUtils.tsx';
 import { cn } from '@/lib/utils.ts';
+import { type KeyboardEvent } from 'react';
 
 interface LoanNumberProps<T extends FieldValues> {
   control: Control<T>;
@@ -30,11 +31,13 @@ export function LoanNumber<T extends FieldValues>({
   className,
   autoFocus,
 }: LoanNumberProps<T>) {
-  const serialValue = useWatch({ control, name: serialFieldName });
-  const numberValue = useWatch({ control, name: numberFieldName });
+  const [serialValue, numberValue] = useWatch({
+    control,
+    name: [serialFieldName, numberFieldName],
+  });
 
   const fillFromOldLoan = async (
-    e?: React.KeyboardEvent<HTMLInputElement>
+    e?: KeyboardEvent<HTMLInputElement>
   ): Promise<void> => {
     if (e) e.preventDefault();
     if (!serialValue || !numberValue) {
