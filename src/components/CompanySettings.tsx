@@ -63,9 +63,7 @@ export default function CompanySettings() {
                   <Badge className="ml-4 bg-blue-500 text-white">Default</Badge>
                 ) : null}
               </TableCell>
-              <TableCell className="tabular-nums">
-                {viewableDate(record.current_date)}
-              </TableCell>
+              <TableCell>{viewableDate(record.current_date)}</TableCell>
               <TableCell>{record.next_serial}</TableCell>
               <TableCell>
                 <CrudCompany
