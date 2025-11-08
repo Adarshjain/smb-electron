@@ -49,6 +49,7 @@ const createWindow = () => {
     title: 'Sri Mahaveer Bankers',
     width: 1280,
     height: 648,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       webSecurity: false,
