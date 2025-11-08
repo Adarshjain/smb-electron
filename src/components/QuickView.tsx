@@ -98,6 +98,7 @@ export default function QuickView() {
         <CustomerPicker
           inputClassName="w-[400px]"
           onSelect={(customer) => setCustomerId(customer.id)}
+          showShortcut="F6"
         />
       </div>
       {customerId && (

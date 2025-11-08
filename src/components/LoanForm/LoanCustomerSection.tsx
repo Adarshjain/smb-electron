@@ -1,10 +1,13 @@
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 import CustomerPicker from '@/components/CustomerPicker';
 import type { FullCustomer, Tables } from '@/../tables';
 import CustomerInfo from '@/components/LoanForm/CustomerInfo.tsx';
 import { read } from '@/hooks/dbUtil.ts';
 import { toast } from 'sonner';
 import { toastStyles } from '@/constants/loanForm.ts';
+import { Dialog, DialogContent } from '@/components/ui/dialog.tsx';
+import CustomerCrud from '@/pages/CustomerCrud.tsx';
+import { DialogTitle } from '@radix-ui/react-dialog';
 
 interface LoanCustomerSectionProps {
   selectedCustomer: FullCustomer | null;
@@ -14,6 +17,26 @@ interface LoanCustomerSectionProps {
 export const LoanCustomerSection = memo(function LoanCustomerSection(
   props: LoanCustomerSectionProps
 ) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      if (
+        e.key === 'F2' &&
+        e.target instanceof HTMLInputElement &&
+        e.target.name === 'customer_picker'
+      ) {
+        setIsModalOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', listener);
+
+    return () => {
+      window.removeEventListener('keydown', listener);
+    };
+  }, []);
+
   const onCustomerSelect = async (customer: Tables['customers']['Row']) => {
     const areaResponse = await read('areas', {
       name: customer.area,
@@ -39,7 +62,13 @@ export const LoanCustomerSection = memo(function LoanCustomerSection(
 
   return (
     <div>
-      <CustomerPicker onSelect={() => void onCustomerSelect} autofocus />
+      <CustomerPicker
+        onSelect={(customer: Tables['customers']['Row']) =>
+          void onCustomerSelect(customer)
+        }
+        autofocus
+        showShortcut="F2"
+      />
       {props.selectedCustomer && (
         <CustomerInfo
           className="pl-3 py-2 min-h-[136px]"
@@ -47,6 +76,21 @@ export const LoanCustomerSection = memo(function LoanCustomerSection(
           area={props.selectedCustomer.area}
         />
       )}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+          <DialogTitle className="sr-only">Add Customer</DialogTitle>
+          <CustomerCrud
+            cantEdit
+            onCreate={(customer: Tables['customers']['Row']) => {
+              setIsModalOpen(false);
+              setTimeout(() => {
+                void onCustomerSelect(customer);
+                document.getElementsByName('metal_type')[0].focus();
+              }, 100);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 });
