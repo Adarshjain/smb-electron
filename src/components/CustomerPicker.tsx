@@ -27,7 +27,7 @@ interface SearchableSelectProps {
   placeholder?: string;
   inputClassName?: string;
   autofocus?: boolean;
-  showShortcut?: boolean;
+  showShortcut?: string;
 }
 
 export default function CustomerPicker({
@@ -35,7 +35,7 @@ export default function CustomerPicker({
   placeholder = 'Customer',
   inputClassName,
   autofocus = false,
-  showShortcut = false,
+  showShortcut,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -167,7 +167,7 @@ export default function CustomerPicker({
           />
           {showShortcut ? (
             <InputGroupAddon align="inline-end">
-              <Kbd>F6</Kbd>
+              <Kbd>{showShortcut}</Kbd>
             </InputGroupAddon>
           ) : null}
         </InputGroup>
