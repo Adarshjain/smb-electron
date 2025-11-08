@@ -4,6 +4,7 @@ import {
   Controller,
   type FieldPath,
   type FieldValues,
+  useController,
 } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { FIELD_WIDTHS, VALIDATION_CONSTRAINTS } from '@/constants/loanForm';
@@ -32,6 +33,7 @@ export const SerialNumber = memo(function SerialNumberInput<
   onChange,
   onNumFieldKeyDown,
 }: SerialNumberInputProps<T>) {
+  const serialField = useController({ control, name: serialFieldName });
   return (
     <div className="flex">
       <Controller
@@ -71,6 +73,16 @@ export const SerialNumber = memo(function SerialNumberInput<
             className={`${FIELD_WIDTHS.LOAN_NO_INPUT} rounded-l-none border-l-0 text-center focus-visible:z-10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
             onKeyDown={(e) => {
               if (e.key === 'Enter') onNumFieldKeyDown?.(e);
+              if (!(e.shiftKey || e.altKey || e.ctrlKey || e.metaKey)) {
+                if (/^[a-zA-Z]$/.test(e.key)) {
+                  serialField.field.onChange(e.key.toUpperCase());
+                  setTimeout(() => {
+                    if (e.target instanceof HTMLInputElement) {
+                      e.target.select();
+                    }
+                  }, 10);
+                }
+              }
             }}
             onFocus={(e) => {
               e.currentTarget.select();
