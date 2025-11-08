@@ -69,7 +69,10 @@ export default function SearchSelect<T = string>({
   useEffect(() => {
     if (value !== undefined) {
       setSelected(value);
-      setSearch(value && typeof value === 'string' ? value : '');
+      setSearch(
+        // @ts-expect-error area
+        value && typeof value === 'string' ? value : (value.name as string)
+      );
     }
   }, [value]);
 
@@ -122,8 +125,12 @@ export default function SearchSelect<T = string>({
     setSelected(opt);
     onChange?.(opt);
     setOpen(false);
-    setSearch(opt && typeof opt === 'string' ? opt : '');
-    onSearchChange?.(opt && typeof opt === 'string' ? opt : '');
+    // @ts-expect-error area
+    setSearch(opt && typeof opt === 'string' ? opt : (opt.name as string));
+    onSearchChange?.(
+      // @ts-expect-error area
+      opt && typeof opt === 'string' ? opt : (opt.name as string)
+    );
     setIsKeyboardNavigating(false);
   };
 
