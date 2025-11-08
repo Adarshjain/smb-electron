@@ -7,6 +7,7 @@ import Settings from '@/pages/Settings.tsx';
 import NewLoan from '@/pages/NewLoan.tsx';
 import ReleaseLoan from '@/pages/ReleaseLoan.tsx';
 import DailySummary from '@/pages/DailySummary.tsx';
+import CustomerCrud from '@/pages/CustomerCrud.tsx';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/new-loan" element={<NewLoan />} />
         <Route path="/release-loan" element={<ReleaseLoan />} />
         <Route path="/day-book" element={<DailySummary />} />
+        <Route path="/customer-crud" element={<CustomerCrud />} />
       </Routes>
       <Toaster
         position="bottom-left"
