@@ -71,7 +71,7 @@ export default function SearchSelect<T = string>({
       setSelected(value);
       setSearch(
         // @ts-expect-error area
-        value && typeof value === 'string' ? value : (value.name as string)
+        typeof value === 'string' ? value : (value.name as string)
       );
     }
   }, [value]);

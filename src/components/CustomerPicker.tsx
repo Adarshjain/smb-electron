@@ -1,7 +1,7 @@
 import {
   InputGroup,
-  InputGroupInput,
   InputGroupAddon,
+  InputGroupInput,
 } from '@/components/ui/input-group';
 import { cn } from '@/lib/utils';
 import {
@@ -27,6 +27,7 @@ interface SearchableSelectProps {
   placeholder?: string;
   inputClassName?: string;
   autofocus?: boolean;
+  showShortcut?: boolean;
 }
 
 export default function CustomerPicker({
@@ -34,6 +35,7 @@ export default function CustomerPicker({
   placeholder = 'Customer',
   inputClassName,
   autofocus = false,
+  showShortcut = false,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -144,7 +146,7 @@ export default function CustomerPicker({
           e.preventDefault();
         }}
       >
-        <InputGroup>
+        <InputGroup className={inputClassName}>
           <InputGroupInput
             ref={inputRef}
             value={search}
@@ -162,11 +164,12 @@ export default function CustomerPicker({
             }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className={inputClassName}
           />
-          <InputGroupAddon align="inline-end">
-            <Kbd>F6</Kbd>
-          </InputGroupAddon>
+          {showShortcut ? (
+            <InputGroupAddon align="inline-end">
+              <Kbd>F6</Kbd>
+            </InputGroupAddon>
+          ) : null}
         </InputGroup>
       </PopoverTrigger>
       <PopoverContent

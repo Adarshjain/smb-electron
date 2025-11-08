@@ -10,7 +10,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
 import { useCallback, useEffect, useState } from 'react';
-import { create, read } from '@/hooks/dbUtil.ts';
+import { create, read, update } from '@/hooks/dbUtil.ts';
 import { toastElectronResponse } from '@/lib/myUtils.tsx';
 import ProductSelector from '@/components/ProductSelector.tsx';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,8 @@ import AreaSelector from '@/components/AreaSelector.tsx';
 import { toast } from 'sonner';
 import { toastStyles } from '@/constants/loanForm.ts';
 import { Button } from '@/components/ui/button';
+import CustomerPicker from '@/components/CustomerPicker.tsx';
+import { Label } from '@/components/ui/label';
 
 const CustomerSchema = z.object({
   id: z.string(),
@@ -41,7 +43,13 @@ const CustomerSchema = z.object({
 
 type Customer = z.infer<typeof CustomerSchema>;
 
-export default function CustomerCrud() {
+export default function CustomerCrud({
+  cantEdit,
+  onCreate,
+}: {
+  cantEdit?: boolean;
+  onCreate?: (customer: Tables['customers']['Row']) => void;
+}) {
   const [areasList, setAreasList] = useState<Tables['areas']['Row'][]>([]);
   const [addressList, setAddressList] = useState<string[]>([]);
   const [nameList, setNameList] = useState<string[]>([]);
@@ -67,6 +75,34 @@ export default function CustomerCrud() {
   });
 
   const area = watch('area');
+  const id = watch('id');
+
+  const onCustomerSelect = async (customer: Tables['customers']['Row']) => {
+    const areasResponse = await read('areas', { name: customer.area });
+    if (!areasResponse.success) {
+      toastElectronResponse(areasResponse);
+      return;
+    }
+    if (!areasResponse.data?.length) {
+      toast.error('Area does not exist', {
+        className: toastStyles.error,
+      });
+      return;
+    }
+    reset({
+      id: customer.id,
+      address1: customer.address1 ?? '',
+      address2: customer.address2 ?? '',
+      door_no: customer.door_no ?? '',
+      fhname: customer.fhname,
+      area: areasResponse.data[0],
+      fhtitle: customer.fhtitle,
+      id_proof: customer.id_proof ?? '',
+      id_proof_value: customer.id_proof_value ?? '',
+      name: customer.name,
+      phone_no: customer.phone_no ?? '',
+    });
+  };
 
   useEffect(() => {
     const run = async () => {
@@ -97,7 +133,7 @@ export default function CustomerCrud() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   async function onSubmit(data: Customer) {
-    const resp = await create('customers', {
+    const customer: Tables['customers']['Row'] = {
       id: `${data.name.substring(0, 3)}${data.fhname.substring(0, 3)}${data.area.name.substring(0, 3)}`,
       name: data.name,
       fhtitle: data.fhtitle,
@@ -110,8 +146,18 @@ export default function CustomerCrud() {
       id_proof_value:
         data.id_proof_value === '' ? null : (data.id_proof_value ?? null),
       address2: data.address2 === '' ? null : (data.address2 ?? null),
-    });
-    toastElectronResponse(resp);
+    };
+    if (id) {
+      toastElectronResponse(
+        await update('customers', {
+          ...customer,
+          id,
+        })
+      );
+    } else {
+      toastElectronResponse(await create('customers', customer));
+      onCreate?.(customer);
+    }
     reset(defaultValues);
   }
 
@@ -140,28 +186,42 @@ export default function CustomerCrud() {
   });
 
   return (
-    <form ref={setFormRef} className="flex gap-3 flex-col p-4 w-[400px]">
-      <div>Customer</div>
-      <Controller
-        name="name"
-        control={control}
-        render={({ field }) => (
-          <ProductSelector
-            value={field.value}
-            onChange={field.onChange}
-            onFocus={(e) => {
-              e.currentTarget.select();
-            }}
-            options={nameList}
-            inputName="name"
-            placeholder="Name"
-            triggerWidth="w-[370px]"
-            popoverWidth="w-[370px]"
-            autoFocus
-          />
-        )}
-      />
+    <form ref={setFormRef} className="flex gap-3 flex-col p-2 w-[465px]">
+      <div className="text-xl text-center">
+        {id ? 'Editing Customer' : 'New Customer'}
+      </div>
+      {!cantEdit ? (
+        <CustomerPicker
+          inputClassName="w-[370px]"
+          placeholder="Search Customer"
+          onSelect={(customer: Tables['customers']['Row']) =>
+            void onCustomerSelect(customer)
+          }
+        />
+      ) : null}
       <div className="flex gap-2">
+        <Label className="w-[70px]">Name</Label>
+        <Controller
+          name="name"
+          control={control}
+          render={({ field }) => (
+            <ProductSelector
+              {...field}
+              onFocus={(e) => {
+                e.currentTarget.select();
+              }}
+              options={nameList}
+              inputName="name"
+              placeholder="Name"
+              triggerWidth="w-[370px]"
+              popoverWidth="w-[370px]"
+              autoFocus
+            />
+          )}
+        />
+      </div>
+      <div className="flex gap-2">
+        <Label className="w-[70px]">F/H Name</Label>
         <Controller
           name="fhtitle"
           control={control}
@@ -174,7 +234,7 @@ export default function CustomerCrud() {
               value={field.value}
             >
               <SelectTrigger className="w-20" name="fhtitle">
-                <SelectValue placeholder="S/F/W/C/O" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="S/O">S/O</SelectItem>
@@ -190,8 +250,7 @@ export default function CustomerCrud() {
           control={control}
           render={({ field }) => (
             <ProductSelector
-              value={field.value}
-              onChange={field.onChange}
+              {...field}
               onFocus={(e) => {
                 e.currentTarget.select();
               }}
@@ -205,6 +264,7 @@ export default function CustomerCrud() {
         />
       </div>
       <div className="flex gap-2">
+        <Label className="w-[70px]">Address 1</Label>
         <Controller
           name="door_no"
           control={control}
@@ -226,8 +286,7 @@ export default function CustomerCrud() {
           control={control}
           render={({ field }) => (
             <ProductSelector
-              value={field.value}
-              onChange={field.onChange}
+              {...field}
               onFocus={(e) => {
                 e.currentTarget.select();
               }}
@@ -240,94 +299,109 @@ export default function CustomerCrud() {
           )}
         />
       </div>
-      <Controller
-        name="address2"
-        control={control}
-        render={({ field }) => (
-          <ProductSelector
-            value={field.value}
-            onChange={field.onChange}
-            onFocus={(e) => {
-              e.currentTarget.select();
-            }}
-            options={addressList}
-            inputName="address2"
-            placeholder="Address Line 2"
-            triggerWidth="w-[370px]"
-            popoverWidth="w-[370px]"
-          />
-        )}
-      />
-      <Controller
-        name="area"
-        control={control}
-        render={({ field }) => (
-          <AreaSelector
-            value={areasList.find((area) => area.name === field.value.name)}
-            onChange={field.onChange}
-            onFocus={(e) => {
-              e.currentTarget.select();
-            }}
-            options={areasList}
-            inputName="area"
-            placeholder="Area"
-            triggerWidth="w-[370px]"
-          />
-        )}
-      />
-      {area && (
+      <div className="flex gap-2">
+        <Label className="w-[70px]">Address 2</Label>
+        <Controller
+          name="address2"
+          control={control}
+          render={({ field }) => (
+            <ProductSelector
+              {...field}
+              onFocus={(e) => {
+                e.currentTarget.select();
+              }}
+              options={addressList}
+              inputName="address2"
+              placeholder="Address Line 2"
+              triggerWidth="w-[370px]"
+              popoverWidth="w-[370px]"
+            />
+          )}
+        />
+      </div>
+      <div className="flex gap-2">
+        <Label className="w-[70px]">Area</Label>
+        <Controller
+          name="area"
+          control={control}
+          render={({ field }) => (
+            <AreaSelector
+              value={areasList.find((area) => area.name === field.value.name)}
+              onChange={field.onChange}
+              onFocus={(e) => {
+                e.currentTarget.select();
+              }}
+              options={areasList}
+              inputName="area"
+              placeholder="Area"
+              triggerWidth="w-[370px]"
+            />
+          )}
+        />
+      </div>
+      {area.name && (
         <div>
+          <Label className="w-[70px]">Area Details: </Label>
           {area.post ? `Post: ${area.post}` : ''} {area.town} {area.pincode}
         </div>
       )}
-      <Controller
-        name="phone_no"
-        control={control}
-        render={({ field }) => (
-          <Input
-            {...field}
-            onFocus={(e) => {
-              e.currentTarget.select();
-            }}
-            id="phone_no"
-            name="phone_no"
-            placeholder="Phone"
-            className="w-[370px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-          />
-        )}
-      />
-      <Controller
-        name="id_proof"
-        control={control}
-        render={({ field }) => (
-          <Input
-            {...field}
-            onFocus={(e) => {
-              e.currentTarget.select();
-            }}
-            id="id_proof"
-            name="id_proof"
-            placeholder="ID Proof Type"
-            className="w-[370px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-          />
-        )}
-      />
-      <Controller
-        name="id_proof_value"
-        control={control}
-        render={({ field }) => (
-          <Input
-            {...field}
-            onFocus={(e) => {
-              e.currentTarget.select();
-            }}
-            id="id_proof_value"
-            name="id_proof_value"
-            placeholder="ID Proof Value"
-            className="w-[370px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-          />
-        )}
-      />
+      <div className="flex gap-2">
+        <Label className="w-[70px]">Phone</Label>
+        <Controller
+          name="phone_no"
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              onFocus={(e) => {
+                e.currentTarget.select();
+              }}
+              id="phone_no"
+              name="phone_no"
+              placeholder="Phone"
+              className="w-[370px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+          )}
+        />
+      </div>
+      <div className="flex gap-2">
+        <Label className="w-[70px]">ID Proof</Label>
+        <Controller
+          name="id_proof"
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              onFocus={(e) => {
+                e.currentTarget.select();
+              }}
+              id="id_proof"
+              name="id_proof"
+              placeholder="ID Proof Type"
+              className="w-[370px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+          )}
+        />
+      </div>
+      <div className="flex gap-2">
+        <Label className="w-[70px]">ID Proof Value</Label>
+        <Controller
+          name="id_proof_value"
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              onFocus={(e) => {
+                e.currentTarget.select();
+              }}
+              id="id_proof_value"
+              name="id_proof_value"
+              placeholder="ID Proof Value"
+              className="w-[370px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+          )}
+        />
+      </div>
       <Button
         onClick={(e) => {
           e.preventDefault();
