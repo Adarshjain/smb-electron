@@ -28,7 +28,7 @@ interface AggregatedBills {
   releases: Tables['releases']['Row'][];
 }
 
-export default function DailySummary() {
+export default function DayBook() {
   const { company } = useCompany();
   const [date, setDate] = useState(company?.current_date);
   const [bills, setBills] = useState<Record<string, AggregatedBills>>({});
@@ -149,13 +149,13 @@ export default function DailySummary() {
       <div className="flex justify-around"></div>
       <div className="flex justify-between gap-3">
         {/* Loan Summary */}
-        <Table className="border">
+        <Table className="table-auto">
           <TableHeader>
             <TableRow>
               <TableHead className="border-r">Company</TableHead>
               <TableHead className="border-r text-right">Principal</TableHead>
               <TableHead className="border-r text-right">Interest</TableHead>
-              <TableHead className="border-r text-right">Count</TableHead>
+              <TableHead className="text-right">Count</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -175,7 +175,7 @@ export default function DailySummary() {
                     <TableCell className="border-r text-right">
                       {formatCurrency(value.loan.interestTotal, true)}
                     </TableCell>
-                    <TableCell className="border-r text-right">
+                    <TableCell className="text-right">
                       {value.loans.length}
                     </TableCell>
                   </TableRow>
@@ -193,13 +193,13 @@ export default function DailySummary() {
           </TableBody>
         </Table>
         {/* Release Summary */}
-        <Table className="border">
+        <Table className="table-auto">
           <TableHeader>
             <TableRow>
               <TableHead className="border-r">Company</TableHead>
               <TableHead className="border-r text-right">Principal</TableHead>
               <TableHead className="border-r text-right">Interest</TableHead>
-              <TableHead className="border-r text-right">Count</TableHead>
+              <TableHead className="text-right">Count</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -219,7 +219,7 @@ export default function DailySummary() {
                     <TableCell className="border-r text-right">
                       {formatCurrency(value.release.interestTotal, true)}
                     </TableCell>
-                    <TableCell className="border-r text-right">
+                    <TableCell className="text-right">
                       {value.releases.length}
                     </TableCell>
                   </TableRow>
@@ -249,7 +249,7 @@ export default function DailySummary() {
               <div className="mt-3 mb-2 text-center">{name}</div>
               <div className="flex gap-3">
                 {/*Loan List*/}
-                <Table className="border">
+                <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="border-r">Loan No</TableHead>
@@ -259,9 +259,7 @@ export default function DailySummary() {
                       <TableHead className="border-r text-right">
                         Interest
                       </TableHead>
-                      <TableHead className="border-r text-right">
-                        Total
-                      </TableHead>
+                      <TableHead className="text-right">Total</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -274,7 +272,7 @@ export default function DailySummary() {
                         <TableCell className="border-r text-right">
                           {formatCurrency(loan.interest, true)}
                         </TableCell>
-                        <TableCell className="border-r text-right">
+                        <TableCell className="text-right">
                           {formatCurrency(loan.total, true)}
                         </TableCell>
                       </TableRow>
@@ -287,14 +285,14 @@ export default function DailySummary() {
                       <TableCell className="border-r text-right">
                         {formatCurrency(value.loan.interestTotal)}
                       </TableCell>
-                      <TableCell className="border-r text-right">
+                      <TableCell className="text-right">
                         {formatCurrency(value.loan.total)}
                       </TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
                 {/*Release List*/}
-                <Table className="border">
+                <Table className="table-auto">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="border-r">Loan No</TableHead>
@@ -304,9 +302,7 @@ export default function DailySummary() {
                       <TableHead className="border-r text-right">
                         Interest
                       </TableHead>
-                      <TableHead className="border-r text-right">
-                        Total
-                      </TableHead>
+                      <TableHead className="text-right">Total</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -319,7 +315,7 @@ export default function DailySummary() {
                         <TableCell className="border-r text-right">
                           {formatCurrency(release.interest_amount, true)}
                         </TableCell>
-                        <TableCell className="border-r text-right">
+                        <TableCell className="text-right">
                           {formatCurrency(release.total_amount, true)}
                         </TableCell>
                       </TableRow>
@@ -332,7 +328,7 @@ export default function DailySummary() {
                       <TableCell className="border-r text-right">
                         {formatCurrency(value.release.interestTotal)}
                       </TableCell>
-                      <TableCell className="border-r text-right">
+                      <TableCell className="text-right">
                         {formatCurrency(value.release.total)}
                       </TableCell>
                     </TableRow>
