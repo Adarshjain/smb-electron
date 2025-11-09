@@ -45,7 +45,7 @@ export default function CompanySettings() {
           onSave={refetch}
         />
       </div>
-      <Table className="border rounded">
+      <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>

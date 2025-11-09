@@ -132,22 +132,106 @@ export default function BillAsLineItem({
   return (
     <>
       {enrichedBills.length ? (
-        <div className="border rounded-md">
-          <Table className="table-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="border-r">Loan No</TableHead>
+              <TableHead className="border-r">Date</TableHead>
+              <TableHead className="border-r">Months</TableHead>
+              <TableHead className="border-r">Items</TableHead>
+              <TableHead className="text-right border-r">Weight</TableHead>
+              <TableHead className="text-right border-r">Amount</TableHead>
+              <TableHead className="text-right border-r">Interest</TableHead>
+              <TableHead className="text-right">Total</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {enrichedBills.map((bill) => {
+              const total =
+                bill.interest + bill.firstMonthInterest + bill.docCharges;
+              return (
+                <TableRow key={`${bill.serial}-${bill.loan_no}`}>
+                  <TableCell className="border-r">{`${bill.serial} ${bill.loan_no}`}</TableCell>
+                  <TableCell className="border-r">
+                    {viewableDate(bill.date)}
+                  </TableCell>
+                  <TableCell
+                    className={cn(
+                      'border-r',
+                      bill.months > 18
+                        ? 'bg-destructive text-white border-destructive'
+                        : ''
+                    )}
+                  >
+                    {bill.months}
+                  </TableCell>
+
+                  <TableCell className="border-r">{bill.description}</TableCell>
+                  <TableCell className="text-right border-r">
+                    {bill.weight.toFixed(2)} gms
+                  </TableCell>
+                  <TableCell className="text-right border-r">
+                    {formatCurrency(bill.loan_amount)}
+                  </TableCell>
+                  <TableCell className="text-right border-r">
+                    <Tooltip>
+                      <TooltipTrigger>
+                        {formatCurrency(bill.interest)}
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="right"
+                        className="px-2 py-1 text-xs"
+                      >
+                        {bill.interest === 0
+                          ? formatCurrency(total)
+                          : `${formatCurrency(bill.interest)} + ${formatCurrency(bill.firstMonthInterest + bill.docCharges)} = ${formatCurrency(total)}`}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(bill.interest + bill.loan_amount)}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+            <TableRow>
+              <TableCell colSpan={5} />
+              <TableCell className="text-right border-l">
+                {formatCurrency(totals.principle)}
+              </TableCell>
+              <TableCell className="text-right border-x">
+                {formatCurrency(totals.interest)}
+              </TableCell>
+              <TableCell className="text-right">
+                {formatCurrency(totals.total)}
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      ) : (
+        <div className="w-[fit-content] px-2 py-1 rounded bg-green-200">
+          No Active Loans!
+        </div>
+      )}
+      {enrichedBillsReleased.length ? (
+        <>
+          <div>Released</div>
+          <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="border-r">Loan No</TableHead>
                 <TableHead className="border-r">Date</TableHead>
+                <TableHead className="border-r">Release Date</TableHead>
                 <TableHead className="border-r">Months</TableHead>
                 <TableHead className="border-r">Items</TableHead>
                 <TableHead className="text-right border-r">Weight</TableHead>
                 <TableHead className="text-right border-r">Amount</TableHead>
                 <TableHead className="text-right border-r">Interest</TableHead>
-                <TableHead className="text-right border-r">Total</TableHead>
+                <TableHead className="text-right">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {enrichedBills.map((bill) => {
+              {enrichedBillsReleased.map((bill) => {
                 const total =
                   bill.interest + bill.firstMonthInterest + bill.docCharges;
                 return (
@@ -156,17 +240,10 @@ export default function BillAsLineItem({
                     <TableCell className="border-r">
                       {viewableDate(bill.date)}
                     </TableCell>
-                    <TableCell
-                      className={cn(
-                        'border-r',
-                        bill.months > 18
-                          ? 'bg-destructive text-white border-destructive'
-                          : ''
-                      )}
-                    >
-                      {bill.months}
+                    <TableCell className="border-r">
+                      {viewableDate(bill.releasedEntry?.date)}
                     </TableCell>
-
+                    <TableCell className="border-r">{bill.months}</TableCell>
                     <TableCell className="border-r">
                       {bill.description}
                     </TableCell>
@@ -191,111 +268,26 @@ export default function BillAsLineItem({
                         </TooltipContent>
                       </Tooltip>
                     </TableCell>
-                    <TableCell className="text-right border-r">
+                    <TableCell className="text-right">
                       {formatCurrency(bill.interest + bill.loan_amount)}
                     </TableCell>
                   </TableRow>
                 );
               })}
               <TableRow>
-                <TableCell colSpan={5} />
+                <TableCell colSpan={6} />
                 <TableCell className="text-right border-l">
-                  {formatCurrency(totals.principle)}
+                  {formatCurrency(totalsReleased.principle)}
                 </TableCell>
-                <TableCell className="text-right border-x">
-                  {formatCurrency(totals.interest)}
+                <TableCell className="text-right border-l">
+                  {formatCurrency(totalsReleased.interest)}
                 </TableCell>
-                <TableCell className="text-right border-r">
-                  {formatCurrency(totals.total)}
+                <TableCell className="text-right border-l">
+                  {formatCurrency(totalsReleased.total)}
                 </TableCell>
               </TableRow>
             </TableBody>
           </Table>
-        </div>
-      ) : (
-        <div className="w-[fit-content] px-2 py-1 rounded bg-green-200">
-          No Active Loans!
-        </div>
-      )}
-      {enrichedBillsReleased.length ? (
-        <>
-          <div>Released</div>
-          <div className="border rounded-md">
-            <Table className="table-auto">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="border-r">Loan No</TableHead>
-                  <TableHead className="border-r">Date</TableHead>
-                  <TableHead className="border-r">Release Date</TableHead>
-                  <TableHead className="border-r">Months</TableHead>
-                  <TableHead className="border-r">Items</TableHead>
-                  <TableHead className="text-right border-r">Weight</TableHead>
-                  <TableHead className="text-right border-r">Amount</TableHead>
-                  <TableHead className="text-right border-r">
-                    Interest
-                  </TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {enrichedBillsReleased.map((bill) => {
-                  const total =
-                    bill.interest + bill.firstMonthInterest + bill.docCharges;
-                  return (
-                    <TableRow key={`${bill.serial}-${bill.loan_no}`}>
-                      <TableCell className="border-r">{`${bill.serial} ${bill.loan_no}`}</TableCell>
-                      <TableCell className="border-r">
-                        {viewableDate(bill.date)}
-                      </TableCell>
-                      <TableCell className="border-r">
-                        {viewableDate(bill.releasedEntry?.date)}
-                      </TableCell>
-                      <TableCell className="border-r">{bill.months}</TableCell>
-                      <TableCell className="border-r">
-                        {bill.description}
-                      </TableCell>
-                      <TableCell className="text-right border-r">
-                        {bill.weight.toFixed(2)} gms
-                      </TableCell>
-                      <TableCell className="text-right border-r">
-                        {formatCurrency(bill.loan_amount)}
-                      </TableCell>
-                      <TableCell className="text-right border-r">
-                        <Tooltip>
-                          <TooltipTrigger>
-                            {formatCurrency(bill.interest)}
-                          </TooltipTrigger>
-                          <TooltipContent
-                            side="right"
-                            className="px-2 py-1 text-xs"
-                          >
-                            {bill.interest === 0
-                              ? formatCurrency(total)
-                              : `${formatCurrency(bill.interest)} + ${formatCurrency(bill.firstMonthInterest + bill.docCharges)} = ${formatCurrency(total)}`}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(bill.interest + bill.loan_amount)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                <TableRow>
-                  <TableCell colSpan={6} />
-                  <TableCell className="text-right border-l">
-                    {formatCurrency(totalsReleased.principle)}
-                  </TableCell>
-                  <TableCell className="text-right border-l">
-                    {formatCurrency(totalsReleased.interest)}
-                  </TableCell>
-                  <TableCell className="text-right border-l">
-                    {formatCurrency(totalsReleased.total)}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
         </>
       ) : null}
     </>
