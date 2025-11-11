@@ -88,12 +88,17 @@ export const initCompanies = () => {
   const createCompanies: Tables['companies']['Row'][] = [];
 
   for (const record of data) {
-    createCompanies.push({
-      name: toSentenceCase(record.NAME),
-      next_serial: 'A-1',
-      is_default: 0,
-      current_date: new Date().toISOString().split('T')[0],
-    });
+    if (
+      record.NAME.toLowerCase() === 'mahaveer bankers' ||
+      record.NAME.toLowerCase() === 'sri mahaveer bankers'
+    ) {
+      createCompanies.push({
+        name: toSentenceCase(record.NAME),
+        next_serial: 'A-1',
+        is_default: 0,
+        current_date: new Date().toISOString().split('T')[0],
+      });
+    }
   }
   try {
     createBatched('companies', createCompanies);
@@ -154,7 +159,10 @@ export const initBills = () => {
   const billingTable = reader.getTable('billing');
   let billingData = billingTable.getData<Record<string, string>>();
   billingData = billingData.filter(
-    (record) => new Date(record.date) >= new Date('2020-01-01')
+    (record) =>
+      new Date(record.date) > new Date('2019-12-31') &&
+      (record.company.toLowerCase() === 'mahaveer bankers' ||
+        record.company.toLowerCase() === 'sri mahaveer bankers')
   );
 
   const itemDesTable = reader.getTable('itemdes');
