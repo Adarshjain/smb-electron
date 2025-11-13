@@ -11,6 +11,13 @@ export default function Settings() {
     <div className="p-6 flex flex-col gap-3">
       <div className="text-2xl font-bold tracking-tight">Settings</div>
       <CompanySettings />
+      <Button
+        variant="outline"
+        className="w-32"
+        onClick={() => void navigate('/customer-crud')}
+      >
+        <div className="justify-self-center col-start-2">Customers</div>
+      </Button>
       <div className="text-xl font-medium flex items-center gap-1 mt-12">
         <AlertTriangleIcon size={20} /> Danger Zone
       </div>
@@ -33,7 +40,7 @@ export default function Settings() {
         }
         title={`Delete all entries and refresh?`}
         onConfirm={async () =>
-          toastElectronResponse(await window.api.db.initSeed())
+          void toastElectronResponse(await window.api.db.initSeed())
         }
         confirmText="Delete"
         isDestructive
