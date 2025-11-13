@@ -63,16 +63,45 @@ export interface Tables {
     Delete: { id: string };
   };
 
-  balances: {
+  daily_balances: {
     Row: {
       date: string;
       opening: number;
       closing: number;
       company: string;
     };
-    Insert: Tables['balances']['Row'];
-    Update: Partial<Tables['balances']['Row']>;
+    Insert: Tables['daily_balances']['Row'];
+    Update: Partial<Tables['daily_balances']['Row']>;
     Delete: { date: string; company: string };
+  };
+
+  account_head: {
+    Row: {
+      code: number;
+      name: string;
+      openingBalance: number;
+      company: string;
+      hisaabGroup: string;
+    };
+    Insert: Tables['account_head']['Row'];
+    Update: Partial<Tables['account_head']['Row']>;
+    Delete: { code: number };
+  };
+
+  daily_entries: {
+    Row: {
+      particular: string;
+      description: string;
+      amount: number;
+      date: string;
+      company: string;
+      from_code: number;
+      to_code: number;
+      particular1: string;
+    };
+    Insert: Tables['daily_entries']['Row'];
+    Update: Partial<Tables['daily_entries']['Row']>;
+    Delete: { code: number };
   };
 
   bills: {

@@ -15,7 +15,7 @@ export const tables: TableName[] = [
   'areas',
   'companies',
   'customers',
-  'balances',
+  'daily_balances',
   'bills',
   'bill_items',
   'releases',

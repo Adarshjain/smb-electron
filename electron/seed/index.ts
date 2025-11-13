@@ -1,6 +1,6 @@
 import MDBReader from 'mdb-reader';
 import fs from 'fs';
-import { createBatched, executeSql } from '../db/localDB';
+import { create, createBatched, executeSql } from '../db/localDB';
 import { type MetalType, type TableName, type Tables } from '../../tables';
 import { TablesSQliteSchema } from '../../tableSchema';
 
@@ -54,25 +54,68 @@ export const initAreas = () => {
   }
 };
 
+export const initAccountHead = () => {
+  if (!reader) {
+    return;
+  }
+  const table = reader.getTable('accounthead');
+  let data = table.getData<Record<string, string>>();
+  data = data.filter(
+    (d) =>
+      d.company.toLowerCase() === 'mahaveer bankers' ||
+      d.company.toLowerCase() === 'sri mahaveer bankers'
+  );
+
+  const createAccountHead: Tables['account_head']['Row'][] = [];
+
+  for (const record of data) {
+    createAccountHead.push({
+      name: record.acc_name,
+      company: toSentenceCase(record.company),
+      code: parseInt('' + record.acc_code),
+      hisaabGroup: record.SEARCHBY,
+      openingBalance: 0,
+    });
+  }
+  try {
+    createBatched('account_head', createAccountHead);
+  } catch (e) {
+    console.log(e instanceof Error ? e.message : 'Random Error');
+  }
+};
+
 export const initBalance = () => {
   if (!reader) {
     return;
   }
-  const table = reader.getTable('balance');
+  const table = reader.getTable('Voucher2');
   const data = table.getData<Record<string, string>>();
 
-  const createBalances: Tables['balances']['Row'][] = [];
+  const createDailyBalances: Tables['daily_entries']['Row'][] = [];
 
   for (const record of data) {
-    createBalances.push({
-      date: new Date(record.cl_date).toISOString().split('T')[0], //.split(" at ")[0]
-      opening: 0,
-      closing: parseFloat(record.cl_bal),
+    if (parseFloat('' + (record.dr || record.cr)) === 0) {
+      continue;
+    }
+    createDailyBalances.push({
+      date: new Date(record.date).toISOString().split('T')[0],
       company: toSentenceCase(record.company),
+      description: record.description ?? null,
+      particular: record.particular ?? null,
+      particular1: record.particular1 ?? null,
+      amount: parseFloat('' + (record.dr || record.cr)),
+      from_code:
+        parseFloat('' + record.dr) === 0
+          ? parseInt('' + record.acc_code)
+          : parseInt('' + record.code),
+      to_code:
+        parseFloat('' + record.dr) === 0
+          ? parseInt('' + record.code)
+          : parseInt('' + record.acc_code),
     });
   }
   try {
-    createBatched('balances', createBalances);
+    createBatched('daily_entries', createDailyBalances);
   } catch (e) {
     console.log(e instanceof Error ? e.message : 'Random Error');
   }
@@ -336,6 +379,7 @@ export const initAllSeedData = (filePath: string) => {
   initCustomers();
   initProducts();
   initIntRates();
-  initBalance();
   initBills();
+  initAccountHead();
+  initBalance();
 };
