@@ -155,8 +155,8 @@ export const TablesSQliteSchema: Record<
     primary: ['id'],
   },
 
-  balances: {
-    name: 'balances',
+  daily_balances: {
+    name: 'daily_balances',
     columns: {
       date: {
         schema: 'TEXT NOT NULL',
@@ -171,7 +171,7 @@ export const TablesSQliteSchema: Record<
         encoded: false,
       },
       company: {
-        schema: 'TEXT NOT NULL DEFAULT 0',
+        schema: 'TEXT NOT NULL',
         encoded: false,
       },
       synced: {
@@ -181,6 +181,83 @@ export const TablesSQliteSchema: Record<
     },
     requiredFields: ['date', 'opening', 'closing', 'company'],
     unique: ['date', 'company'],
+    primary: ['date', 'company'],
+  },
+
+  account_head: {
+    name: 'account_head',
+    columns: {
+      code: {
+        schema: 'REAL NOT NULL',
+        encoded: false,
+      },
+      openingBalance: {
+        schema: 'REAL NOT NULL',
+        encoded: false,
+      },
+      name: {
+        schema: 'TEXT NOT NULL',
+        encoded: false,
+      },
+      hisaabGroup: {
+        schema: 'TEXT NOT NULL',
+        encoded: false,
+      },
+      company: {
+        schema: 'TEXT NOT NULL',
+        encoded: false,
+      },
+      synced: {
+        schema: 'BOOLEAN NOT NULL DEFAULT 0',
+        encoded: false,
+      },
+    },
+    requiredFields: ['code', 'openingBalance', 'name', 'company'],
+    unique: ['code', 'company'],
+    primary: ['code', 'company'],
+  },
+
+  daily_entries: {
+    name: 'daily_entries',
+    columns: {
+      amount: {
+        schema: 'REAL NOT NULL',
+        encoded: false,
+      },
+      from_code: {
+        schema: 'REAL NOT NULL',
+        encoded: false,
+      },
+      to_code: {
+        schema: 'REAL NOT NULL',
+        encoded: false,
+      },
+      particular: {
+        schema: 'TEXT',
+        encoded: false,
+      },
+      particular1: {
+        schema: 'TEXT',
+        encoded: false,
+      },
+      description: {
+        schema: 'TEXT',
+        encoded: false,
+      },
+      company: {
+        schema: 'TEXT NOT NULL',
+        encoded: false,
+      },
+      date: {
+        schema: 'TEXT NOT NULL',
+        encoded: false,
+      },
+      synced: {
+        schema: 'BOOLEAN NOT NULL DEFAULT 0',
+        encoded: false,
+      },
+    },
+    requiredFields: ['amount', 'from_code', 'to_code', 'company', 'date'],
     primary: ['date', 'company'],
   },
 
