@@ -1,6 +1,6 @@
 import MDBReader from 'mdb-reader';
 import fs from 'fs';
-import { create, createBatched, executeSql } from '../db/localDB';
+import { createBatched, executeSql } from '../db/localDB';
 import { type MetalType, type TableName, type Tables } from '../../tables';
 import { TablesSQliteSchema } from '../../tableSchema';
 
@@ -103,15 +103,10 @@ export const initBalance = () => {
       description: record.description ?? null,
       particular: record.particular ?? null,
       particular1: record.particular1 ?? null,
-      amount: parseFloat('' + (record.dr || record.cr)),
-      from_code:
-        parseFloat('' + record.dr) === 0
-          ? parseInt('' + record.acc_code)
-          : parseInt('' + record.code),
-      to_code:
-        parseFloat('' + record.dr) === 0
-          ? parseInt('' + record.code)
-          : parseInt('' + record.acc_code),
+      debit: parseFloat('' + record.dr),
+      credit: parseFloat('' + record.cr),
+      code_1: parseInt('' + record.acc_code),
+      code_2: parseInt('' + record.code),
     });
   }
   try {

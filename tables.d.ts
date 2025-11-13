@@ -92,11 +92,12 @@ export interface Tables {
     Row: {
       particular: string;
       description: string;
-      amount: number;
+      debit: number;
+      credit: number;
       date: string;
       company: string;
-      from_code: number;
-      to_code: number;
+      code_1: number;
+      code_2: number;
       particular1: string;
     };
     Insert: Tables['daily_entries']['Row'];
