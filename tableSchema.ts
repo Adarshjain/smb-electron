@@ -220,15 +220,19 @@ export const TablesSQliteSchema: Record<
   daily_entries: {
     name: 'daily_entries',
     columns: {
-      amount: {
+      debit: {
         schema: 'REAL NOT NULL',
         encoded: false,
       },
-      from_code: {
+      credit: {
         schema: 'REAL NOT NULL',
         encoded: false,
       },
-      to_code: {
+      code_1: {
+        schema: 'REAL NOT NULL',
+        encoded: false,
+      },
+      code_2: {
         schema: 'REAL NOT NULL',
         encoded: false,
       },
@@ -257,7 +261,7 @@ export const TablesSQliteSchema: Record<
         encoded: false,
       },
     },
-    requiredFields: ['amount', 'from_code', 'to_code', 'company', 'date'],
+    requiredFields: [],
     primary: ['date', 'company'],
   },
 
