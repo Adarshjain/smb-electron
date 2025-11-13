@@ -99,6 +99,7 @@ export interface Tables {
       code_1: number;
       code_2: number;
       particular1: string;
+      sortOrder: number;
     };
     Insert: Tables['daily_entries']['Row'];
     Update: Partial<Tables['daily_entries']['Row']>;

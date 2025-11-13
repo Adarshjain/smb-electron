@@ -65,7 +65,7 @@ export const TabManager: React.FC = () => {
           <div
             key={tab.id}
             className={cn(
-              'py-1 px-4 inline-flex items-center border border-b-0 border-transparent text-gray-500 rounded-t-lg focus:outline-hidden focus:text-gray-700 disabled:opacity-50 disabled:pointer-events-none mt-1 cursor-pointer',
+              'py-1 pl-4 pr-2 inline-flex items-center border border-b-0 border-transparent  rounded-t-lg focus:outline-hidden focus:text-gray-700 disabled:opacity-50 disabled:pointer-events-none mt-1 cursor-pointer',
               tab.id === activeTabId
                 ? 'bg-white border-gray-200'
                 : 'hover:text-gray-700 hover:bg-blue-100 rounded'
