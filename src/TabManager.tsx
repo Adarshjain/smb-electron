@@ -7,6 +7,8 @@ import React, {
   useState,
 } from 'react';
 import { App } from './App.tsx';
+import { XIcon } from 'lucide-react';
+import { cn } from '@/lib/utils.ts';
 
 interface Tab {
   id: string;
@@ -58,28 +60,27 @@ export const TabManager: React.FC = () => {
   // Memoize the tab bar so UI updates don’t reset children
   const tabBar = useMemo(
     () => (
-      <div className="flex bg-gray-100 border-b border-gray-300">
+      <div className="flex bg-gray-100 border-gray-300">
         {tabs.map((tab) => (
           <div
             key={tab.id}
-            className={`px-4 py-2 cursor-pointer flex items-center ${
+            className={cn(
+              'py-1 px-4 inline-flex items-center border border-b-0 border-transparent text-gray-500 rounded-t-lg focus:outline-hidden focus:text-gray-700 disabled:opacity-50 disabled:pointer-events-none mt-1 cursor-pointer',
               tab.id === activeTabId
-                ? 'bg-white border-t-2 border-blue-600'
-                : ''
-            }`}
+                ? 'bg-white border-gray-200'
+                : 'hover:text-gray-700 hover:bg-blue-100 rounded'
+            )}
             onClick={() => switchTab(tab.id)}
           >
             {tab.title}
             {!tab.isMain && (
-              <button
-                className="ml-2 text-gray-400 hover:text-red-600"
+              <XIcon
+                className="ml-2 w-5 h-5 p-0.5 text-gray-400 hover:bg-gray-300 rounded-3xl"
                 onClick={(e) => {
                   e.stopPropagation();
                   closeTab(tab.id);
                 }}
-              >
-                ✕
-              </button>
+              />
             )}
           </div>
         ))}
