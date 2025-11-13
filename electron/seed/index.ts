@@ -107,6 +107,7 @@ export const initBalance = () => {
       credit: parseFloat('' + record.cr),
       code_1: parseInt('' + record.acc_code),
       code_2: parseInt('' + record.code),
+      sortOrder: parseInt('' + record.rec_id),
     });
   }
   try {

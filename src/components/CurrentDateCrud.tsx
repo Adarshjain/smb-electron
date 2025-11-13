@@ -34,7 +34,7 @@ export default function CurrentDateCrud() {
   const isHome = useMemo(() => location.pathname === '/', [location.pathname]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [internalDate, setInternalDate] = useState<string>(
-    company?.current_date ?? currentIsoDate()
+    nextIsoDate(company?.current_date ?? currentIsoDate())
   );
 
   const onSet = (e?: React.MouseEvent) => {
@@ -43,6 +43,7 @@ export default function CurrentDateCrud() {
       return;
     }
     void setCurrentDate(internalDate);
+    setIsModalOpen(false);
   };
 
   if (!company) {
@@ -79,7 +80,7 @@ export default function CurrentDateCrud() {
         </DialogHeader>
         <div className="flex gap-2">
           <DatePicker
-            value={company.current_date}
+            value={internalDate}
             onInputChange={setInternalDate}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
