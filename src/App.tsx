@@ -9,7 +9,7 @@ import ReleaseLoan from '@/pages/ReleaseLoan.tsx';
 import DayBook from '@/pages/DayBook.tsx';
 import CustomerCrud from '@/pages/CustomerCrud.tsx';
 
-function App() {
+export function App() {
   return (
     <HashRouter>
       <Toolbar />
@@ -45,5 +45,3 @@ function App() {
     </HashRouter>
   );
 }
-
-export default App;

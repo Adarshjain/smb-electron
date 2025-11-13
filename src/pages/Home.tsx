@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button.tsx';
 import { useEffect } from 'react';
 import { Kbd } from '@/components/ui/kbd';
 import QuickView from '@/components/QuickView.tsx';
+import CustomerCrud from '@/pages/CustomerCrud.tsx';
+import { useTabs } from '@/TabManager.tsx';
 
 const shortCutMapping: {
   shortcutKey: string;
@@ -25,6 +27,8 @@ const shortCutMapping: {
 
 export function Home() {
   const navigate = useNavigate();
+  const { openTab } = useTabs();
+
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
       if (e.key === 'F1') {
@@ -85,7 +89,7 @@ export function Home() {
         <Button
           variant="outline"
           className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
-          onClick={() => void navigate('/customer-crud')}
+          onClick={() => openTab('Customer: John Doe', <CustomerCrud />)}
         >
           <Kbd className="justify-self-start col-start-1">F5</Kbd>
           <div className="justify-self-center col-start-2">Daily Entry</div>
