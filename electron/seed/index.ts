@@ -4,6 +4,107 @@ import { createBatched, executeSql } from '../db/localDB';
 import { type MetalType, type TableName, type Tables } from '../../tables';
 import { TablesSQliteSchema } from '../../tableSchema';
 
+const openingBalanceMap: Record<string, Record<string, number>> = {
+  'Mahaveer Bankers': {
+    'ADVANCE TAX PAID': 15000,
+    'ASHOK KUMAR JAIN': -97138,
+    'AUDITOR FEES': 8000,
+    'BANK CHARGES': 1894,
+    'BANK INTEREST RECEIVED': -9925,
+    'CAPITAL A/C': 2604100.27,
+    CASH: 510061.95,
+    'CASH ADJUSTMENT': 84.93,
+    'CITY UNION BANK A/C': 6035.27,
+    DRAWINGS: 243622,
+    'EQUITAS BANK SB A/C': 5911.16,
+    EXPENSE: 80,
+    'GIFT FROM SHILPA': 200000,
+    'INCOME TAX PAID': 23966,
+    'INCOME TAX REFUND': -8960,
+    'INT. PAID TO A K JAIN': 3880,
+    'INTEREST RECEIVED': 887635,
+    'INTEREST RECEIVED FROM ASHOK KUMAR JAIN': -235302,
+    'INTEREST RECEIVED FROM GHISULAL TALEDA': -14625,
+    'JEWELS (207.14G)': -17364,
+    LIC: 118768,
+    'LOAN ACCOUNT': 3693255,
+    'MANTRA MODEM': 4700,
+    'MISCELLANEOUS INCOME': -775761,
+    'NOVAPAY CHARGES': 2750.32,
+    'NOVO PAY COMISSION': -4561.2,
+    NOVOPAY: 19783.79,
+    'NOVOPAY TDS': 124,
+    SALARY: 130000,
+    'SILVER ARTICLES (14.206.5KG)': -12628,
+    'STATIONARY & POSTAGE': 20099.05,
+  },
+  'Sri Mahaveer Bankers': {
+    'ADINTEREST RECEIVED ': -280,
+    'ADVANCE TAX PAID': 70000,
+    ARCHANA: 97138,
+    'ASHOK KUMAR CAPITAL A/C': 2290456.38,
+    'ASHOK KUMAR-HUF': -4250000,
+    'AUCTION CHARGES': 40200,
+    'AUCTION INTEREST': -902790,
+    'AUDITOR FEES': 13000,
+    'AXIS BANK SB A/C': 403608.4,
+    'BANK CHARGES': 5229.29,
+    'BANK INTEREST RECEIVED': -119327,
+    'BANK INTREST PAID': 358969,
+    'BUILDING CONSTRUCTION A/C': 4107793,
+    CASH: 505324,
+    'CITY UNION BANK': 2353,
+    'COLLEGE FEES': 127230,
+    DONATION: 1200,
+    DRAWINGS: 601000,
+    'ELETRIC BILL': 15843,
+    'EQUITAS BANK C/A': 5000.38,
+    'EQUITAS BANK SB A/C': 3969,
+    'FURNITURE ': 1050,
+    'GAS SUBSIDY': -7151.12,
+    'GHISULAL HUF': -4800000,
+    'GIFT FROM ADARSH': -100000,
+    'GIFT FROM SHILPA': -300000,
+    'GL CAPITAL TRANSFER A/C': -1367651.29,
+    'HOUSE PROPERTY ': 1168202,
+    'INCOME TAX': 36560,
+    'INCOME TAX REFUND': -18340,
+    'INTEREST PAID ARCHANA': 235302,
+    'INTEREST PAID TO ADARSH JAIN': 788500,
+    'INTEREST PAID TO ASHOKUMAR HUF': 1830500,
+    'INTEREST PAID TO CHANDARA KALA': 34915,
+    'INTEREST PAID TO DEEPA': 14297,
+    'INTEREST PAID TO GHISULAL HUF': 2023000,
+    'INTEREST PAID TO RAMESH': 78750,
+    'INTEREST PAID TO SHILPA': 529352,
+    'INTEREST RECEIVED': -3943201,
+    'INTEREST RECEIVED FROM GURU': -23250,
+    'INTEREST RECIVED FROM ARCHANA': -3880,
+    'INTEREST RECIVED FROM SANTHOSH': -24855,
+    'INTEREST RECIVED FROM YOGANATHAN': -112500,
+    'INTEREST REWCIVED FROM MAHAVEER': -34915,
+    'INTEREST RICEVED BANK (GL)': -4182,
+    IRCTC: 2593,
+    LIC: 239991,
+    'LOAN ACCOUNT': 9462195,
+    'MISC. EXPENSES': 10345,
+    'MISCELLANEOUS INCOME': -3679479,
+    'MUNICIPAL TAX': 17880,
+    'PHONE DEPO WRITTEN OF': 2000,
+    'PPF INT RICIVED': -12695,
+    SALARY: 445250,
+    'SBI  PPF A/C': 62695,
+    'SHARES IN COMP. WRITTEN OF': 2000,
+    'SILVER ARTICLES(GL) 25.500KG': 7650,
+    'STATINORY &POSTAGE': 88945.58,
+    'TELEPHONE BILL': 11957,
+    'TRAVELLING EXP': 19935,
+    'UNION BANK HOUSING LOAN': -1781050.57,
+    'UNION BANK SB A/C': 4281.71,
+    YOGANATHAN: 300000,
+  },
+};
+
 let reader: MDBReader | null = null;
 
 const initReader = (filePath: string) => {
@@ -69,12 +170,13 @@ export const initAccountHead = () => {
   const createAccountHead: Tables['account_head']['Row'][] = [];
 
   for (const record of data) {
+    const company = toSentenceCase(record.company);
     createAccountHead.push({
       name: record.acc_name,
-      company: toSentenceCase(record.company),
+      company,
       code: parseInt('' + record.acc_code),
       hisaabGroup: record.SEARCHBY,
-      openingBalance: 0,
+      openingBalance: openingBalanceMap[company][record.acc_name] ?? 0,
     });
   }
   try {
@@ -84,7 +186,7 @@ export const initAccountHead = () => {
   }
 };
 
-export const initBalance = () => {
+export const initDailyEntries = () => {
   if (!reader) {
     return;
   }
@@ -377,5 +479,5 @@ export const initAllSeedData = (filePath: string) => {
   initIntRates();
   initBills();
   initAccountHead();
-  initBalance();
+  initDailyEntries();
 };
