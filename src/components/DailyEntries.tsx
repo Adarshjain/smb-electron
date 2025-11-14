@@ -27,6 +27,8 @@ export default function DailyEntries() {
     Tables['account_head']['Row'] | null
   >(null);
   const [displayRows, setDisplayRows] = useState<Row[]>([]);
+  const [openingBalance, setOpeningBalance] = useState<number>(0);
+  const [closingBalance, setClosingBalance] = useState<number>(0);
 
   const getAccountById = useCallback(
     (code: number): Tables['account_head']['Row'] | undefined => {
@@ -43,15 +45,14 @@ export default function DailyEntries() {
   );
 
   useEffect(() => {
-    if (!currentAccountHead || !company) {
+    if (!currentAccountHead || !company || !currentAccountHead || date === '') {
       return;
     }
     const run = async () => {
-      const start = performance.now();
       const q = `SELECT * FROM daily_entries 
          where 
            (code_1 = ${currentAccountHead.code} or code_2 = ${currentAccountHead.code}) 
-           AND "date" > '2020-03-01' AND "date" < '${company.current_date}' `;
+           AND "date" > '2020-03-31' AND "date" < '${date}' AND company='${company.name}' order by sortOrder asc`;
       const queryResponse = await query<Tables['daily_entries']['Row'][]>(q);
       if (!queryResponse.success) {
         toastElectronResponse(queryResponse);
@@ -67,15 +68,14 @@ export default function DailyEntries() {
           currentAccountHead?.code === entry.code_1
             ? entry.credit
             : entry.debit;
-        total += credit - debit;
+        total = Number(
+          (Number(total) + Number(credit) - Number(debit)).toFixed(2)
+        );
       });
-      console.log(
-        currentAccountHead.openingBalance + total,
-        performance.now() - start
-      );
+      setOpeningBalance(currentAccountHead.openingBalance + total);
     };
     void run();
-  }, [company, currentAccountHead]);
+  }, [company, currentAccountHead, date]);
 
   useEffect(() => {
     if (!company?.name) return;
@@ -103,7 +103,7 @@ export default function DailyEntries() {
   }, [company?.name]);
 
   useEffect(() => {
-    if (!company?.name || !date) return;
+    if (!company?.name || !date || !currentAccountHead) return;
 
     const run = async () => {
       const dailyEntryResponse = await read('daily_entries', {
@@ -114,12 +114,13 @@ export default function DailyEntries() {
         toastElectronResponse(dailyEntryResponse);
         return;
       }
+      let total = 0;
       setDisplayRows(
         dailyEntryResponse.data
           ?.filter(
             (entry) =>
-              getAccountById(entry.code_1)?.name === currentAccountHead?.name ||
-              getAccountById(entry.code_2)?.name === currentAccountHead?.name
+              getAccountById(entry.code_1)?.name === currentAccountHead.name ||
+              getAccountById(entry.code_2)?.name === currentAccountHead.name
           )
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map((entry) => {
@@ -131,6 +132,9 @@ export default function DailyEntries() {
               currentAccountHead?.code === entry.code_1
                 ? entry.credit
                 : entry.debit;
+            total = Number(
+              (Number(total) + Number(credit) - Number(debit)).toFixed(2)
+            );
             return {
               key: `${entry.code_1}-${entry.code_2}-${entry.credit}-${entry.debit}-${entry.sortOrder}`,
               title:
@@ -145,15 +149,10 @@ export default function DailyEntries() {
             };
           }) ?? []
       );
+      setClosingBalance(total + openingBalance);
     };
     void run();
-  }, [
-    company?.name,
-    currentAccountHead?.code,
-    currentAccountHead?.name,
-    date,
-    getAccountById,
-  ]);
+  }, [company, currentAccountHead, date, getAccountById, openingBalance]);
 
   return (
     <div className="p-3">
@@ -180,30 +179,54 @@ export default function DailyEntries() {
           navigated
         />
       </div>
-      {displayRows.length > 0 ? (
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-2">Title</th>
-              <th className="text-left p-2">Description</th>
-              <th className="text-right p-2">Credit</th>
-              <th className="text-right p-2">Debit</th>
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b">
+            <th className="text-left p-2">Title</th>
+            <th className="text-left p-2">Description</th>
+            <th className="text-right p-2">Credit</th>
+            <th className="text-right p-2">Debit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr className="border-b">
+            <td className="p-2">Opening Balance</td>
+            <td className="p-2"></td>
+            <td className="p-2 text-right">
+              {openingBalance > 0 || openingBalance === 0
+                ? formatCurrency(openingBalance, true)
+                : null}
+            </td>
+            <td className="p-2 text-right">
+              {openingBalance > 0 || openingBalance === 0
+                ? null
+                : formatCurrency(-openingBalance, true)}
+            </td>
+          </tr>
+          {displayRows.map((row) => (
+            <tr key={row.key} className="border-b">
+              <td className="p-2">{row.title}</td>
+              <td className="p-2">{row.description}</td>
+              <td className="p-2 text-right">{row.credit}</td>
+              <td className="p-2 text-right">{row.debit}</td>
             </tr>
-          </thead>
-          <tbody>
-            {displayRows.map((row) => (
-              <tr key={row.key} className="border-b">
-                <td className="p-2">{row.title}</td>
-                <td className="p-2">{row.description}</td>
-                <td className="p-2 text-right">{row.credit}</td>
-                <td className="p-2 text-right">{row.debit}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <div className="text-center text-gray-500 mt-4">No entries found</div>
-      )}
+          ))}
+          <tr className="border-b">
+            <td className="p-2">Closing Balance</td>
+            <td className="p-2"></td>
+            <td className="p-2 text-right">
+              {closingBalance > 0 || closingBalance === 0
+                ? formatCurrency(closingBalance, true)
+                : null}
+            </td>
+            <td className="p-2 text-right">
+              {closingBalance > 0 || closingBalance === 0
+                ? null
+                : formatCurrency(-closingBalance, true)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   );
 }
