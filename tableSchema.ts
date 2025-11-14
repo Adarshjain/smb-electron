@@ -409,6 +409,10 @@ export const TablesSQliteSchema: Record<
         schema: 'TEXT NOT NULL',
         encoded: false,
       },
+      loan_date: {
+        schema: 'TEXT NOT NULL',
+        encoded: false,
+      },
       interest_amount: {
         schema: 'REAL NOT NULL',
         encoded: false,
