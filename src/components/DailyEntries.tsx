@@ -19,7 +19,8 @@ interface Row {
 
 export default function DailyEntries() {
   const { company } = useCompany();
-  const [date, setDate] = useState(company?.current_date);
+
+  const [date, setDate] = useState(company?.current_date ?? '');
   const [accountHeads, setAccountHeads] = useState<
     Tables['account_head']['Row'][]
   >([]);
@@ -27,132 +28,148 @@ export default function DailyEntries() {
     Tables['account_head']['Row'] | null
   >(null);
   const [displayRows, setDisplayRows] = useState<Row[]>([]);
-  const [openingBalance, setOpeningBalance] = useState<number>(0);
-  const [closingBalance, setClosingBalance] = useState<number>(0);
+  const [openingBalance, setOpeningBalance] = useState(0);
+  const [closingBalance, setClosingBalance] = useState(0);
 
   const getAccountById = useCallback(
-    (code: number): Tables['account_head']['Row'] | undefined => {
-      return accountHeads.find((head) => head.code === code);
-    },
+    (code: number) => accountHeads.find((head) => head.code === code),
     [accountHeads]
   );
 
   const getAccountByName = useCallback(
-    (name: string): Tables['account_head']['Row'] | undefined => {
-      return accountHeads.find((head) => head.name === name);
-    },
+    (name: string) => accountHeads.find((head) => head.name === name),
     [accountHeads]
   );
 
-  useEffect(() => {
-    if (!currentAccountHead || !company || !currentAccountHead || date === '') {
-      return;
-    }
-    const run = async () => {
-      const q = `SELECT * FROM daily_entries 
-         where 
-           (code_1 = ${currentAccountHead.code} or code_2 = ${currentAccountHead.code}) 
-           AND "date" > '2020-03-31' AND "date" < '${date}' AND company='${company.name}' order by sortOrder asc`;
-      const queryResponse = await query<Tables['daily_entries']['Row'][]>(q);
-      if (!queryResponse.success) {
-        toastElectronResponse(queryResponse);
-        return;
-      }
-      let total = 0;
-      queryResponse.data?.forEach((entry) => {
-        const credit =
-          currentAccountHead?.code === entry.code_1
-            ? entry.debit
-            : entry.credit;
-        const debit =
-          currentAccountHead?.code === entry.code_1
-            ? entry.credit
-            : entry.debit;
-        total = Number(
-          (Number(total) + Number(credit) - Number(debit)).toFixed(2)
-        );
-      });
-      setOpeningBalance(currentAccountHead.openingBalance + total);
-    };
-    void run();
-  }, [company, currentAccountHead, date]);
+  const calculateTransactionEffect = useCallback(
+    (entry: Tables['daily_entries']['Row'], accCode: number) => {
+      const isPrimary = accCode === entry.code_1;
+      const credit = isPrimary ? entry.debit : entry.credit;
+      const debit = isPrimary ? entry.credit : entry.debit;
+      return { credit: Number(credit), debit: Number(debit) };
+    },
+    []
+  );
 
-  useEffect(() => {
+  const loadAccountHeads = useCallback(async () => {
     if (!company?.name) return;
+    const res = await read('account_head', { company: company.name });
+    if (!res.success) return toastElectronResponse(res);
 
-    const run = async () => {
-      const accountHeadResponse = await read('account_head', {
-        company: company.name,
-      });
-      if (!accountHeadResponse.success) {
-        toastElectronResponse(accountHeadResponse);
-        return;
-      }
-      const sortedHeads =
-        accountHeadResponse.data?.sort((a, b) =>
-          a.name.localeCompare(b.name)
-        ) ?? [];
+    const sorted = res.data?.sort((a, b) => a.name.localeCompare(b.name)) ?? [];
+    setAccountHeads(sorted);
 
-      setAccountHeads(sortedHeads);
+    // Default to CASH account
+    const cashAccount = sorted.find((head) => head.name === 'CASH') ?? null;
+    setCurrentAccountHead(cashAccount);
+  }, [company]);
 
-      setCurrentAccountHead(
-        accountHeadResponse.data?.find((head) => head.name === 'CASH') ?? null
-      );
-    };
-    void run();
-  }, [company?.name]);
+  const loadOpeningBalance = useCallback(async () => {
+    if (!company || !currentAccountHead || !date) return;
 
-  useEffect(() => {
+    const q = `
+      SELECT * FROM daily_entries 
+      WHERE 
+        (code_1 = ${currentAccountHead.code} OR code_2 = ${currentAccountHead.code})
+        AND "date" > '2020-03-31'
+        AND "date" < '${date}'
+        AND company='${company.name}'
+      ORDER BY sortOrder ASC
+    `;
+
+    const res = await query<Tables['daily_entries']['Row'][]>(q);
+    if (!res.success) return toastElectronResponse(res);
+
+    const total =
+      res.data?.reduce((sum, entry) => {
+        const { credit, debit } = calculateTransactionEffect(
+          entry,
+          currentAccountHead.code
+        );
+        return Number((sum + credit - debit).toFixed(2));
+      }, 0) ?? 0;
+
+    setOpeningBalance(currentAccountHead.openingBalance + total);
+  }, [company, currentAccountHead, date, calculateTransactionEffect]);
+
+  const loadDailyEntries = useCallback(async () => {
     if (!company?.name || !date || !currentAccountHead) return;
 
-    const run = async () => {
-      const dailyEntryResponse = await read('daily_entries', {
-        company: company.name,
-        date,
-      });
-      if (!dailyEntryResponse.success) {
-        toastElectronResponse(dailyEntryResponse);
-        return;
-      }
-      let total = 0;
-      setDisplayRows(
-        dailyEntryResponse.data
-          ?.filter(
-            (entry) =>
-              getAccountById(entry.code_1)?.name === currentAccountHead.name ||
-              getAccountById(entry.code_2)?.name === currentAccountHead.name
-          )
-          .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map((entry) => {
-            const credit =
-              currentAccountHead?.code === entry.code_1
-                ? entry.debit
-                : entry.credit;
-            const debit =
-              currentAccountHead?.code === entry.code_1
-                ? entry.credit
-                : entry.debit;
-            total = Number(
-              (Number(total) + Number(credit) - Number(debit)).toFixed(2)
-            );
-            return {
-              key: `${entry.code_1}-${entry.code_2}-${entry.credit}-${entry.debit}-${entry.sortOrder}`,
-              title:
-                getAccountById(
-                  currentAccountHead?.code === entry.code_1
-                    ? entry.code_2
-                    : entry.code_1
-                )?.name ?? '',
-              description: entry.description,
-              credit: credit === 0 ? '' : formatCurrency(credit, true),
-              debit: debit === 0 ? '' : formatCurrency(debit, true),
-            };
-          }) ?? []
-      );
-      setClosingBalance(total + openingBalance);
-    };
-    void run();
-  }, [company, currentAccountHead, date, getAccountById, openingBalance]);
+    const res = await read('daily_entries', {
+      company: company.name,
+      date,
+    });
+
+    if (!res.success) return toastElectronResponse(res);
+
+    let runningTotal = 0;
+
+    const filteredEntries =
+      res.data
+        ?.filter(
+          (e) =>
+            getAccountById(e.code_1)?.name === currentAccountHead.name ||
+            getAccountById(e.code_2)?.name === currentAccountHead.name
+        )
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((entry) => {
+          const { credit, debit } = calculateTransactionEffect(
+            entry,
+            currentAccountHead.code
+          );
+          runningTotal = Number((runningTotal + credit - debit).toFixed(2));
+
+          const title =
+            getAccountById(
+              currentAccountHead.code === entry.code_1
+                ? entry.code_2
+                : entry.code_1
+            )?.name ?? '';
+
+          return {
+            key: `${entry.code_1}-${entry.code_2}-${entry.credit}-${entry.debit}-${entry.sortOrder}`,
+            title,
+            description: entry.description,
+            credit: credit === 0 ? '' : formatCurrency(credit, true),
+            debit: debit === 0 ? '' : formatCurrency(debit, true),
+          };
+        }) ?? [];
+
+    setDisplayRows(filteredEntries);
+    setClosingBalance(runningTotal + openingBalance);
+  }, [
+    company,
+    currentAccountHead,
+    date,
+    openingBalance,
+    calculateTransactionEffect,
+    getAccountById,
+  ]);
+
+  useEffect(() => {
+    void loadAccountHeads();
+  }, [loadAccountHeads]);
+
+  useEffect(() => {
+    void loadOpeningBalance();
+  }, [loadOpeningBalance]);
+
+  useEffect(() => {
+    void loadDailyEntries();
+  }, [loadDailyEntries]);
+
+  const renderBalanceRow = (label: string, amount: number) => (
+    <tr className="border-b">
+      <td className="p-2">{label}</td>
+      <td className="p-2"></td>
+      <td className="p-2 text-right">
+        {amount >= 0 ? formatCurrency(amount, true) : null}
+      </td>
+      <td className="p-2 text-right">
+        {amount < 0 ? formatCurrency(-amount, true) : null}
+      </td>
+    </tr>
+  );
 
   return (
     <div className="p-3">
@@ -179,6 +196,7 @@ export default function DailyEntries() {
           navigated
         />
       </div>
+
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b">
@@ -189,20 +207,7 @@ export default function DailyEntries() {
           </tr>
         </thead>
         <tbody>
-          <tr className="border-b">
-            <td className="p-2">Opening Balance</td>
-            <td className="p-2"></td>
-            <td className="p-2 text-right">
-              {openingBalance > 0 || openingBalance === 0
-                ? formatCurrency(openingBalance, true)
-                : null}
-            </td>
-            <td className="p-2 text-right">
-              {openingBalance > 0 || openingBalance === 0
-                ? null
-                : formatCurrency(-openingBalance, true)}
-            </td>
-          </tr>
+          {renderBalanceRow('Opening Balance', openingBalance)}
           {displayRows.map((row) => (
             <tr key={row.key} className="border-b">
               <td className="p-2">{row.title}</td>
@@ -211,20 +216,7 @@ export default function DailyEntries() {
               <td className="p-2 text-right">{row.debit}</td>
             </tr>
           ))}
-          <tr className="border-b">
-            <td className="p-2">Closing Balance</td>
-            <td className="p-2"></td>
-            <td className="p-2 text-right">
-              {closingBalance > 0 || closingBalance === 0
-                ? formatCurrency(closingBalance, true)
-                : null}
-            </td>
-            <td className="p-2 text-right">
-              {closingBalance > 0 || closingBalance === 0
-                ? null
-                : formatCurrency(-closingBalance, true)}
-            </td>
-          </tr>
+          {renderBalanceRow('Closing Balance', closingBalance)}
         </tbody>
       </table>
     </div>
