@@ -5,7 +5,7 @@ import {
 } from '@/components/ui/native-select';
 import DatePicker from '@/components/DatePicker.tsx';
 import { useCompany } from '@/context/CompanyProvider.tsx';
-import { read } from '@/hooks/dbUtil.ts';
+import { query, read } from '@/hooks/dbUtil.ts';
 import type { Tables } from '../../tables';
 import { formatCurrency, toastElectronResponse } from '@/lib/myUtils.tsx';
 
@@ -41,6 +41,41 @@ export default function DailyEntries() {
     },
     [accountHeads]
   );
+
+  useEffect(() => {
+    if (!currentAccountHead || !company) {
+      return;
+    }
+    const run = async () => {
+      const start = performance.now();
+      const q = `SELECT * FROM daily_entries 
+         where 
+           (code_1 = ${currentAccountHead.code} or code_2 = ${currentAccountHead.code}) 
+           AND "date" > '2020-03-01' AND "date" < '${company.current_date}' `;
+      const queryResponse = await query<Tables['daily_entries']['Row'][]>(q);
+      if (!queryResponse.success) {
+        toastElectronResponse(queryResponse);
+        return;
+      }
+      let total = 0;
+      queryResponse.data?.forEach((entry) => {
+        const credit =
+          currentAccountHead?.code === entry.code_1
+            ? entry.debit
+            : entry.credit;
+        const debit =
+          currentAccountHead?.code === entry.code_1
+            ? entry.credit
+            : entry.debit;
+        total += credit - debit;
+      });
+      console.log(
+        currentAccountHead.openingBalance + total,
+        performance.now() - start
+      );
+    };
+    void run();
+  }, [company, currentAccountHead]);
 
   useEffect(() => {
     if (!company?.name) return;
