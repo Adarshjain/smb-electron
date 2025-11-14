@@ -147,6 +147,7 @@ export interface Tables {
       serial: string;
       loan_no: number;
       date: string;
+      loan_date: string;
       loan_amount: number;
       interest_amount: number;
       total_amount: number;

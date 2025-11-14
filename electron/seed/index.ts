@@ -358,6 +358,7 @@ export const initBills = () => {
         serial: record.serial,
         loan_no: parseInt(record.nos),
         date: new Date(record.redate).toISOString().split('T')[0],
+        loan_date: new Date(record.date).toISOString().split('T')[0],
         loan_amount: loanAmount,
         interest_amount: interestPaid - interestDiscount,
         total_amount: loanAmount + interestPaid - interestDiscount,
