@@ -20,6 +20,7 @@ import CustomerInfo from '@/components/LoanForm/CustomerInfo.tsx';
 import BillItemsInfo from '@/components/LoanForm/BillItemsInfo.tsx';
 import { ReleaseLoanAmountSection } from '@/components/LoanForm/ReleaseLoanAmountSection.tsx';
 import { Label } from '@/components/ui/label';
+import { getTaxedMonthDiff } from '../../electron/seed';
 
 export default function ReleaseLoan() {
   const { company } = useCompany();
@@ -52,14 +53,21 @@ export default function ReleaseLoan() {
   const onSubmit = useCallback(
     async (data: ReleaseLoan) => {
       if (loadedLoan?.released === 0) {
+        const loan_amount = parseFloat(data.loan_amount ?? 0);
+        const releaseDate = company?.current_date ?? viewableDate();
+        const tax_interest_amount =
+          (loan_amount * getTaxedMonthDiff(releaseDate, loadedLoan.date)) / 100;
+
         await create('releases', {
           serial: data.serial,
           loan_no: data.loan_no,
-          date: company?.current_date ?? viewableDate(),
-          loan_amount: parseFloat(data.loan_amount ?? 0),
+          date: releaseDate,
+          loan_amount,
           interest_amount: parseFloat(data.interest_amount ?? 0),
           total_amount: parseFloat(data.total_amount ?? 0),
           company: data.company,
+          tax_interest_amount,
+          loan_date: loadedLoan.date,
         });
         await update('bills', {
           serial: data.serial,

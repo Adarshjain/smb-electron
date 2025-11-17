@@ -90,7 +90,7 @@ export interface Tables {
 
   daily_entries: {
     Row: {
-      particular: string;
+      particular: string | null;
       description: string;
       debit: number;
       credit: number;
@@ -98,7 +98,7 @@ export interface Tables {
       company: string;
       code_1: number;
       code_2: number;
-      particular1: string;
+      particular1: string | null;
       sortOrder: number;
     };
     Insert: Tables['daily_entries']['Row'];
@@ -150,6 +150,7 @@ export interface Tables {
       loan_date: string;
       loan_amount: number;
       interest_amount: number;
+      tax_interest_amount: number;
       total_amount: number;
       company: string;
     };

@@ -1,5 +1,12 @@
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import {
+  addMonths,
+  differenceInMonths,
+  format,
+  isBefore,
+  startOfDay,
+  subDays,
+} from 'date-fns';
 import type { ElectronToReactResponse } from '../../shared-types';
 import type { FullCustomer, MetalType, Tables } from '../../tables';
 import MyCache from '../../MyCache.ts';
@@ -135,6 +142,41 @@ export function getMonthDiff(from: string, to?: string) {
     (now.getMonth() - start.getMonth());
   if (now.getDate() < start.getDate()) months--;
   return start.getDate() === now.getDate() ? months - 1 : months;
+}
+
+export function getTaxedMonthDiff(from: string | Date, to?: string | Date) {
+  const start = new Date(from);
+  const end = adjustEndDate(start, to ? new Date(to) : new Date(), 0);
+  return monthDiffRoundedUp(start, end);
+}
+
+export function monthDiffRoundedUp(startDate: Date, endDate: Date): number {
+  let diff = differenceInMonths(endDate, startDate);
+
+  const dateAfterDiff = addMonths(startDate, diff);
+
+  if (isBefore(dateAfterDiff, endDate)) {
+    diff += 1; // round up
+  }
+
+  return diff;
+}
+
+export function adjustEndDate(startDate: Date, endDate: Date, n: number): Date {
+  startDate = startDate ? new Date(startDate) : new Date();
+  endDate = new Date(endDate);
+
+  const start = startOfDay(startDate);
+  let end = startOfDay(endDate);
+
+  if (isBefore(end, start)) {
+    end = subDays(end, n);
+    if (isBefore(end, start)) {
+      end = start;
+    }
+  }
+
+  return end;
 }
 
 export function getDocCharges(

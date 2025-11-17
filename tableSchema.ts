@@ -417,6 +417,10 @@ export const TablesSQliteSchema: Record<
         schema: 'REAL NOT NULL',
         encoded: false,
       },
+      tax_interest_amount: {
+        schema: 'REAL NOT NULL',
+        encoded: false,
+      },
       loan_amount: {
         schema: 'REAL NOT NULL',
         encoded: false,

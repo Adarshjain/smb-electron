@@ -3,6 +3,7 @@ import fs from 'fs';
 import { createBatched, executeSql } from '../db/localDB';
 import { type MetalType, type TableName, type Tables } from '../../tables';
 import { TablesSQliteSchema } from '../../tableSchema';
+import { addMonths, differenceInMonths, isBefore } from 'date-fns';
 
 const openingBalanceMap: Record<string, Record<string, number>> = {
   'Mahaveer Bankers': {
@@ -120,6 +121,24 @@ const toSentenceCase = (name: string) => {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };
+
+export function getTaxedMonthDiff(from: string | Date, to?: string | Date) {
+  const start = new Date(from);
+  const end = to ? new Date(to) : new Date();
+  return monthDiffRoundedUp(start, end);
+}
+
+export function monthDiffRoundedUp(startDate: Date, endDate: Date): number {
+  let diff = differenceInMonths(endDate, startDate);
+
+  const dateAfterDiff = addMonths(startDate, diff);
+
+  if (isBefore(dateAfterDiff, endDate)) {
+    diff += 1; // round up
+  }
+
+  return diff;
+}
 
 export const deleteAllRecords = () => {
   for (const table of Object.keys(TablesSQliteSchema) as TableName[])
@@ -354,12 +373,20 @@ export const initBills = () => {
       released: record.STATUS === 'Redeemed' ? 1 : 0,
     });
     if (record.STATUS === 'Redeemed') {
+      const tax_interest_amount =
+        (loanAmount *
+          getTaxedMonthDiff(
+            new Date(record.date).toISOString().split('T')[0],
+            new Date(record.redate).toISOString().split('T')[0]
+          )) /
+        100;
       createReleases.push({
         serial: record.serial,
         loan_no: parseInt(record.nos),
         date: new Date(record.redate).toISOString().split('T')[0],
         loan_date: new Date(record.date).toISOString().split('T')[0],
         loan_amount: loanAmount,
+        tax_interest_amount,
         interest_amount: interestPaid - interestDiscount,
         total_amount: loanAmount + interestPaid - interestDiscount,
         company: toSentenceCase(record.company),
