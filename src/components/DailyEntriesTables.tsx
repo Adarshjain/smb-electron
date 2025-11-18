@@ -1,4 +1,4 @@
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -8,7 +8,6 @@ import type { Tables } from '../../tables';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
 import '../styles/DailyEntries.css';
 import { Input } from '@/components/ui/input.tsx';
-import { formatCurrency } from '@/lib/myUtils.tsx';
 
 const dailyEntrySchema = z.object({
   entries: z.array(
@@ -48,6 +47,12 @@ export function DailyEntriesTables(props: {
     name: 'entries',
     control,
   });
+
+  const enteredValues = useWatch({
+    name: 'entries',
+    control,
+  });
+
   const dailyEntryItems = useMemo(() => {
     return fieldArray.fields
       .map((_, index) =>
@@ -91,7 +96,7 @@ export function DailyEntriesTables(props: {
     if (!props.currentAccountHead) return;
     let runningTotal = 0;
 
-    const filteredEntries =
+    const filteredEntries: DailyEntry['entries'] =
       props.entries
         ?.filter(
           (e) =>
@@ -141,6 +146,35 @@ export function DailyEntriesTables(props: {
     reset,
   ]);
 
+  useEffect(() => {
+    let runningTotal = 0;
+    enteredValues
+      .filter(
+        (entry) =>
+          !(
+            !entry.particular &&
+            !entry.debit &&
+            !entry.credit &&
+            !entry.description
+          )
+      )
+      .forEach((entry) => {
+        runningTotal = Number(
+          (
+            runningTotal +
+            parseFloat(!entry.credit ? '0' : '' + entry.credit) -
+            parseFloat(!entry.debit ? '0' : '' + entry.debit)
+          ).toFixed(2)
+        );
+      });
+    setClosingBalance(runningTotal + props.openingBalance);
+  }, [
+    calculateTransactionEffect,
+    enteredValues,
+    props.currentAccountHead?.code,
+    props.openingBalance,
+  ]);
+
   return (
     <form ref={setFormRef} className="de-input-matrix">
       <div className="flex">
@@ -160,20 +194,16 @@ export function DailyEntriesTables(props: {
           disabled
           placeholder=""
           className="text-right w-48 !opacity-100"
-          defaultValue={
-            props.openingBalance >= 0
-              ? formatCurrency(props.openingBalance, true)
-              : ''
+          value={
+            props.openingBalance >= 0 ? props.openingBalance.toFixed(2) : ''
           }
         />
         <Input
           disabled
           placeholder=""
           className="text-right w-48 !opacity-100"
-          defaultValue={
-            props.openingBalance < 0
-              ? formatCurrency(-props.openingBalance, true)
-              : ''
+          value={
+            props.openingBalance < 0 ? (-props.openingBalance).toFixed(2) : ''
           }
         />
       </div>
@@ -270,17 +300,13 @@ export function DailyEntriesTables(props: {
           disabled
           placeholder=""
           className="text-right w-48 !opacity-100"
-          defaultValue={
-            closingBalance >= 0 ? formatCurrency(closingBalance, true) : ''
-          }
+          value={closingBalance >= 0 ? closingBalance.toFixed(2) : ''}
         />
         <Input
           disabled
           placeholder=""
           className="text-right w-48 !opacity-100"
-          defaultValue={
-            closingBalance < 0 ? formatCurrency(-closingBalance, true) : ''
-          }
+          value={closingBalance < 0 ? (-closingBalance).toFixed(2) : ''}
         />
       </div>
     </form>
