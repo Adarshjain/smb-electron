@@ -7,6 +7,7 @@ import type { Loan } from '@/types/loanForm';
 import { KEYBOARD_SHORTCUTS } from '@/constants/loanForm';
 import MyCache from '../../../MyCache.ts';
 import { read } from '@/hooks/dbUtil.ts';
+import { errorToast } from '@/lib/myUtils.tsx';
 
 interface BillingItemRowProps {
   index: number;
@@ -71,14 +72,18 @@ export const BillingItemRow = memo(function BillingItemRow({
         return;
       }
       const response = await read('products', {});
-      if (response.success && response.data) {
-        const productNames = response.data.sort((a, b) =>
-          a.name.localeCompare(b.name)
-        );
-        setProductsTable(productNames);
-        cache.set(cacheKey, productNames);
-      } else {
-        setProductsTable([]);
+      try {
+        if (response) {
+          const productNames = response.sort((a, b) =>
+            a.name.localeCompare(b.name)
+          );
+          setProductsTable(productNames);
+          cache.set(cacheKey, productNames);
+        } else {
+          setProductsTable([]);
+        }
+      } catch (e) {
+        errorToast(e);
       }
     };
     void run();

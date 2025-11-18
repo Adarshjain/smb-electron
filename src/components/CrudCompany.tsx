@@ -31,7 +31,7 @@ import {
 import { format } from 'date-fns';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
 import { create, update } from '@/hooks/dbUtil.ts';
-import { toastElectronResponse } from '@/lib/myUtils.tsx';
+import { errorToast, successToast } from '@/lib/myUtils.tsx';
 import { toastStyles } from '@/constants/loanForm.ts';
 
 const formSchema = z.object({
@@ -108,10 +108,14 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
           );
         }
 
-        const response = await (isCreate
-          ? create('companies', payload as Tables['companies']['Insert'])
-          : update('companies', payload as Tables['companies']['Update']));
-        toastElectronResponse(response);
+        try {
+          await (isCreate
+            ? create('companies', payload as Tables['companies']['Insert'])
+            : update('companies', payload as Tables['companies']['Update']));
+          successToast('Success');
+        } catch (e) {
+          errorToast(e);
+        }
       } catch (e) {
         toast.error(
           e instanceof Error ? e.message : 'An unknown error occurred',

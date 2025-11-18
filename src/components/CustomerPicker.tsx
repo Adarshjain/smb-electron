@@ -57,13 +57,13 @@ export default function CustomerPicker({
   useEffect(() => {
     let active = true;
     const run = async () => {
-      const res = await read(
+      const customers = await read(
         'customers',
         { name: `${search}%` },
         undefined,
         true
       );
-      if (active) setItems(res.success ? (res.data ?? []) : []);
+      if (active) setItems(customers ?? []);
     };
     if (search.length === 0) {
       setItems([]);

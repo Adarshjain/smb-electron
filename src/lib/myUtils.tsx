@@ -89,6 +89,22 @@ export function formatCurrency(value: number, skipSymbol = false): string {
   ).format(value);
 }
 
+export function successToast(msg: string) {
+  toast.success(msg, { className: toastStyles.success });
+}
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+export function errorToast(msg: string | Error | unknown) {
+  if (msg instanceof Error) {
+    rpcError({
+      success: false,
+      error: msg.message,
+      stack: msg.cause as string,
+    });
+  } else {
+    toast.error(msg as string, { className: toastStyles.error });
+  }
+}
+
 export function toastElectronResponse<T>(
   response: ElectronToReactResponse<T>,
   successMessage = 'Success',
@@ -115,10 +131,12 @@ export async function getRate(
   const cache = new MyCache<Tables['interest_rates']['Row'][]>('IntRates');
   let intRates = cache.get('intRates');
   if (!intRates) {
-    const response = await read('interest_rates', {});
-    if (response.success) {
-      cache.set('intRates', response.data ?? []);
-      intRates = response.data ?? [];
+    try {
+      const interestRates = await read('interest_rates', {});
+      cache.set('intRates', interestRates ?? []);
+      intRates = interestRates ?? [];
+    } catch (e) {
+      errorToast(e);
     }
   }
   return intRates?.find((rate) => {
@@ -198,62 +216,72 @@ export async function loadBillWithDeps(
   serial: string,
   loanNo: number
 ): Promise<Tables['full_bill']['Row'] | null> {
-  const loan = await read('bills', {
-    serial: serial.toUpperCase(),
-    loan_no: loanNo,
-  });
-  if (!(loan.success && loan.data?.length)) {
-    toast.error('No loan found with given Serial and Loan Number', {
-      className: toastStyles.error,
+  try {
+    const loan = await read('bills', {
+      serial: serial.toUpperCase(),
+      loan_no: loanNo,
     });
+    if (!loan?.length) {
+      toast.error('No loan found with given Serial and Loan Number', {
+        className: toastStyles.error,
+      });
+      return null;
+    }
+    const currentLoan = loan[0];
+
+    const fullCustomer = await fetchFullCustomer(currentLoan.customer_id);
+    if (!fullCustomer) {
+      toast.error('No fullCustomer match', { className: toastStyles.error });
+      return null;
+    }
+
+    const billItems = await read('bill_items', {
+      serial: serial.toUpperCase(),
+      loan_no: loanNo,
+    });
+    if (!billItems?.length) {
+      toast.error('No items match', { className: toastStyles.error });
+      return null;
+    }
+
+    return {
+      ...currentLoan,
+      full_customer: fullCustomer,
+      bill_items: billItems,
+    };
+  } catch (e) {
+    errorToast(e);
     return null;
   }
-  const currentLoan = loan.data[0];
-
-  const fullCustomer = await fetchFullCustomer(currentLoan.customer_id);
-  if (!fullCustomer) {
-    toast.error('No fullCustomer match', { className: toastStyles.error });
-    return null;
-  }
-
-  const billItems = await read('bill_items', {
-    serial: serial.toUpperCase(),
-    loan_no: loanNo,
-  });
-  if (!(billItems.success && billItems.data?.length)) {
-    toast.error('No items match', { className: toastStyles.error });
-    return null;
-  }
-
-  return {
-    ...currentLoan,
-    full_customer: fullCustomer,
-    bill_items: billItems.data,
-  };
 }
 
 export async function fetchFullCustomer(
   customerId: string
 ): Promise<FullCustomer | null> {
-  const customerPromise = await read('customers', {
-    id: customerId,
-  });
-  if (!(customerPromise.success && customerPromise.data?.length)) {
-    toast.error('No customerPromise match', { className: toastStyles.error });
+  try {
+    const customers = await read('customers', {
+      id: customerId,
+    });
+    if (!customers?.length) {
+      toast.error('No customerPromise match', { className: toastStyles.error });
+      return null;
+    }
+    const customer = customers[0];
+    const areas = await read('areas', {
+      name: customer.area,
+    });
+    if (!areas?.length) {
+      toast.error('No area match', { className: toastStyles.error });
+      return null;
+    }
+    return {
+      customer: customer,
+      area: areas[0],
+    };
+  } catch (e) {
+    errorToast(e);
     return null;
   }
-  const customer = customerPromise.data[0];
-  const areaResponse = await read('areas', {
-    name: customer.area,
-  });
-  if (!(areaResponse.success && areaResponse.data?.length)) {
-    toast.error('No area match', { className: toastStyles.error });
-    return null;
-  }
-  return {
-    customer: customer,
-    area: areaResponse.data[0],
-  };
 }
 
 export async function fetchBillsByCustomer(
@@ -272,30 +300,34 @@ export async function fetchBillsByCustomer(
         }
   );
   const fullCustomer = await fetchFullCustomer(customerId);
-  if (fullCustomer && billsResponse.success && billsResponse.data?.length) {
+  if (fullCustomer && billsResponse?.length) {
     const fullBills: Tables['full_bill']['Row'][] = [];
-    for (const bill of billsResponse.data) {
-      const billItemsResponse = await read('bill_items', {
-        serial: bill.serial,
-        loan_no: bill.loan_no,
-      });
-      let release: Tables['releases']['Row'] | undefined;
-      if (!skipReleased && bill.released === 1) {
-        const releaseResponse = await read('releases', {
+    for (const bill of billsResponse) {
+      try {
+        const billItemsResponse = await read('bill_items', {
           serial: bill.serial,
           loan_no: bill.loan_no,
         });
-        if (releaseResponse.success && releaseResponse.data?.length) {
-          release = releaseResponse.data[0];
+        let release: Tables['releases']['Row'] | undefined;
+        if (!skipReleased && bill.released === 1) {
+          const releaseResponse = await read('releases', {
+            serial: bill.serial,
+            loan_no: bill.loan_no,
+          });
+          if (releaseResponse?.length) {
+            release = releaseResponse[0];
+          }
         }
-      }
-      if (billItemsResponse.success && billItemsResponse.data?.length) {
-        fullBills.push({
-          ...bill,
-          full_customer: fullCustomer,
-          bill_items: billItemsResponse.data,
-          releasedEntry: release,
-        });
+        if (billItemsResponse?.length) {
+          fullBills.push({
+            ...bill,
+            full_customer: fullCustomer,
+            bill_items: billItemsResponse,
+            releasedEntry: release,
+          });
+        }
+      } catch (e) {
+        errorToast(e);
       }
     }
     return fullBills;

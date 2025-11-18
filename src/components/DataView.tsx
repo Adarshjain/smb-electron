@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { read } from '@/hooks/dbUtil.ts';
 import type { TableName, Tables } from '../../tables';
-import { rpcError } from '@/lib/myUtils.tsx';
+import { errorToast } from '@/lib/myUtils.tsx';
 import {
   Table,
   TableBody,
@@ -40,10 +40,10 @@ export default function DataView<K extends TableName>(props: {
   useEffect(() => {
     read(props.table, {})
       .then((response) => {
-        if (response.success) {
-          setTableData(response.data ?? []);
-        } else {
-          rpcError(response);
+        try {
+          setTableData(response ?? []);
+        } catch (error) {
+          errorToast(error);
         }
       })
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument

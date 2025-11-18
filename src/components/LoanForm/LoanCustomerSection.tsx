@@ -3,11 +3,10 @@ import CustomerPicker from '@/components/CustomerPicker';
 import type { FullCustomer, Tables } from '@/../tables';
 import CustomerInfo from '@/components/LoanForm/CustomerInfo.tsx';
 import { read } from '@/hooks/dbUtil.ts';
-import { toast } from 'sonner';
-import { toastStyles } from '@/constants/loanForm.ts';
 import { Dialog, DialogContent } from '@/components/ui/dialog.tsx';
 import CustomerCrud from '@/pages/CustomerCrud.tsx';
 import { DialogTitle } from '@radix-ui/react-dialog';
+import { errorToast } from '@/lib/myUtils.tsx';
 
 interface LoanCustomerSectionProps {
   selectedCustomer: FullCustomer | null;
@@ -38,17 +37,21 @@ export const LoanCustomerSection = memo(function LoanCustomerSection(
   }, []);
 
   const onCustomerSelect = async (customer: Tables['customers']['Row']) => {
-    const areaResponse = await read('areas', {
-      name: customer.area,
-    });
-    if (areaResponse.success && areaResponse.data?.length) {
-      props.onCustomerSelect({
-        customer,
-        area: areaResponse.data[0],
+    try {
+      const areaResponse = await read('areas', {
+        name: customer.area,
       });
-      return;
+      if (areaResponse?.length) {
+        props.onCustomerSelect({
+          customer,
+          area: areaResponse[0],
+        });
+        return;
+      }
+      errorToast('No area match');
+    } catch (e) {
+      errorToast(e);
     }
-    toast.error('No area match', { className: toastStyles.error });
     props.onCustomerSelect({
       customer,
       area: {
