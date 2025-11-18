@@ -187,7 +187,7 @@ export default function SearchSelect<T = string>({
           e.preventDefault();
         }}
       >
-        <div>
+        <div className="search-select">
           <Input
             ref={inputRef}
             value={search}

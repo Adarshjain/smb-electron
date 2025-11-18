@@ -7,15 +7,8 @@ import DatePicker from '@/components/DatePicker.tsx';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import { create, query, read } from '@/hooks/dbUtil.ts';
 import type { LocalTables, Tables } from '../../tables';
-import { errorToast, formatCurrency } from '@/lib/myUtils.tsx';
-
-interface Row {
-  key: string;
-  title: string;
-  description: string;
-  debit: string;
-  credit: string;
-}
+import { errorToast } from '@/lib/myUtils.tsx';
+import { DailyEntriesTables } from '@/components/DailyEntriesTables.tsx';
 
 // Constants
 const LOAN_AMOUNT = 'LOAN AMOUNT';
@@ -36,14 +29,10 @@ export default function DailyEntries() {
   const [currentAccountHead, setCurrentAccountHead] = useState<
     Tables['account_head']['Row'] | null
   >(null);
-  const [displayRows, setDisplayRows] = useState<Row[]>([]);
+  const [todaysEntries, setTodaysEntries] = useState<
+    Tables['daily_entries']['Row'][]
+  >([]);
   const [openingBalance, setOpeningBalance] = useState(0);
-  const [closingBalance, setClosingBalance] = useState(0);
-
-  const getAccountById = useCallback(
-    (code: number) => accountHeads.find((head) => head.code === code),
-    [accountHeads]
-  );
 
   const getAccountByName = useCallback(
     (name: string) => accountHeads.find((head) => head.name === name),
@@ -243,7 +232,7 @@ export default function DailyEntries() {
   );
 
   const loadDailyEntries = useCallback(async () => {
-    if (!company?.name || !date || !currentAccountHead) return;
+    if (!company?.name || !date) return;
 
     try {
       // Load initial entries
@@ -256,58 +245,16 @@ export default function DailyEntries() {
       await loadTodaysLoansAndReleases(dailyEntriesResponse);
 
       // Reload entries after updates
-      const dailyEntry = await read('daily_entries', {
-        company: company.name,
-        date,
-      });
-
-      let runningTotal = 0;
-
-      const filteredEntries =
-        dailyEntry
-          ?.filter(
-            (e) =>
-              getAccountById(e.code_1)?.name === currentAccountHead.name ||
-              getAccountById(e.code_2)?.name === currentAccountHead.name
-          )
-          .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map((entry) => {
-            const { credit, debit } = calculateTransactionEffect(
-              entry,
-              currentAccountHead.code
-            );
-            runningTotal = Number((runningTotal + credit - debit).toFixed(2));
-
-            const title =
-              getAccountById(
-                currentAccountHead.code === entry.code_1
-                  ? entry.code_2
-                  : entry.code_1
-              )?.name ?? '';
-
-            return {
-              key: `${entry.code_1}-${entry.code_2}-${entry.credit}-${entry.debit}-${entry.sortOrder}`,
-              title,
-              description: entry.description,
-              credit: credit === 0 ? '' : formatCurrency(credit, true),
-              debit: debit === 0 ? '' : formatCurrency(debit, true),
-            };
-          }) ?? [];
-
-      setDisplayRows(filteredEntries);
-      setClosingBalance(runningTotal + openingBalance);
+      setTodaysEntries(
+        (await read('daily_entries', {
+          company: company.name,
+          date,
+        })) ?? []
+      );
     } catch (error) {
       errorToast(error);
     }
-  }, [
-    company,
-    currentAccountHead,
-    date,
-    openingBalance,
-    calculateTransactionEffect,
-    getAccountById,
-    loadTodaysLoansAndReleases,
-  ]);
+  }, [company, date, loadTodaysLoansAndReleases]);
 
   useEffect(() => {
     void loadAccountHeads();
@@ -321,25 +268,10 @@ export default function DailyEntries() {
     void loadDailyEntries();
   }, [loadDailyEntries]);
 
-  const renderBalanceRow = useCallback(
-    (label: string, amount: number) => (
-      <tr className="border-b">
-        <td className="p-2">{label}</td>
-        <td className="p-2"></td>
-        <td className="p-2 text-right">
-          {amount >= 0 ? formatCurrency(amount, true) : null}
-        </td>
-        <td className="p-2 text-right">
-          {amount < 0 ? formatCurrency(-amount, true) : null}
-        </td>
-      </tr>
-    ),
-    []
-  );
-
   return (
     <div className="p-3">
-      <div className="flex justify-between mb-4">
+      <div className="flex gap-3 mb-4">
+        <div className="text-xl mr-auto">Daily Entry</div>
         {currentAccountHead && (
           <NativeSelect
             value={currentAccountHead.name}
@@ -348,13 +280,12 @@ export default function DailyEntries() {
             }
           >
             {accountHeads.map((head) => (
-              <NativeSelectOption key={head.name} value={head.name}>
+              <NativeSelectOption key={head.name + head.code} value={head.name}>
                 {head.name}
               </NativeSelectOption>
             ))}
           </NativeSelect>
         )}
-        <div className="text-xl">Daily Entry</div>
         <DatePicker
           className="w-27.5"
           value={date}
@@ -363,28 +294,12 @@ export default function DailyEntries() {
         />
       </div>
 
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="border-b">
-            <th className="text-left p-2">Title</th>
-            <th className="text-left p-2">Description</th>
-            <th className="text-right p-2">Credit</th>
-            <th className="text-right p-2">Debit</th>
-          </tr>
-        </thead>
-        <tbody>
-          {renderBalanceRow('Opening Balance', openingBalance)}
-          {displayRows.map((row) => (
-            <tr key={row.key} className="border-b">
-              <td className="p-2">{row.title}</td>
-              <td className="p-2">{row.description}</td>
-              <td className="p-2 text-right">{row.credit}</td>
-              <td className="p-2 text-right">{row.debit}</td>
-            </tr>
-          ))}
-          {renderBalanceRow('Closing Balance', closingBalance)}
-        </tbody>
-      </table>
+      <DailyEntriesTables
+        accountHeads={accountHeads}
+        openingBalance={openingBalance}
+        entries={todaysEntries}
+        currentAccountHead={currentAccountHead}
+      />
     </div>
   );
 }

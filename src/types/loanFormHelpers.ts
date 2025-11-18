@@ -30,7 +30,7 @@ export function hasWeightData(item: BillingItem): boolean {
  */
 export function isLoanReadyForSubmit(loan: Loan): boolean {
   // Check customer
-  if (!isValidCustomer(loan.customer)) {
+  if (!isValidCustomer(loan.customer?.customer ?? null)) {
     return false;
   }
 
