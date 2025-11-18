@@ -68,6 +68,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
           setCompany(companyMatch);
         }
       })
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       .catch((e) => toast.error(e, { className: toastStyles.error }));
   }, []);
 
