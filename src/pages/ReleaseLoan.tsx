@@ -15,12 +15,16 @@ import DatePicker from '@/components/DatePicker.tsx';
 import { LoanNumber } from '@/components/LoanForm/LoanNumber.tsx';
 import type { Tables } from '@/../tables';
 import { create, deleteRecord, read, update } from '@/hooks/dbUtil.ts';
-import { getInterest, getMonthDiff, viewableDate } from '@/lib/myUtils.tsx';
+import {
+  getInterest,
+  getMonthDiff,
+  getTaxedMonthDiff,
+  viewableDate,
+} from '@/lib/myUtils.tsx';
 import CustomerInfo from '@/components/LoanForm/CustomerInfo.tsx';
 import BillItemsInfo from '@/components/LoanForm/BillItemsInfo.tsx';
 import { ReleaseLoanAmountSection } from '@/components/LoanForm/ReleaseLoanAmountSection.tsx';
 import { Label } from '@/components/ui/label';
-import { getTaxedMonthDiff } from '../../electron/seed';
 
 export default function ReleaseLoan() {
   const { company } = useCompany();
