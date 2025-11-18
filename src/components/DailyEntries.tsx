@@ -293,7 +293,6 @@ export default function DailyEntries() {
           navigated
         />
       </div>
-
       <DailyEntriesTables
         accountHeads={accountHeads}
         openingBalance={openingBalance}
