@@ -33,7 +33,7 @@ import {
 } from '@/constants/loanForm';
 import { toast } from 'sonner';
 
-import '@/NewLoan.css';
+import '@/styles/NewLoan.css';
 import { MetalTypeSelector } from '@/components/LoanForm/MetalTypeSelector.tsx';
 import { LoanNumber } from '@/components/LoanForm/LoanNumber.tsx';
 import DatePicker from '@/components/DatePicker.tsx';
