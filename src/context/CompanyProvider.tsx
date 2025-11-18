@@ -1,14 +1,14 @@
 import {
   createContext,
   type ReactNode,
+  useCallback,
   useContext,
   useEffect,
-  useCallback,
   useState,
 } from 'react';
 import type { Tables } from '@/../tables';
 import { read, update } from '../hooks/dbUtil.ts';
-import { getNextSerial, toastElectronResponse } from '@/lib/myUtils.tsx';
+import { errorToast, getNextSerial } from '@/lib/myUtils.tsx';
 import { toast } from 'sonner';
 import { toastStyles } from '@/constants/loanForm.ts';
 
@@ -32,13 +32,15 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   >([]);
   const setCurrentDate = async (current_date: string) => {
     if (company) {
-      toastElectronResponse(
+      try {
         await update('companies', {
           current_date,
           name: company.name,
-        })
-      );
-      setCompany({ ...company, current_date });
+        });
+        setCompany({ ...company, current_date });
+      } catch (error) {
+        errorToast(error);
+      }
     }
   };
 
@@ -59,12 +61,10 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const fetchCompanies = useCallback(() => {
     read('companies', {})
       .then((response) => {
-        if (response.success && response.data && response.data.length > 0) {
-          setAllCompanies(response.data as Tables['companies']['Row'][]);
+        if (response?.length) {
+          setAllCompanies(response);
           const companyMatch =
-            (response.data as Tables['companies']['Row'][]).find(
-              (comp) => comp.is_default === 1
-            ) ?? response.data[0];
+            response.find((comp) => comp.is_default === 1) ?? response[0];
           setCompany(companyMatch);
         }
       })

@@ -16,6 +16,7 @@ import { LoanNumber } from '@/components/LoanForm/LoanNumber.tsx';
 import type { Tables } from '@/../tables';
 import { create, deleteRecord, read, update } from '@/hooks/dbUtil.ts';
 import {
+  errorToast,
   getInterest,
   getMonthDiff,
   getTaxedMonthDiff,
@@ -149,28 +150,32 @@ export default function ReleaseLoan() {
 
   const handleOnOldLoanLoaded = async (loan: Tables['full_bill']['Row']) => {
     if (loan.released === 1) {
-      const releaseResp = await read('releases', {
-        serial: loan.serial,
-        loan_no: loan.loan_no,
-      });
-      if (releaseResp.success && releaseResp.data?.length) {
-        const release = releaseResp.data[0];
-        const monthDiff = getMonthDiff(loan.date, release.date);
-        reset({
-          date: release.date,
-          loan_no: loan.loan_no,
+      try {
+        const releaseResp = await read('releases', {
           serial: loan.serial,
-          released: 1,
-          loan_amount: loan.loan_amount.toFixed(2),
-          interest_amount: release.interest_amount.toFixed(2),
-          interest_rate: loan.interest_rate.toFixed(2),
-          total_amount: release.total_amount.toFixed(2),
-          total_months: monthDiff,
-          company: loan.company,
+          loan_no: loan.loan_no,
         });
+        if (releaseResp?.length) {
+          const release = releaseResp[0];
+          const monthDiff = getMonthDiff(loan.date, release.date);
+          reset({
+            date: release.date,
+            loan_no: loan.loan_no,
+            serial: loan.serial,
+            released: 1,
+            loan_amount: loan.loan_amount.toFixed(2),
+            interest_amount: release.interest_amount.toFixed(2),
+            interest_rate: loan.interest_rate.toFixed(2),
+            total_amount: release.total_amount.toFixed(2),
+            total_months: monthDiff,
+            company: loan.company,
+          });
+        }
+        setLoadedLoan(loan);
+        setTimeout(() => next('interest_amount'), 20);
+      } catch (error) {
+        errorToast(error);
       }
-      setLoadedLoan(loan);
-      setTimeout(() => next('interest_amount'), 20);
       return;
     }
     const monthDiff = getMonthDiff(loan.date, company?.current_date);

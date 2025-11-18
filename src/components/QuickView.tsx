@@ -11,7 +11,7 @@ import {
 import BillsByCustomer from '@/components/LoanForm/BillsByCustomer.tsx';
 import { SerialNumber } from '@/components/LoanForm/SerialNumber.tsx';
 import { read } from '@/hooks/dbUtil';
-import { toastElectronResponse } from '@/lib/myUtils.tsx';
+import { errorToast } from '@/lib/myUtils.tsx';
 
 export const QuickViewSchema = z.object({
   serial: z.string().length(1),
@@ -71,17 +71,20 @@ export default function QuickView() {
     if (!serial || !loanNo) {
       return;
     }
-    const readBillsResponse = await read(
-      'bills',
-      {
-        serial,
-        loan_no: loanNo,
-      },
-      'customer_id'
-    );
-    toastElectronResponse(readBillsResponse, undefined, true);
-    if (readBillsResponse.success && readBillsResponse.data?.length) {
-      setCustomerId(readBillsResponse.data[0].customer_id);
+    try {
+      const readBillsResponse = await read(
+        'bills',
+        {
+          serial,
+          loan_no: loanNo,
+        },
+        'customer_id'
+      );
+      if (readBillsResponse?.length) {
+        setCustomerId(readBillsResponse[0].customer_id);
+      }
+    } catch (error) {
+      errorToast(error);
     }
   }
 

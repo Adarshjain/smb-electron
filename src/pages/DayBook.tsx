@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatCurrency } from '@/lib/myUtils.tsx';
+import { errorToast, formatCurrency } from '@/lib/myUtils.tsx';
 
 interface AggregatedBills {
   loan: {
@@ -57,19 +57,19 @@ export default function DayBook() {
 
   useEffect(() => {
     const run = async () => {
-      const billsPromise = read('bills', {
-        date,
-      });
-      const releasesPromise = read('releases', {
-        date,
-      });
-      const [billsResponse, releasesResponse] = await Promise.all([
-        billsPromise,
-        releasesPromise,
-      ]);
-      const aggregatedBills: Record<string, AggregatedBills> = {};
-      if (billsResponse.success) {
-        billsResponse.data?.forEach((bill) => {
+      try {
+        const billsPromise = read('bills', {
+          date,
+        });
+        const releasesPromise = read('releases', {
+          date,
+        });
+        const [billsResponse, releasesResponse] = await Promise.all([
+          billsPromise,
+          releasesPromise,
+        ]);
+        const aggregatedBills: Record<string, AggregatedBills> = {};
+        billsResponse?.forEach((bill) => {
           if (!aggregatedBills[bill.company]) {
             aggregatedBills[bill.company] = {
               loan: {
@@ -98,10 +98,8 @@ export default function DayBook() {
             total: bill.loan_amount + interestTotal,
           });
         });
-      }
 
-      if (releasesResponse.success) {
-        releasesResponse.data?.forEach((release) => {
+        releasesResponse?.forEach((release) => {
           if (!aggregatedBills[release.company]) {
             aggregatedBills[release.company] = {
               loan: {
@@ -127,9 +125,11 @@ export default function DayBook() {
 
           aggregatedBills[release.company].releases.push(release);
         });
-      }
 
-      setBills(aggregatedBills);
+        setBills(aggregatedBills);
+      } catch (e) {
+        errorToast(e);
+      }
     };
     void run();
   }, [date]);

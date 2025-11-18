@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
 import { useCallback, useEffect, useState } from 'react';
 import { create, read, update } from '@/hooks/dbUtil.ts';
-import { toastElectronResponse } from '@/lib/myUtils.tsx';
+import { errorToast } from '@/lib/myUtils.tsx';
 import ProductSelector from '@/components/ProductSelector.tsx';
 import { Input } from '@/components/ui/input';
 import type { Tables } from '../../tables';
@@ -78,54 +78,54 @@ export default function CustomerCrud({
   const id = watch('id');
 
   const onCustomerSelect = async (customer: Tables['customers']['Row']) => {
-    const areasResponse = await read('areas', { name: customer.area });
-    if (!areasResponse.success) {
-      toastElectronResponse(areasResponse);
-      return;
-    }
-    if (!areasResponse.data?.length) {
-      toast.error('Area does not exist', {
-        className: toastStyles.error,
+    try {
+      const areasResponse = await read('areas', { name: customer.area });
+      if (!areasResponse?.length) {
+        toast.error('Area does not exist', {
+          className: toastStyles.error,
+        });
+        return;
+      }
+      reset({
+        id: customer.id,
+        address1: customer.address1 ?? '',
+        address2: customer.address2 ?? '',
+        door_no: customer.door_no ?? '',
+        fhname: customer.fhname,
+        area: areasResponse[0],
+        fhtitle: customer.fhtitle,
+        id_proof: customer.id_proof ?? '',
+        id_proof_value: customer.id_proof_value ?? '',
+        name: customer.name,
+        phone_no: customer.phone_no ?? '',
       });
-      return;
+    } catch (error) {
+      errorToast(error);
     }
-    reset({
-      id: customer.id,
-      address1: customer.address1 ?? '',
-      address2: customer.address2 ?? '',
-      door_no: customer.door_no ?? '',
-      fhname: customer.fhname,
-      area: areasResponse.data[0],
-      fhtitle: customer.fhtitle,
-      id_proof: customer.id_proof ?? '',
-      id_proof_value: customer.id_proof_value ?? '',
-      name: customer.name,
-      phone_no: customer.phone_no ?? '',
-    });
   };
 
   useEffect(() => {
     const run = async () => {
-      const customerResponse = await read('customers', {});
-      if (!customerResponse.success) {
-        toastElectronResponse(customerResponse);
-        return;
-      }
-      if (customerResponse.data?.length) {
-        const addressSet = new Set<string>();
-        const nameSet = new Set<string>();
-        for (const r of customerResponse.data) {
-          nameSet.add(r.name.trim());
-          nameSet.add(r.fhname.trim());
-          if (r.address1) addressSet.add(r.address1.trim());
-          if (r.address2) addressSet.add(r.address2.trim());
+      try {
+        const customerResponse = await read('customers', {});
+        if (customerResponse?.length) {
+          const addressSet = new Set<string>();
+          const nameSet = new Set<string>();
+          for (const r of customerResponse) {
+            nameSet.add(r.name.trim());
+            nameSet.add(r.fhname.trim());
+            if (r.address1) addressSet.add(r.address1.trim());
+            if (r.address2) addressSet.add(r.address2.trim());
+          }
+          setAddressList([...addressSet].sort());
+          setNameList([...nameSet].sort());
         }
-        setAddressList([...addressSet].sort());
-        setNameList([...nameSet].sort());
-      }
-      const areaResponse = await read('areas', {});
-      if (areaResponse.success && areaResponse.data?.length) {
-        setAreasList(areaResponse.data);
+        const areaResponse = await read('areas', {});
+        if (areaResponse?.length) {
+          setAreasList(areaResponse);
+        }
+      } catch (e) {
+        errorToast(e);
       }
     };
     void run();
@@ -148,14 +148,20 @@ export default function CustomerCrud({
       address2: data.address2 === '' ? null : (data.address2 ?? null),
     };
     if (id) {
-      toastElectronResponse(
+      try {
         await update('customers', {
           ...customer,
           id,
-        })
-      );
+        });
+      } catch (error) {
+        errorToast(error);
+      }
     } else {
-      toastElectronResponse(await create('customers', customer));
+      try {
+        await create('customers', customer);
+      } catch (error) {
+        errorToast(error);
+      }
       onCreate?.(customer);
     }
     reset(defaultValues);

@@ -7,7 +7,7 @@ import DatePicker from '@/components/DatePicker.tsx';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import { create, query, read } from '@/hooks/dbUtil.ts';
 import type { LocalTables, Tables } from '../../tables';
-import { formatCurrency, toastElectronResponse } from '@/lib/myUtils.tsx';
+import { errorToast, formatCurrency } from '@/lib/myUtils.tsx';
 
 interface Row {
   key: string;
@@ -57,10 +57,10 @@ export default function DailyEntries() {
 
   const loadAccountHeads = useCallback(async () => {
     if (!company?.name) return;
-    const res = await read('account_head', { company: company.name });
-    if (!res.success) return toastElectronResponse(res);
+    const accountHead = await read('account_head', { company: company.name });
 
-    const sorted = res.data?.sort((a, b) => a.name.localeCompare(b.name)) ?? [];
+    const sorted =
+      accountHead?.sort((a, b) => a.name.localeCompare(b.name)) ?? [];
     setAccountHeads(sorted);
 
     // Default to CASH account
@@ -72,20 +72,19 @@ export default function DailyEntries() {
     if (!company || !currentAccountHead || !date) return;
 
     const q = `
-      SELECT * FROM daily_entries 
-      WHERE 
-        (code_1 = ${currentAccountHead.code} OR code_2 = ${currentAccountHead.code})
+      SELECT *
+      FROM daily_entries
+      WHERE (code_1 = ${currentAccountHead.code} OR code_2 = ${currentAccountHead.code})
         AND "date" > '2020-03-31'
         AND "date" < '${date}'
-        AND company='${company.name}'
-      ORDER BY sortOrder ASC
+        AND company = '${company.name}'
+      ORDER BY sortOrder
     `;
 
-    const res = await query<Tables['daily_entries']['Row'][]>(q);
-    if (!res.success) return toastElectronResponse(res);
+    const dailyEntries = await query<Tables['daily_entries']['Row'][]>(q);
 
     const total =
-      res.data?.reduce((sum, entry) => {
+      dailyEntries?.reduce((sum, entry) => {
         const { credit, debit } = calculateTransactionEffect(
           entry,
           currentAccountHead.code
@@ -102,124 +101,115 @@ export default function DailyEntries() {
     ): Promise<undefined> => {
       if (!company?.name || !date) return;
 
-      const loanAmountTotalResponse = await query<{ total: number }>(
-        `select SUM(loan_amount) as total from bills where "date" = '${date}' AND company='${company.name}'`
-      );
+      try {
+        const loanAmountTotal = await query<{ total: number }>(
+          `select SUM(loan_amount) as total from bills where "date" = '${date}' AND company='${company.name}'`
+        );
 
-      if (!loanAmountTotalResponse.success) {
-        toastElectronResponse(loanAmountTotalResponse);
-        return;
-      }
-      const releaseTotalResponse = await query<{
-        principal: number;
-        interest: number;
-      }>(
-        `SELECT SUM(loan_amount) AS principal,
+        const releaseTotalResponse = await query<{
+          principal: number;
+          interest: number;
+        }>(
+          `SELECT SUM(loan_amount) AS principal,
               FLOOR(SUM(tax_interest_amount)) AS interest
        FROM releases
        WHERE company = '${company.name}'
          AND date = '${date}'
       `
-      );
+        );
 
-      if (!releaseTotalResponse.success) {
-        toastElectronResponse(releaseTotalResponse);
-        return;
-      }
-
-      const sortOrderResponse = await query<{
-        sortOrder: number;
-      }>(`select sortOrder
+        const sortOrderResponse = await query<{
+          sortOrder: number;
+        }>(`select sortOrder
         from daily_entries
         order by sortOrder desc limit 1;`);
 
-      if (!sortOrderResponse.success) {
-        toastElectronResponse(sortOrderResponse);
-        return;
-      }
-      let sortOrder = (sortOrderResponse.data?.sortOrder ?? 0) + 1;
+        let sortOrder = (sortOrderResponse?.sortOrder ?? 0) + 1;
 
-      const loanAmountIndex = dailyEntry?.findIndex(
-        (entry) => entry.description === LOAN_AMOUNT
-      );
-      const newLoanAmount = loanAmountTotalResponse.data?.total ?? 0;
-      if (loanAmountIndex !== -1) {
-        if (newLoanAmount > 0) {
-          await create('daily_entries', {
-            company: company.name,
-            date,
-            code_1: 14,
-            code_2: 1,
-            description: LOAN_AMOUNT,
-            credit: newLoanAmount,
-            debit: 0,
-            sortOrder,
-            particular: null,
-            particular1: null,
-          });
-        }
-        sortOrder += 1;
-      } else {
-        await query<null>(`UPDATE daily_entries
+        const loanAmountIndex = dailyEntry?.findIndex(
+          (entry) => entry.description === LOAN_AMOUNT
+        );
+        const newLoanAmount = loanAmountTotal?.total ?? 0;
+        if (loanAmountIndex !== -1) {
+          if (newLoanAmount > 0) {
+            await create('daily_entries', {
+              company: company.name,
+              date,
+              code_1: 14,
+              code_2: 1,
+              description: LOAN_AMOUNT,
+              credit: newLoanAmount,
+              debit: 0,
+              sortOrder,
+              particular: null,
+              particular1: null,
+            });
+          }
+          sortOrder += 1;
+        } else {
+          await query<null>(`UPDATE daily_entries
                            SET credit=${newLoanAmount}
                            WHERE company = '${company.name}'
                              AND date = '${date}'
                              AND description = ${LOAN_AMOUNT}`);
-      }
-
-      const redemptionAmountIndex = dailyEntry?.findIndex(
-        (entry) => entry.description === REDEMPTION_AMOUNT
-      );
-      const newReleaseAmount = releaseTotalResponse.data?.principal ?? 0;
-      if (redemptionAmountIndex !== -1) {
-        if (newLoanAmount > 0) {
-          await create('daily_entries', {
-            company: company.name,
-            date,
-            code_1: 14,
-            code_2: 1,
-            description: REDEMPTION_AMOUNT,
-            credit: 0,
-            debit: newReleaseAmount,
-            sortOrder,
-            particular: null,
-            particular1: null,
-          });
         }
-        sortOrder += 1;
-      } else {
-        await query<null>(`UPDATE daily_entries
+
+        const redemptionAmountIndex = dailyEntry?.findIndex(
+          (entry) => entry.description === REDEMPTION_AMOUNT
+        );
+        const newReleaseAmount = releaseTotalResponse?.principal ?? 0;
+        if (redemptionAmountIndex !== -1) {
+          if (newLoanAmount > 0) {
+            await create('daily_entries', {
+              company: company.name,
+              date,
+              code_1: 14,
+              code_2: 1,
+              description: REDEMPTION_AMOUNT,
+              credit: 0,
+              debit: newReleaseAmount,
+              sortOrder,
+              particular: null,
+              particular1: null,
+            });
+          }
+          sortOrder += 1;
+        } else {
+          await query<null>(`UPDATE daily_entries
                            SET debit=${newLoanAmount}
                            WHERE company = '${company.name}'
                              AND date = '${date}'
                              AND description = ${REDEMPTION_AMOUNT}`);
-      }
-
-      const redemptionInterestIndex = dailyEntry?.findIndex(
-        (entry) => entry.description === BEING_REDEEMED_LOAN_INTEREST
-      );
-      const newReleaseInterest = releaseTotalResponse.data?.interest ?? 0;
-      if (redemptionInterestIndex !== -1) {
-        if (newLoanAmount > 0) {
-          await create('daily_entries', {
-            company: company.name,
-            date,
-            code_1: 14,
-            code_2: 1,
-            description: REDEMPTION_AMOUNT,
-            credit: 0,
-            debit: newReleaseInterest,
-            sortOrder,
-            particular: null,
-            particular1: null,
-          });
         }
-      } else {
-        await query<null>(`UPDATE daily_entries
+
+        const redemptionInterestIndex = dailyEntry?.findIndex(
+          (entry) => entry.description === BEING_REDEEMED_LOAN_INTEREST
+        );
+        const newReleaseInterest = releaseTotalResponse?.interest ?? 0;
+        if (redemptionInterestIndex !== -1) {
+          if (newLoanAmount > 0) {
+            await create('daily_entries', {
+              company: company.name,
+              date,
+              code_1: 14,
+              code_2: 1,
+              description: REDEMPTION_AMOUNT,
+              credit: 0,
+              debit: newReleaseInterest,
+              sortOrder,
+              particular: null,
+              particular1: null,
+            });
+          }
+        } else {
+          await query<null>(`UPDATE daily_entries
                            SET debit=${newLoanAmount}
                            WHERE company = '${company.name}'
                              AND date = '${date}'
                              AND description = ${BEING_REDEEMED_LOAN_INTEREST}`);
+        }
+      } catch (error) {
+        errorToast(error);
       }
     },
     [company?.name, date]
@@ -233,21 +223,12 @@ export default function DailyEntries() {
       date,
     });
 
-    if (!dailyEntriesResponse.success) {
-      return toastElectronResponse(dailyEntriesResponse);
-    }
+    await loadTodaysLoansAndReleases(dailyEntriesResponse);
 
-    await loadTodaysLoansAndReleases(dailyEntriesResponse.data);
-
-    const dailyEntriesResponseRe = await read('daily_entries', {
+    const dailyEntry = await read('daily_entries', {
       company: company.name,
       date,
     });
-
-    if (!dailyEntriesResponseRe.success)
-      return toastElectronResponse(dailyEntriesResponseRe);
-
-    const dailyEntry = dailyEntriesResponseRe.data;
 
     let runningTotal = 0;
 
