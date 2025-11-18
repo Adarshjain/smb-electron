@@ -18,7 +18,9 @@ export function useEnterNavigation<T = string>({
       const form = formRef.current;
       if (!form) return;
       if (name) {
-        const nextField = form.querySelector<HTMLElement>(`[name="${name}"]`);
+        const nextField = form.querySelector<HTMLElement>(
+          `[name="${name as string}"]`
+        );
         nextField?.focus();
         return;
       }

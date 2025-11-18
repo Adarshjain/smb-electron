@@ -46,6 +46,7 @@ export default function DataView<K extends TableName>(props: {
           rpcError(response);
         }
       })
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       .catch((e) => toast.error(e, { className: toastStyles.error }));
   }, [props.table]);
 
