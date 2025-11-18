@@ -125,13 +125,12 @@ export default function DailyEntries() {
         order by sortOrder desc limit 1;`);
 
         let sortOrder = (sortOrderResponse?.sortOrder ?? 0) + 1;
-
         const loanAmountIndex = dailyEntry?.findIndex(
           (entry) => entry.description === LOAN_AMOUNT
         );
         const newLoanAmount = loanAmountTotal?.total ?? 0;
-        if (loanAmountIndex !== -1) {
-          if (newLoanAmount > 0) {
+        if (newLoanAmount > 0) {
+          if (loanAmountIndex === -1) {
             await create('daily_entries', {
               company: company.name,
               date,
@@ -144,22 +143,22 @@ export default function DailyEntries() {
               particular: null,
               particular1: null,
             });
-          }
-          sortOrder += 1;
-        } else {
-          await query<null>(`UPDATE daily_entries
+            sortOrder += 1;
+          } else {
+            await query<null>(`UPDATE daily_entries
                            SET credit=${newLoanAmount}
                            WHERE company = '${company.name}'
                              AND date = '${date}'
                              AND description = ${LOAN_AMOUNT}`);
+          }
         }
 
         const redemptionAmountIndex = dailyEntry?.findIndex(
           (entry) => entry.description === REDEMPTION_AMOUNT
         );
         const newReleaseAmount = releaseTotalResponse?.principal ?? 0;
-        if (redemptionAmountIndex !== -1) {
-          if (newLoanAmount > 0) {
+        if (newReleaseAmount > 0) {
+          if (redemptionAmountIndex === -1) {
             await create('daily_entries', {
               company: company.name,
               date,
@@ -172,22 +171,22 @@ export default function DailyEntries() {
               particular: null,
               particular1: null,
             });
-          }
-          sortOrder += 1;
-        } else {
-          await query<null>(`UPDATE daily_entries
-                           SET debit=${newLoanAmount}
+            sortOrder += 1;
+          } else {
+            await query<null>(`UPDATE daily_entries
+                           SET debit=${newReleaseAmount}
                            WHERE company = '${company.name}'
                              AND date = '${date}'
                              AND description = ${REDEMPTION_AMOUNT}`);
+          }
         }
 
         const redemptionInterestIndex = dailyEntry?.findIndex(
           (entry) => entry.description === BEING_REDEEMED_LOAN_INTEREST
         );
         const newReleaseInterest = releaseTotalResponse?.interest ?? 0;
-        if (redemptionInterestIndex !== -1) {
-          if (newLoanAmount > 0) {
+        if (newReleaseInterest > 0) {
+          if (redemptionInterestIndex === -1) {
             await create('daily_entries', {
               company: company.name,
               date,
@@ -200,13 +199,13 @@ export default function DailyEntries() {
               particular: null,
               particular1: null,
             });
-          }
-        } else {
-          await query<null>(`UPDATE daily_entries
-                           SET debit=${newLoanAmount}
+          } else {
+            await query<null>(`UPDATE daily_entries
+                           SET debit=${newReleaseInterest}
                            WHERE company = '${company.name}'
                              AND date = '${date}'
                              AND description = ${BEING_REDEEMED_LOAN_INTEREST}`);
+          }
         }
       } catch (error) {
         errorToast(error);
