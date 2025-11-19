@@ -15,8 +15,8 @@ export const FIELD_WIDTHS = {
 
 // Keyboard shortcuts
 export const KEYBOARD_SHORTCUTS = {
-  ADD_BILLING_ITEM: '/',
-  REMOVE_BILLING_ITEM: '-',
+  ADD_BILLING_ITEM: '+',
+  REMOVE_BILLING_ITEM: 'Delete',
 } as const;
 
 // Default decimal precision

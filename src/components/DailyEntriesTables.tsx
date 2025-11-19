@@ -1,7 +1,13 @@
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  type KeyboardEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
 import ProductSelector from '@/components/ProductSelector.tsx';
 import type { Tables } from '../../tables';
@@ -46,7 +52,7 @@ export function DailyEntriesTables(props: {
     }),
     []
   );
-  const { control, handleSubmit, reset } = useForm<DailyEntry>({
+  const { control, reset } = useForm<DailyEntry>({
     resolver: zodResolver(dailyEntrySchema),
     defaultValues,
   });
@@ -70,18 +76,8 @@ export function DailyEntriesTables(props: {
       .flat();
   }, [fieldArray.fields]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const onSubmit = (data: DailyEntry) => {
-    console.log(data);
-  };
-
-  const handleFormSubmit = useCallback(() => {
-    void handleSubmit(onSubmit)();
-  }, [handleSubmit, onSubmit]);
-
   const { setFormRef } = useEnterNavigation<DailyEntry>({
     fields: dailyEntryItems,
-    onSubmit: handleFormSubmit,
   });
 
   const getAccountById = useCallback(
@@ -200,15 +196,23 @@ export function DailyEntriesTables(props: {
     ) {
       return true;
     }
-    if (
+    return (
       entry1.debit === entry2.credit &&
       entry2.debit === entry1.credit &&
       entry1.code_1 === entry2.code_2 &&
       entry1.code_2 === entry2.code_1
-    ) {
-      return true;
-    }
-    return false;
+    );
+  };
+
+  const fetchDeletedRecords = (
+    filteredEntries: DailyEntry['entries']
+  ): number[] => {
+    const arr2SortOrders = new Set(
+      filteredEntries.map((item) => item.sortOrder)
+    );
+    return props.entries
+      .filter((item) => !arr2SortOrders.has(item.sortOrder))
+      .map((item) => item.sortOrder);
   };
 
   const saveDailyEntry = async () => {
@@ -275,9 +279,30 @@ export function DailyEntriesTables(props: {
           }
         }
       }
+      const sortOrders = fetchDeletedRecords(filteredEntries);
+      for (const order of sortOrders) {
+        await query<null>(
+          `DELETE FROM daily_entries where sortOrder = ? AND company = ? AND date = ?`,
+          [order, company.name, props.date],
+          true
+        );
+      }
       alert('Success!');
     } catch (e) {
       errorToast(e);
+    }
+  };
+
+  const handleInputKeyDown = (event: KeyboardEvent, index: number) => {
+    if (event.key === 'Delete') {
+      fieldArray.remove(index);
+      fieldArray.append({
+        title: '',
+        debit: '',
+        credit: '',
+        description: '',
+        sortOrder: 0,
+      });
     }
   };
 
@@ -314,10 +339,9 @@ export function DailyEntriesTables(props: {
             }
           />
         </div>
-        {fieldArray.fields.map((_, index) => (
-          <div key={index} className="flex">
+        {fieldArray.fields.map((row, index) => (
+          <div key={JSON.stringify(row)} className="flex">
             <Controller
-              key={`entries.${index}.title`}
               name={`entries.${index}.title`}
               control={control}
               render={({ field }) => (
@@ -340,6 +364,7 @@ export function DailyEntriesTables(props: {
               render={({ field }) => (
                 <Input
                   {...field}
+                  onKeyDown={(e) => handleInputKeyDown(e, index)}
                   onFocus={(e) => {
                     e.currentTarget.select();
                   }}
@@ -366,6 +391,7 @@ export function DailyEntriesTables(props: {
                         : ''
                     );
                   }}
+                  onKeyDown={(e) => handleInputKeyDown(e, index)}
                   id={`entries.${index}.credit`}
                   name={`entries.${index}.credit`}
                   type="number"
@@ -390,6 +416,7 @@ export function DailyEntriesTables(props: {
                         : ''
                     );
                   }}
+                  onKeyDown={(e) => handleInputKeyDown(e, index)}
                   id={`entries.${index}.debit`}
                   name={`entries.${index}.debit`}
                   type="number"
