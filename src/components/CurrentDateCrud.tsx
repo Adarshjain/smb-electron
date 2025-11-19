@@ -1,20 +1,11 @@
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip.tsx';
-import { Badge } from '@/components/ui/badge.tsx';
-import { cn } from '@/lib/utils.ts';
-import {
   currentIsoDate,
-  isToday,
   isValidIsoDate,
   nextIsoDate,
   previousIsoDate,
-  viewableDate,
 } from '@/lib/myUtils.tsx';
-import { useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Kbd } from '@/components/ui/kbd';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import {
   Dialog,
@@ -29,9 +20,7 @@ import DatePicker from '@/components/DatePicker.tsx';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 export default function CurrentDateCrud() {
-  const location = useLocation();
   const { company, setCurrentDate } = useCompany();
-  const isHome = useMemo(() => location.pathname === '/', [location.pathname]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [internalDate, setInternalDate] = useState<string>(
     nextIsoDate(company?.current_date ?? currentIsoDate())
@@ -51,26 +40,17 @@ export default function CurrentDateCrud() {
   }
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-      <DialogTrigger disabled={!isHome}>
-        <Tooltip open={!isHome ? false : undefined}>
-          <TooltipTrigger asChild>
-            <Badge
-              variant="secondary"
-              className={cn(
-                !isToday(company.current_date)
-                  ? 'bg-red-500 text-white px-2 py-1 border'
-                  : '',
-                isHome ? 'cursor-pointer' : 'cursor-default'
-              )}
-            >
-              {viewableDate(company.current_date)}
-            </Badge>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="px-2 py-1 text-xs">
-            <p>Change Date</p>
-          </TooltipContent>
-        </Tooltip>
-      </DialogTrigger>
+      <Button
+        asChild
+        variant="outline"
+        className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
+        id="change-date-button"
+      >
+        <DialogTrigger>
+          <Kbd className="justify-self-start col-start-1">F7</Kbd>
+          <div className="justify-self-center col-start-2">Change Date</div>
+        </DialogTrigger>
+      </Button>
       <DialogContent
         className="sm:max-w-[450px]"
         onPointerDownOutside={(e) => e.preventDefault()}
