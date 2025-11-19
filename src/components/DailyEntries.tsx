@@ -273,7 +273,7 @@ export default function DailyEntries() {
   return (
     <div className="p-3">
       <div className="flex gap-3 mb-4 mx-24">
-        <div className="text-xl mr-auto">Daily Entry</div>
+        <div className="text-xl mr-auto">Cash Book</div>
         {currentAccountHead && (
           <NativeSelect
             value={currentAccountHead.name}

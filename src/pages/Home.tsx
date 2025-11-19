@@ -6,6 +6,7 @@ import { Kbd } from '@/components/ui/kbd';
 import QuickView from '@/components/QuickView.tsx';
 import { useTabs } from '@/TabManager.tsx';
 import DailyEntries from '@/components/DailyEntries.tsx';
+import CurrentDateCrud from '@/components/CurrentDateCrud.tsx';
 
 const shortCutMapping: {
   shortcutKey: string;
@@ -31,16 +32,28 @@ export function Home() {
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
-      if (e.key === 'F1') {
-        const companySwitcher = document.getElementsByName('company-switcher');
-        if (companySwitcher.length) {
-          companySwitcher[0].click();
+      switch (e.key) {
+        case 'F1': {
+          const companySwitcher =
+            document.getElementsByName('company-switcher');
+          if (companySwitcher.length) {
+            companySwitcher[0].click();
+          }
+          break;
         }
-      } else if (e.key === 'F6') {
-        const customerPicker = document.getElementsByName('customer_picker');
-        if (customerPicker.length) {
-          customerPicker[0].focus();
+        case 'F6': {
+          const customerPicker = document.getElementsByName('customer_picker');
+          if (customerPicker.length) {
+            customerPicker[0].focus();
+          }
+          break;
         }
+        case 'F4':
+          openTab('Cash Book', <DailyEntries />);
+          break;
+        case 'F7':
+          document.getElementById('change-date-button')?.click();
+          break;
       }
       const match = shortCutMapping.find((sc) => sc.shortcutKey === e.key);
       if (match) {
@@ -53,7 +66,7 @@ export function Home() {
     return () => {
       window.removeEventListener('keydown', listener);
     };
-  }, [navigate]);
+  }, [navigate, openTab]);
 
   return (
     <div className="flex">
@@ -81,18 +94,19 @@ export function Home() {
         <Button
           variant="outline"
           className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
+          onClick={() => openTab('Cash Book', <DailyEntries />)}
+        >
+          <Kbd className="justify-self-start col-start-1">F4</Kbd>
+          <div className="justify-self-center col-start-2">Cash Book</div>
+        </Button>
+        <CurrentDateCrud />
+        <Button
+          variant="outline"
+          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
           onClick={() => void navigate('/day-book')}
         >
           <Kbd className="justify-self-start col-start-1">F8</Kbd>
           <div className="justify-self-center col-start-2">Day Book</div>
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
-          onClick={() => openTab('Daily Entry', <DailyEntries />)}
-        >
-          <Kbd className="justify-self-start col-start-1">F5</Kbd>
-          <div className="justify-self-center col-start-2">Daily Entry</div>
         </Button>
         <Button
           variant="outline"
