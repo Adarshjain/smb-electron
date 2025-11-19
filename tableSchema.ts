@@ -240,14 +240,6 @@ export const TablesSQliteSchema: Record<
         schema: 'REAL NOT NULL',
         encoded: false,
       },
-      particular: {
-        schema: 'TEXT',
-        encoded: false,
-      },
-      particular1: {
-        schema: 'TEXT',
-        encoded: false,
-      },
       description: {
         schema: 'TEXT',
         encoded: false,

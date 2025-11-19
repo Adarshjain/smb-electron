@@ -9,6 +9,10 @@
     border-top: 1px solid var(--input);
   }
 
+  > :nth-child(even) {
+    background-color: var(--color-gray-100);
+  }
+
   > div {
     border-bottom: 1px solid var(--input);
   }
@@ -21,6 +25,7 @@
   input {
     border-right: 1px solid var(--input);
   }
+
   .search-select input {
     border-right: 0;
   }

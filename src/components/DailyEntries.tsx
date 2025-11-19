@@ -11,7 +11,7 @@ import { errorToast } from '@/lib/myUtils.tsx';
 import { DailyEntriesTables } from '@/components/DailyEntriesTables.tsx';
 
 // Constants
-const LOAN_AMOUNT = 'LOAN AMOUNT';
+const LOAN_AMOUNT = 'LOAN  AMOUNT';
 const REDEMPTION_AMOUNT = 'REDEMPTION AMOUNT';
 const BEING_REDEEMED_LOAN_INTEREST = 'BEING REDEEMED LOAN INTEREST';
 const CASH_ACCOUNT_NAME = 'CASH';
@@ -116,13 +116,22 @@ export default function DailyEntries() {
       if (!company?.name || !date) return;
 
       if (existingEntry) {
-        // Update existing entry using parameterized query
-        await query<null>(
-          `UPDATE daily_entries
+        if (credit !== existingEntry.credit || debit !== existingEntry.debit) {
+          await query<null>(
+            `UPDATE daily_entries
            SET credit = ?, debit = ?
-           WHERE company = ? AND date = ? AND description = ?`,
-          [credit, debit, company.name, date, description]
-        );
+           WHERE company = ? AND date = ? AND description = ? AND sortOrder = ?`,
+            [
+              credit,
+              debit,
+              company.name,
+              date,
+              description,
+              existingEntry.sortOrder,
+            ],
+            true
+          );
+        }
       } else {
         // Create new entry
         await create('daily_entries', {
@@ -134,8 +143,6 @@ export default function DailyEntries() {
           credit,
           debit,
           sortOrder,
-          particular: null,
-          particular1: null,
         });
       }
     },
@@ -152,37 +159,32 @@ export default function DailyEntries() {
         // Fetch all required data in parallel
         const [loanAmountTotal, releaseTotalResponse, sortOrderResponse] =
           await Promise.all([
-            query<{ total: number }>(
+            query<[{ total: number }]>(
               `SELECT SUM(loan_amount) as total 
                FROM bills 
                WHERE "date" = ? AND company = ?`,
               [date, company.name]
             ),
-            query<{
-              principal: number;
-              interest: number;
-            }>(
+            query<[{ principal: number; interest: number }]>(
               `SELECT SUM(loan_amount) AS principal,
                       FLOOR(SUM(tax_interest_amount)) AS interest
                FROM releases
                WHERE company = ? AND date = ?`,
               [company.name, date]
             ),
-            query<{ sortOrder: number }>(
+            query<[{ sortOrder: number }]>(
               `SELECT sortOrder
                FROM daily_entries
                ORDER BY sortOrder DESC
                LIMIT 1`
             ),
           ]);
-
-        let sortOrder = (sortOrderResponse?.sortOrder ?? 0) + 1;
-
+        let sortOrder = (sortOrderResponse?.[0].sortOrder ?? 0) + 1;
         // Process loan amount
         const loanAmountEntry = dailyEntry?.find(
           (entry) => entry.description === LOAN_AMOUNT
         );
-        const newLoanAmount = loanAmountTotal?.total ?? 0;
+        const newLoanAmount = loanAmountTotal?.[0].total ?? 0;
         if (newLoanAmount > 0) {
           await upsertDailyEntry(
             LOAN_AMOUNT,
@@ -196,9 +198,9 @@ export default function DailyEntries() {
 
         // Process redemption amount
         const redemptionAmountEntry = dailyEntry?.find(
-          (entry) => entry.description === REDEMPTION_AMOUNT
+          (entry) => entry.description?.trim() === REDEMPTION_AMOUNT
         );
-        const newReleaseAmount = releaseTotalResponse?.principal ?? 0;
+        const newReleaseAmount = releaseTotalResponse?.[0].principal ?? 0;
         if (newReleaseAmount > 0) {
           await upsertDailyEntry(
             REDEMPTION_AMOUNT,
@@ -214,7 +216,7 @@ export default function DailyEntries() {
         const redemptionInterestEntry = dailyEntry?.find(
           (entry) => entry.description === BEING_REDEEMED_LOAN_INTEREST
         );
-        const newReleaseInterest = releaseTotalResponse?.interest ?? 0;
+        const newReleaseInterest = releaseTotalResponse?.[0].interest ?? 0;
         if (newReleaseInterest > 0) {
           await upsertDailyEntry(
             BEING_REDEEMED_LOAN_INTEREST,
@@ -270,7 +272,7 @@ export default function DailyEntries() {
 
   return (
     <div className="p-3">
-      <div className="flex gap-3 mb-4">
+      <div className="flex gap-3 mb-4 mx-24">
         <div className="text-xl mr-auto">Daily Entry</div>
         {currentAccountHead && (
           <NativeSelect
@@ -298,6 +300,7 @@ export default function DailyEntries() {
         openingBalance={openingBalance}
         entries={todaysEntries}
         currentAccountHead={currentAccountHead}
+        date={date}
       />
     </div>
   );
