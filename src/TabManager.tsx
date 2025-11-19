@@ -96,20 +96,18 @@ export const TabManager: React.FC = () => {
           ))}
         </div>
         {company ? (
-          <div className="w-1/3  flex justify-center">
-            <div>
-              {company.name}{' '}
-              <Badge
-                variant="secondary"
-                className={cn(
-                  !isToday(company.current_date)
-                    ? 'bg-red-500 text-white px-2 py-1 border'
-                    : ''
-                )}
-              >
-                {viewableDate(company.current_date)}
-              </Badge>
-            </div>
+          <div className="w-1/3 flex justify-center items-center gap-4">
+            {company.name}{' '}
+            <Badge
+              variant="secondary"
+              className={cn(
+                !isToday(company.current_date)
+                  ? 'bg-red-500 text-white px-2 py-1 border'
+                  : ''
+              )}
+            >
+              {viewableDate(company.current_date)}
+            </Badge>
           </div>
         ) : null}
         <Button
