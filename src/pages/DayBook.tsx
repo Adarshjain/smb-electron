@@ -12,6 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { errorToast, formatCurrency } from '@/lib/myUtils.tsx';
+import GoHome from '@/components/GoHome.tsx';
 
 interface AggregatedBills {
   loan: {
@@ -136,7 +137,8 @@ export default function DayBook() {
 
   return (
     <div className="p-3">
-      <div className="flex justify-around mb-4">
+      <div className="flex justify-between mb-4">
+        <GoHome />
         <div className="text-xl">Loans</div>
         <DatePicker
           className="w-27.5"
@@ -145,6 +147,7 @@ export default function DayBook() {
           navigated
         />
         <div className="text-xl">Releases</div>
+        <div className="text-xl"></div>
       </div>
       <div className="flex justify-around"></div>
       <div className="flex justify-between gap-3">

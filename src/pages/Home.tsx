@@ -94,6 +94,13 @@ export function Home() {
           <Kbd className="justify-self-start col-start-1">F5</Kbd>
           <div className="justify-self-center col-start-2">Daily Entry</div>
         </Button>
+        <Button
+          variant="outline"
+          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
+          onClick={() => void navigate('/settings')}
+        >
+          <div className="justify-self-center col-start-2">Settings</div>
+        </Button>
       </div>
     </div>
   );
