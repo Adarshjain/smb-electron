@@ -26,6 +26,7 @@ import CustomerInfo from '@/components/LoanForm/CustomerInfo.tsx';
 import BillItemsInfo from '@/components/LoanForm/BillItemsInfo.tsx';
 import { ReleaseLoanAmountSection } from '@/components/LoanForm/ReleaseLoanAmountSection.tsx';
 import { Label } from '@/components/ui/label';
+import GoHome from '@/components/GoHome.tsx';
 
 export default function ReleaseLoan() {
   const { company } = useCompany();
@@ -208,6 +209,7 @@ export default function ReleaseLoan() {
       >
         <div className="flex-1">
           <div className="flex flex-1 flex-row gap-4 items-center">
+            <GoHome />
             <div className="flex flex-col gap-1">
               <Label>Loan Number</Label>
               <LoanNumber<ReleaseLoan>

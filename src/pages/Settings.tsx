@@ -4,12 +4,16 @@ import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
 import { AlertTriangleIcon } from 'lucide-react';
 import { toastElectronResponse } from '@/lib/myUtils.tsx';
 import { useNavigate } from 'react-router-dom';
+import GoHome from '@/components/GoHome.tsx';
 
 export default function Settings() {
   const navigate = useNavigate();
   return (
     <div className="p-6 flex flex-col gap-3">
-      <div className="text-2xl font-bold tracking-tight">Settings</div>
+      <div className="flex">
+        <GoHome />
+        <div className="text-2xl font-bold tracking-tight ml-4">Settings</div>
+      </div>
       <CompanySettings />
       <Button
         variant="outline"

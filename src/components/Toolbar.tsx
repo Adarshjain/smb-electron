@@ -7,22 +7,16 @@ import {
   NavigationMenuList,
 } from '@/components/ui/navigation-menu';
 import { Link, useLocation } from 'react-router-dom';
-import { useThanglish } from '@/context/ThanglishProvider.tsx';
-import { Button } from '@/components/ui/button.tsx';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip.tsx';
 import { cn } from '@/lib/utils.ts';
-import { useCompany } from '@/context/CompanyProvider.tsx';
-import CurrentDateCrud from '@/components/CurrentDateCrud.tsx';
 import { useEffect, useState } from 'react';
 
 export default function Toolbar() {
-  const { isTamil, setIsTamil } = useThanglish();
   const location = useLocation();
-  const { company } = useCompany();
   const [title, setTitle] = useState('');
 
   useEffect(() => {
@@ -98,20 +92,7 @@ export default function Toolbar() {
         </NavigationMenuList>
         <div className="ml-12 font-bold">{title}</div>
       </div>
-      {company ? (
-        <div className="w-1/3  flex justify-center">
-          <div>
-            {company.name} <CurrentDateCrud />
-          </div>
-        </div>
-      ) : null}
       <div className="flex justify-end mr-4 gap-3 w-1/3 items-center">
-        <Button
-          className={`text-white cursor-pointer py-1 h-7 ${isTamil ? 'bg-blue-600 hover:bg-blue-500' : 'bg-green-600 hover:bg-green-500'}`}
-          onClick={() => setIsTamil(!isTamil)}
-        >
-          {isTamil ? 'Tamil' : 'English'}
-        </Button>
         <NavigationMenuList>
           <NavigationMenuItem>
             <Tooltip>

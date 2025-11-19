@@ -48,6 +48,7 @@ import {
 import { BillingItemsTable } from '@/components/LoanForm/BillingItemsTable.tsx';
 import BillsByCustomer from '@/components/LoanForm/BillsByCustomer.tsx';
 import { cn } from '@/lib/utils.ts';
+import GoHome from '@/components/GoHome.tsx';
 
 export default function NewLoan() {
   const { company, setNextSerial } = useCompany();
@@ -453,6 +454,7 @@ export default function NewLoan() {
               <div className="flex flex-1 flex-col gap-3">
                 <div className="flex justify-between items-center">
                   <div className="flex gap-4 items-center">
+                    <GoHome />
                     <LoanNumber<Loan>
                       control={control}
                       onLoanLoad={handleEditLoan}
