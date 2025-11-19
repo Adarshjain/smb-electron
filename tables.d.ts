@@ -90,15 +90,13 @@ export interface Tables {
 
   daily_entries: {
     Row: {
-      particular: string | null;
-      description: string;
+      description: string | null;
       debit: number;
       credit: number;
       date: string;
       company: string;
       code_1: number;
       code_2: number;
-      particular1: string | null;
       sortOrder: number;
     };
     Insert: Tables['daily_entries']['Row'];

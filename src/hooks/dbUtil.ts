@@ -77,9 +77,10 @@ export const deleteRecord = async <K extends TableName>(
 
 export const query = async <T>(
   query: string,
-  params?: unknown[]
+  params?: unknown[],
+  justRun = false
 ): Promise<T | null> => {
-  const response = await window.api.db.query(query, params);
+  const response = await window.api.db.query(query, params, justRun);
   if (response.success) {
     return (response.data as T) ?? null;
   }

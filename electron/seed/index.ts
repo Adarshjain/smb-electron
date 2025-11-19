@@ -222,8 +222,6 @@ export const initDailyEntries = () => {
       date: new Date(record.date).toISOString().split('T')[0],
       company: toSentenceCase(record.company),
       description: record.description ?? null,
-      particular: record.particular ?? null,
-      particular1: record.particular1 ?? null,
       debit: parseFloat('' + record.dr),
       credit: parseFloat('' + record.cr),
       code_1: parseInt('' + record.acc_code),

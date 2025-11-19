@@ -8,14 +8,19 @@ import type { Tables } from '../../tables';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
 import '../styles/DailyEntries.css';
 import { Input } from '@/components/ui/input.tsx';
+import { Button } from '@/components/ui/button';
+import { useCompany } from '@/context/CompanyProvider.tsx';
+import { create, query } from '@/hooks/dbUtil.ts';
+import { errorToast } from '@/lib/myUtils.tsx';
 
 const dailyEntrySchema = z.object({
   entries: z.array(
     z.object({
-      particular: z.string().optional().nullable(),
+      title: z.string().optional().nullable(),
       description: z.string().optional(),
       credit: z.string().optional(),
       debit: z.string().optional(),
+      sortOrder: z.number(),
     })
   ),
 });
@@ -26,8 +31,10 @@ export function DailyEntriesTables(props: {
   accountHeads: Tables['account_head']['Row'][];
   entries: Tables['daily_entries']['Row'][];
   openingBalance: number;
+  date: string;
 }) {
   const { setIsTamil } = useThanglish();
+  const { company } = useCompany();
   const [closingBalance, setClosingBalance] = useState(0);
   useEffect(() => {
     setIsTamil(false);
@@ -56,7 +63,7 @@ export function DailyEntriesTables(props: {
   const dailyEntryItems = useMemo(() => {
     return fieldArray.fields
       .map((_, index) =>
-        ['particular', 'description', 'credit', 'debit'].map(
+        ['title', 'description', 'credit', 'debit'].map(
           (field) => `entries.${index}.${field}`
         )
       )
@@ -111,7 +118,7 @@ export function DailyEntriesTables(props: {
           );
           runningTotal = Number((runningTotal + credit - debit).toFixed(2));
 
-          const particular =
+          const title =
             getAccountById(
               props.currentAccountHead?.code === entry.code_1
                 ? entry.code_2
@@ -119,19 +126,21 @@ export function DailyEntriesTables(props: {
             )?.name ?? '';
 
           return {
-            particular,
-            description: entry.description,
+            title,
+            description: entry.description ?? undefined,
             credit: credit === 0 ? '' : credit.toFixed(2),
             debit: debit === 0 ? '' : debit.toFixed(2),
+            sortOrder: entry.sortOrder,
           };
         }) ?? [];
 
     while (filteredEntries.length <= 10) {
       filteredEntries.push({
-        particular: '',
+        title: '',
         debit: '',
         credit: '',
         description: '',
+        sortOrder: 0,
       });
     }
 
@@ -151,12 +160,8 @@ export function DailyEntriesTables(props: {
     enteredValues
       .filter(
         (entry) =>
-          !(
-            !entry.particular &&
-            !entry.debit &&
-            !entry.credit &&
-            !entry.description
-          )
+          entry.title &&
+          (parseFloat(entry.debit ?? '0') || parseFloat(entry.credit ?? '0'))
       )
       .forEach((entry) => {
         runningTotal = Number(
@@ -175,140 +180,252 @@ export function DailyEntriesTables(props: {
     props.openingBalance,
   ]);
 
+  const getAccountByName = useCallback(
+    (name: string) => props.accountHeads.find((head) => head.name === name),
+    [props.accountHeads]
+  );
+
+  const doEntriesMatch = (
+    entry1: Tables['daily_entries']['Row'],
+    entry2: Tables['daily_entries']['Row']
+  ): boolean => {
+    if (entry1.description !== entry2.description) {
+      return false;
+    }
+    if (
+      entry1.debit === entry2.debit &&
+      entry1.credit === entry2.credit &&
+      entry1.code_1 === entry2.code_1 &&
+      entry1.code_2 === entry2.code_2
+    ) {
+      return true;
+    }
+    if (
+      entry1.debit === entry2.credit &&
+      entry2.debit === entry1.credit &&
+      entry1.code_1 === entry2.code_2 &&
+      entry1.code_2 === entry2.code_1
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  const saveDailyEntry = async () => {
+    if (!company) return;
+    try {
+      let latestSortOrder = 0;
+      const filteredEntries: DailyEntry['entries'] = enteredValues.filter(
+        (entry) =>
+          entry.title &&
+          (parseFloat(entry.debit ?? '0') || parseFloat(entry.credit ?? '0'))
+      );
+
+      for (const entry of filteredEntries) {
+        const account = getAccountByName(entry.title ?? '');
+        const finalEntry: Tables['daily_entries']['Row'] = {
+          // intentionally switched
+          debit: parseFloat('' + entry.credit || '0'),
+          // intentionally switched
+          credit: parseFloat('' + entry.debit || '0'),
+          company: company.name ?? '',
+          date: props.date,
+          sortOrder: entry.sortOrder,
+          description: entry.description ?? null,
+          code_1: props.currentAccountHead?.code ?? 0,
+          code_2: account?.code ?? 0,
+        };
+
+        if (finalEntry.sortOrder === 0) {
+          if (latestSortOrder === 0) {
+            const sortOrderResp = await query<[{ sortOrder: number }]>(
+              `SELECT sortOrder
+               FROM daily_entries
+               ORDER BY sortOrder DESC
+               LIMIT 1`
+            );
+            latestSortOrder = sortOrderResp?.[0].sortOrder ?? 0;
+          }
+          latestSortOrder += 1;
+          finalEntry.sortOrder = latestSortOrder;
+          await create('daily_entries', finalEntry);
+        } else {
+          const matchedEntry = props.entries.find(
+            (entry) => entry.sortOrder === finalEntry.sortOrder
+          );
+          const shouldUpdate =
+            !matchedEntry || !doEntriesMatch(finalEntry, matchedEntry);
+          if (shouldUpdate) {
+            await query<null>(
+              `UPDATE daily_entries
+                       SET credit = ?, debit = ?, description = ?, code_1 = ?, code_2 = ?
+                       WHERE company = ? AND date = ? AND sortOrder = ?`,
+              [
+                finalEntry.credit,
+                finalEntry.debit,
+                finalEntry.description,
+                finalEntry.code_1,
+                finalEntry.code_2,
+                company.name,
+                props.date,
+                finalEntry.sortOrder,
+              ],
+              true
+            );
+          }
+        }
+      }
+      alert('Success!');
+    } catch (e) {
+      errorToast(e);
+    }
+  };
+
   return (
-    <form ref={setFormRef} className="de-input-matrix">
-      <div className="flex">
-        <div className="px-3 py-1 min-w-[420px]">Title</div>
-        <div className="px-3 py-1 flex-1">Description</div>
-        <div className="px-3 py-1 min-w-48 text-right">Credit</div>
-        <div className="px-3 py-1 min-w-48 text-right">Debit</div>
-      </div>
-      <div className="flex">
-        <Input
-          defaultValue="Opening Balance"
-          disabled
-          className="w-[420px] !opacity-100"
-        />
-        <div className="flex-1"></div>
-        <Input
-          disabled
-          placeholder=""
-          className="text-right w-48 !opacity-100"
-          value={
-            props.openingBalance >= 0 ? props.openingBalance.toFixed(2) : ''
-          }
-        />
-        <Input
-          disabled
-          placeholder=""
-          className="text-right w-48 !opacity-100"
-          value={
-            props.openingBalance < 0 ? (-props.openingBalance).toFixed(2) : ''
-          }
-        />
-      </div>
-      {fieldArray.fields.map((_, index) => (
-        <div key={index} className="flex">
-          <Controller
-            key={`entries.${index}.particular`}
-            name={`entries.${index}.particular`}
-            control={control}
-            render={({ field }) => (
-              <ProductSelector
-                value={field.value ?? undefined}
-                onChange={field.onChange}
-                onFocus={(e) => {
-                  e.currentTarget.select();
-                }}
-                options={props.accountHeads.map((account) => account.name)}
-                inputName={`entries.${index}.particular`}
-                placeholder=""
-                triggerWidth={`min-w-[420px]`}
-              />
-            )}
+    <>
+      <form ref={setFormRef} className="de-input-matrix mx-24">
+        <div className="flex">
+          <div className="px-3 py-1 min-w-[480px]">Title</div>
+          <div className="px-3 py-1 flex-1">Description</div>
+          <div className="px-3 py-1 min-w-48 text-right">Credit</div>
+          <div className="px-3 py-1 min-w-48 text-right">Debit</div>
+        </div>
+        <div className="flex">
+          <Input
+            defaultValue="Opening Balance"
+            disabled
+            className="w-[480px] !opacity-100"
           />
-          <Controller
-            name={`entries.${index}.description`}
-            control={control}
-            render={({ field }) => (
-              <Input
-                {...field}
-                onFocus={(e) => {
-                  e.currentTarget.select();
-                }}
-                id={`entries.${index}.description`}
-                name={`entries.${index}.description`}
-                placeholder=""
-                className=""
-              />
-            )}
+          <div className="flex-1"></div>
+          <Input
+            disabled
+            placeholder=""
+            className="text-right w-48 !opacity-100"
+            value={
+              props.openingBalance >= 0 ? props.openingBalance.toFixed(2) : ''
+            }
           />
-          <Controller
-            name={`entries.${index}.credit`}
-            control={control}
-            render={({ field }) => (
-              <Input
-                {...field}
-                onFocus={(e) => {
-                  e.currentTarget.select();
-                }}
-                onBlur={() => {
-                  field.onChange(
-                    field.value ? parseFloat(field.value || '0').toFixed(2) : ''
-                  );
-                }}
-                id={`entries.${index}.credit`}
-                name={`entries.${index}.credit`}
-                type="number"
-                placeholder=""
-                className="min-w-48 w-48 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            )}
-          />
-          <Controller
-            name={`entries.${index}.debit`}
-            control={control}
-            render={({ field }) => (
-              <Input
-                {...field}
-                onFocus={(e) => {
-                  e.currentTarget.select();
-                }}
-                onBlur={() => {
-                  field.onChange(
-                    field.value ? parseFloat(field.value || '0').toFixed(2) : ''
-                  );
-                }}
-                id={`entries.${index}.debit`}
-                name={`entries.${index}.debit`}
-                type="number"
-                placeholder=""
-                className="min-w-48 w-48 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            )}
+          <Input
+            disabled
+            placeholder=""
+            className="text-right w-48 !opacity-100"
+            value={
+              props.openingBalance < 0 ? (-props.openingBalance).toFixed(2) : ''
+            }
           />
         </div>
-      ))}
-      <div className="flex">
-        <Input
-          defaultValue="Closing Balance"
-          disabled
-          className="w-[420px] !opacity-100"
-        />
-        <div className="flex-1"></div>
-        <Input
-          disabled
-          placeholder=""
-          className="text-right w-48 !opacity-100"
-          value={closingBalance >= 0 ? closingBalance.toFixed(2) : ''}
-        />
-        <Input
-          disabled
-          placeholder=""
-          className="text-right w-48 !opacity-100"
-          value={closingBalance < 0 ? (-closingBalance).toFixed(2) : ''}
-        />
+        {fieldArray.fields.map((_, index) => (
+          <div key={index} className="flex">
+            <Controller
+              key={`entries.${index}.title`}
+              name={`entries.${index}.title`}
+              control={control}
+              render={({ field }) => (
+                <ProductSelector
+                  value={field.value ?? undefined}
+                  onChange={field.onChange}
+                  onFocus={(e) => {
+                    e.currentTarget.select();
+                  }}
+                  options={props.accountHeads.map((account) => account.name)}
+                  inputName={`entries.${index}.title`}
+                  placeholder=""
+                  triggerWidth={`min-w-[480px]`}
+                />
+              )}
+            />
+            <Controller
+              name={`entries.${index}.description`}
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  onFocus={(e) => {
+                    e.currentTarget.select();
+                  }}
+                  id={`entries.${index}.description`}
+                  name={`entries.${index}.description`}
+                  placeholder=""
+                  className=""
+                />
+              )}
+            />
+            <Controller
+              name={`entries.${index}.credit`}
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  onFocus={(e) => {
+                    e.currentTarget.select();
+                  }}
+                  onBlur={() => {
+                    field.onChange(
+                      field.value
+                        ? parseFloat(field.value || '0').toFixed(2)
+                        : ''
+                    );
+                  }}
+                  id={`entries.${index}.credit`}
+                  name={`entries.${index}.credit`}
+                  type="number"
+                  placeholder=""
+                  className="min-w-48 w-48 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              )}
+            />
+            <Controller
+              name={`entries.${index}.debit`}
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  onFocus={(e) => {
+                    e.currentTarget.select();
+                  }}
+                  onBlur={() => {
+                    field.onChange(
+                      field.value
+                        ? parseFloat(field.value || '0').toFixed(2)
+                        : ''
+                    );
+                  }}
+                  id={`entries.${index}.debit`}
+                  name={`entries.${index}.debit`}
+                  type="number"
+                  placeholder=""
+                  className="min-w-48 w-48 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              )}
+            />
+          </div>
+        ))}
+        <div className="flex">
+          <Input
+            defaultValue="Closing Balance"
+            disabled
+            className="w-[480px] !opacity-100"
+          />
+          <div className="flex-1"></div>
+          <Input
+            disabled
+            placeholder=""
+            className="text-right w-48 !opacity-100"
+            value={closingBalance >= 0 ? closingBalance.toFixed(2) : ''}
+          />
+          <Input
+            disabled
+            placeholder=""
+            className="text-right w-48 !opacity-100"
+            value={closingBalance < 0 ? (-closingBalance).toFixed(2) : ''}
+          />
+        </div>
+      </form>
+      <div className="flex justify-center fixed bottom-0 left-0 right-0 py-3 border-t bg-gray-100 border-gray-200">
+        <Button className="border-black" onClick={() => void saveDailyEntry()}>
+          Update
+        </Button>
       </div>
-    </form>
+    </>
   );
 }
