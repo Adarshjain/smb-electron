@@ -9,7 +9,7 @@ export default function BillsByCustomer(props: {
   showCustomerInfo?: boolean;
   skipReleased?: boolean;
 }) {
-  const [bills, setBills] = useState<Tables['full_bill']['Row'][]>([]);
+  const [bills, setBills] = useState<Tables['full_bill'][]>([]);
   useEffect(() => {
     const run = async () => {
       setBills(

@@ -1,7 +1,12 @@
 import MDBReader from 'mdb-reader';
 import fs from 'fs';
 import { createBatched, executeSql } from '../db/localDB';
-import { type MetalType, type TableName, type Tables } from '../../tables';
+import {
+  type MetalType,
+  type TableName,
+  type Tables,
+  type TablesInsert,
+} from '../../tables';
 import { TablesSQliteSchema } from '../../tableSchema';
 import { addMonths, differenceInMonths, isBefore } from 'date-fns';
 
@@ -152,7 +157,7 @@ export const initAreas = () => {
   const table = reader.getTable('areamaster');
   const data = table.getData<Record<string, string>>();
 
-  const createAreas: Tables['areas']['Row'][] = [];
+  const createAreas: Tables['areas'][] = [];
 
   const map: Record<string, boolean> = {};
 
@@ -186,7 +191,7 @@ export const initAccountHead = () => {
       d.company.toLowerCase() === 'sri mahaveer bankers'
   );
 
-  const createAccountHead: Tables['account_head']['Row'][] = [];
+  const createAccountHead: Tables['account_head'][] = [];
 
   for (const record of data) {
     const company = toSentenceCase(record.company);
@@ -212,7 +217,7 @@ export const initDailyEntries = () => {
   const table = reader.getTable('Voucher2');
   const data = table.getData<Record<string, string>>();
 
-  const createDailyBalances: Tables['daily_entries']['Row'][] = [];
+  const createDailyBalances: Tables['daily_entries'][] = [];
 
   for (const record of data.filter(
     (d) =>
@@ -247,7 +252,7 @@ export const initCompanies = () => {
   const table = reader.getTable('companymaster');
   const data = table.getData<Record<string, string>>();
 
-  const createCompanies: Tables['companies']['Row'][] = [];
+  const createCompanies: Tables['companies'][] = [];
 
   for (const record of data) {
     if (
@@ -282,7 +287,7 @@ export const initProducts = () => {
   const goldQuality1Table = reader.getTable('quality1');
   const goldQuality1Data = goldQuality1Table.getData<Record<string, string>>();
 
-  const createProducts: Tables['products']['Row'][] = [];
+  const createProducts: Tables['products'][] = [];
 
   for (const record of itemDesMasterData) {
     createProducts.push({
@@ -330,9 +335,9 @@ export const initBills = () => {
   const itemDesTable = reader.getTable('itemdes');
   const itemDesData = itemDesTable.getData<Record<string, string>>();
 
-  const createBillItems: Tables['bill_items']['Row'][] = [];
-  const createBills: Tables['bills']['Row'][] = [];
-  const createReleases: Tables['releases']['Row'][] = [];
+  const createBillItems: Tables['bill_items'][] = [];
+  const createBills: Tables['bills'][] = [];
+  const createReleases: Tables['releases'][] = [];
 
   for (const record of billingData) {
     itemDesData
@@ -413,7 +418,7 @@ export const initCustomers = () => {
   const data = table.getData<Record<string, string>>();
 
   const addresses = new Set<string>();
-  const createCustomers: Tables['customers']['Row'][] = [];
+  const createCustomers: Tables['customers'][] = [];
 
   for (const record of data) {
     if (record.address1.trim()) {
@@ -436,20 +441,15 @@ export const initCustomers = () => {
       id_proof_value: record.id_det,
     });
   }
-  const createAddressLines: Tables['address_lines']['Row'][] = [
-    ...addresses,
-  ].map((addr) => ({ address: addr }));
-
   try {
     createBatched('customers', createCustomers);
-    createBatched('address_lines', createAddressLines);
   } catch (e) {
     console.log(e instanceof Error ? e.message : 'Random Error');
   }
 };
 
 export const initIntRates = () => {
-  const rates: Tables['interest_rates']['Insert'][] = [
+  const rates: TablesInsert['interest_rates'][] = [
     {
       from_: 0,
       to_: 1100,

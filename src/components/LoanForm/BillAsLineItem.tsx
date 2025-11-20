@@ -23,7 +23,7 @@ import { useEffect, useState } from 'react';
 import type { Tables } from '@/../tables';
 import { useLoanCalculations } from '@/hooks/useLoanCalculations.ts';
 
-type EnrichedBill = Tables['full_bill']['Row'] & {
+type EnrichedBill = Tables['full_bill'] & {
   months: number;
   interest: number;
   firstMonthInterest: number;
@@ -35,7 +35,7 @@ type EnrichedBill = Tables['full_bill']['Row'] & {
 export default function BillAsLineItem({
   bills,
 }: {
-  bills: Tables['full_bill']['Row'][];
+  bills: Tables['full_bill'][];
 }) {
   const [enrichedBills, setEnrichedBills] = useState<EnrichedBill[]>([]);
   const [enrichedBillsReleased, setEnrichedBillsReleased] = useState<

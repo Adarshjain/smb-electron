@@ -10,7 +10,12 @@ import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FieldGroup } from '@/components/ui/field';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
-import type { FullCustomer, MetalType, Tables } from '../../tables';
+import type {
+  FullCustomer,
+  MetalType,
+  Tables,
+  TablesInsert,
+} from '../../tables';
 import { useLoanCalculations } from '@/hooks/useLoanCalculations';
 import { LoanCustomerSection } from '@/components/LoanForm/LoanCustomerSection';
 import { LoanAmountSection } from '@/components/LoanForm/LoanAmountSection';
@@ -57,9 +62,9 @@ export default function NewLoan() {
     [company]
   );
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [loadedLoan, setLoadedLoan] = useState<
-    Tables['full_bill']['Row'] | null
-  >(null);
+  const [loadedLoan, setLoadedLoan] = useState<Tables['full_bill'] | null>(
+    null
+  );
   const isEditMode = useMemo(() => loadedLoan !== null, [loadedLoan]);
   const [isDeleteConfirmation, setIsDeleteConfirmation] = useState(false);
 
@@ -287,7 +292,7 @@ export default function NewLoan() {
   const onCommitChanges = async (data?: Loan) => {
     data ??= getValues();
     try {
-      const formattedLoan: Tables['bills']['Insert'] = {
+      const formattedLoan: TablesInsert['bills'] = {
         serial: data.serial,
         loan_no: data.loan_no,
         customer_id: data.customer?.customer.id ?? '',
@@ -300,8 +305,8 @@ export default function NewLoan() {
         released: 0,
         company: data.company,
       };
-      const formatterProduct: Tables['bill_items']['Insert'][] =
-        data.billing_items.map((item): Tables['bill_items']['Insert'] => ({
+      const formatterProduct: TablesInsert['bill_items'][] =
+        data.billing_items.map((item): TablesInsert['bill_items'] => ({
           serial: data.serial,
           loan_no: data.loan_no,
           gross_weight: parseFloat(item.gross_weight || '0'),
@@ -389,7 +394,7 @@ export default function NewLoan() {
   };
 
   const handleOnOldLoanLoaded = (
-    loan: Tables['full_bill']['Row'],
+    loan: Tables['full_bill'],
     skipSerial = false
   ) => {
     if (!skipSerial) {
@@ -415,7 +420,7 @@ export default function NewLoan() {
     setTimeout(() => next('loan_amount'), 100);
   };
 
-  const handleEditLoan = (loan: Tables['full_bill']['Row']) => {
+  const handleEditLoan = (loan: Tables['full_bill']) => {
     reset({
       date: loan.date,
       loan_amount: loan.loan_amount.toFixed(2),

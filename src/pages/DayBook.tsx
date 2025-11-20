@@ -25,8 +25,8 @@ interface AggregatedBills {
     principalTotal: number;
     interestTotal: number;
   };
-  loans: (Tables['bills']['Row'] & { interest: number; total: number })[];
-  releases: Tables['releases']['Row'][];
+  loans: (Tables['bills'] & { interest: number; total: number })[];
+  releases: Tables['releases'][];
 }
 
 export default function DayBook() {

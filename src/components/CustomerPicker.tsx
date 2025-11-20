@@ -23,7 +23,7 @@ import { useThanglish } from '@/context/ThanglishProvider.tsx';
 import { Kbd } from '@/components/ui/kbd';
 
 interface SearchableSelectProps {
-  onSelect?: (value: Tables['customers']['Row']) => void;
+  onSelect?: (value: Tables['customers']) => void;
   placeholder?: string;
   inputClassName?: string;
   autofocus?: boolean;
@@ -39,7 +39,7 @@ export default function CustomerPicker({
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [items, setItems] = useState<Tables['customers']['Row'][]>([]);
+  const [items, setItems] = useState<Tables['customers'][]>([]);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [isKeyboardNavigating, setIsKeyboardNavigating] = useState(false);
   const { convert } = useThanglish();
@@ -94,7 +94,7 @@ export default function CustomerPicker({
     }
   }, [highlightedIndex, virtualizer, items.length]);
 
-  const handleSelect = (opt: Tables['customers']['Row']) => {
+  const handleSelect = (opt: Tables['customers']) => {
     onSelect?.(opt);
     setOpen(false);
     setSearch('');

@@ -3,7 +3,7 @@ import type { ElectronToReactResponse } from '../../shared-types';
 
 export const create = async <K extends TableName>(
   table: K,
-  record: Tables[K]['Row']
+  record: Tables[K]
 ): Promise<null> => {
   const createResponse: ElectronToReactResponse<null> =
     await window.api.db.create(table, record);
@@ -17,7 +17,7 @@ export const create = async <K extends TableName>(
 
 export const upsert = async <K extends TableName>(
   table: K,
-  record: Tables[K]['Row']
+  record: Tables[K]
 ): Promise<null> => {
   const upsertResponse: ElectronToReactResponse<null> =
     await window.api.db.upsert(table, record);
@@ -51,7 +51,7 @@ export const read = async <K extends TableName>(
 
 export const update = async <K extends TableName>(
   table: K,
-  record: Tables[K]['Update']
+  record: TablesUpdate[K]
 ): Promise<null> => {
   const updateResponse = await window.api.db.update(table, record);
   if (updateResponse.success) {
@@ -64,7 +64,7 @@ export const update = async <K extends TableName>(
 
 export const deleteRecord = async <K extends TableName>(
   table: K,
-  record: Tables[K]['Delete']
+  record: TablesDelete[K]
 ): Promise<null> => {
   const response = await window.api.db.delete(table, record);
   if (response.success) {

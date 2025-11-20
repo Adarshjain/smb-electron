@@ -13,9 +13,9 @@ import { toast } from 'sonner';
 import { toastStyles } from '@/constants/loanForm.ts';
 
 interface CompanyContextType {
-  company: Tables['companies']['Row'] | null;
-  allCompanies: Tables['companies']['Row'][];
-  setCompany: (company: Tables['companies']['Row']) => void;
+  company: Tables['companies'] | null;
+  allCompanies: Tables['companies'][];
+  setCompany: (company: Tables['companies']) => void;
   setCurrentDate: (date: string) => Promise<void>;
   setNextSerial: (date?: string) => Promise<void>;
   refetch: () => void;
@@ -24,12 +24,8 @@ interface CompanyContextType {
 const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 
 export function CompanyProvider({ children }: { children: ReactNode }) {
-  const [company, setCompany] = useState<Tables['companies']['Row'] | null>(
-    null
-  );
-  const [allCompanies, setAllCompanies] = useState<
-    Tables['companies']['Row'][]
-  >([]);
+  const [company, setCompany] = useState<Tables['companies'] | null>(null);
+  const [allCompanies, setAllCompanies] = useState<Tables['companies'][]>([]);
   const setCurrentDate = async (current_date: string) => {
     if (company) {
       try {

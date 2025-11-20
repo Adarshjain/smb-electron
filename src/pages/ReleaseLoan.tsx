@@ -45,9 +45,9 @@ export default function ReleaseLoan() {
     }),
     [company?.current_date, company?.name]
   );
-  const [loadedLoan, setLoadedLoan] = useState<
-    Tables['full_bill']['Row'] | null
-  >(null);
+  const [loadedLoan, setLoadedLoan] = useState<Tables['full_bill'] | null>(
+    null
+  );
   const nextRef = useRef<((name?: keyof ReleaseLoan) => void) | null>(null);
 
   const { control, handleSubmit, getValues, reset, setValue } =
@@ -149,7 +149,7 @@ export default function ReleaseLoan() {
     }
   }, [getValues, interestAmount, loadedLoan, setValue]);
 
-  const handleOnOldLoanLoaded = async (loan: Tables['full_bill']['Row']) => {
+  const handleOnOldLoanLoaded = async (loan: Tables['full_bill']) => {
     if (loan.released === 1) {
       try {
         const releaseResp = await read('releases', {

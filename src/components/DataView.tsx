@@ -21,9 +21,9 @@ export default function DataView<K extends TableName>(props: {
   table: K;
   hideSearch?: boolean;
   className?: string;
-  onRowClick?: (record: Tables[K]['Row']) => void;
+  onRowClick?: (record: Tables[K]) => void;
 }) {
-  const [tableData, setTableData] = useState<Tables[K]['Row'][]>([]);
+  const [tableData, setTableData] = useState<Tables[K][]>([]);
   const [search, setSearch] = useState<string>('');
   const { convert } = useThanglish();
 
@@ -55,9 +55,9 @@ export default function DataView<K extends TableName>(props: {
       return tableData;
     }
     const lowerSearch = search.toLowerCase();
-    return tableData.filter((record: Tables[K]['Row']) =>
+    return tableData.filter((record: Tables[K]) =>
       Object.entries(columns).some(([col]) => {
-        const val = record[col as keyof Tables[K]['Row']];
+        const val = record[col as keyof Tables[K]];
         if (val == null) return false;
         // Convert to string before toLowerCase to handle numbers
         const strVal = String(val);
@@ -66,9 +66,9 @@ export default function DataView<K extends TableName>(props: {
     );
   }, [tableData, search, columns]);
 
-  const getRowKey = (record: Tables[K]['Row']): string => {
+  const getRowKey = (record: Tables[K]): string => {
     return primaryKeys
-      .map((key) => String(record[key as keyof Tables[K]['Row']]))
+      .map((key) => String(record[key as keyof Tables[K]]))
       .join('|');
   };
 

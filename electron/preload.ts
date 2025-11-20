@@ -1,5 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { type LocalTables, type TableName, type Tables } from '../tables';
+import {
+  type LocalTables,
+  type TableName,
+  type Tables,
+  type TablesDelete,
+  type TablesUpdate,
+} from '../tables';
 import { type ElectronToReactResponse } from '../shared-types';
 import { type BackupEndResponse } from './db/SyncManager';
 
@@ -7,12 +13,12 @@ contextBridge.exposeInMainWorld('api', {
   db: {
     create: <K extends TableName>(
       table: K,
-      record: Tables[K]['Row']
+      record: Tables[K]
     ): Promise<ElectronToReactResponse<null>> =>
       ipcRenderer.invoke('db:create', table, record),
     upsert: <K extends TableName>(
       table: K,
-      record: Tables[K]['Row']
+      record: Tables[K]
     ): Promise<ElectronToReactResponse<null>> =>
       ipcRenderer.invoke('db:create', table, record),
     read: <K extends TableName>(
@@ -24,12 +30,12 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('db:read', table, conditions, fields, isLikeQuery),
     update: <K extends TableName>(
       table: K,
-      record: Tables[K]['Update']
+      record: TablesUpdate[K]
     ): Promise<ElectronToReactResponse<null>> =>
       ipcRenderer.invoke('db:update', table, record),
     delete: <K extends TableName>(
       table: K,
-      record: Tables[K]['Delete']
+      record: TablesDelete[K]
     ): Promise<ElectronToReactResponse<null>> =>
       ipcRenderer.invoke('db:delete', table, record),
     query: (

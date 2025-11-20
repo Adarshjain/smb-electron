@@ -15,7 +15,13 @@ import {
   update,
   upsert,
 } from './db/localDB';
-import type { LocalTables, TableName, Tables } from '../tables';
+import type {
+  LocalTables,
+  TableName,
+  Tables,
+  TablesDelete,
+  TablesUpdate,
+} from '../tables';
 import type { ElectronToReactResponse } from '../shared-types';
 import { initAllSeedData } from './seed';
 
@@ -213,7 +219,7 @@ ipcMain.handle(
   <K extends TableName>(
     _event: IpcMainInvokeEvent,
     table: K,
-    record: Tables[K]['Row']
+    record: Tables[K]
   ): ElectronToReactResponse<null> => {
     try {
       return { success: true, data: create(table, record) };
@@ -256,7 +262,7 @@ ipcMain.handle(
   <K extends TableName>(
     _event: IpcMainInvokeEvent,
     table: K,
-    record: Tables[K]['Update']
+    record: TablesUpdate[K]
   ): ElectronToReactResponse<null> => {
     try {
       const result = update(table, record);
@@ -276,7 +282,7 @@ ipcMain.handle(
   <K extends TableName>(
     _event: IpcMainInvokeEvent,
     table: K,
-    record: Tables[K]['Delete']
+    record: TablesDelete[K]
   ): ElectronToReactResponse<null> => {
     try {
       deleteRecord(table, record);
@@ -296,7 +302,7 @@ ipcMain.handle(
   <K extends TableName>(
     _event: IpcMainInvokeEvent,
     table: K,
-    record: Tables[K]['Row']
+    record: Tables[K]
   ): ElectronToReactResponse<null> => {
     try {
       upsert(table, record);
