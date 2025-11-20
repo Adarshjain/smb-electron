@@ -47,8 +47,6 @@ const createWindow = () => {
 
   win = new BrowserWindow({
     title: 'Sri Mahaveer Bankers',
-    width: 1280,
-    height: 648,
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -63,9 +61,9 @@ const createWindow = () => {
     // In production, load the built renderer from app.asar/dist/index.html
     // __dirname points to app.asar/dist-electron/electron when packaged
     const prodIndex = path.join(__dirname, '..', '..', 'dist', 'index.html');
-    win.maximize();
     void win.loadFile(prodIndex);
   }
+  win.maximize();
 
   win.on('closed', () => {
     win = null;
