@@ -1,4 +1,4 @@
-import DateRangePicker from '@/components/DateRangePicker.tsx';
+import FYPicker from '@/components/FYPicker.tsx';
 import { useCallback, useEffect, useState } from 'react';
 import { query, read } from '@/hooks/dbUtil.ts';
 import { useCompany } from '@/context/CompanyProvider.tsx';
@@ -208,7 +208,7 @@ export default function BalanceSheet() {
 
   return (
     <div className="p-4">
-      <DateRangePicker
+      <FYPicker
         onChange={([start, end]) => {
           setStartDate(start);
           setEndDate(end);

@@ -1,4 +1,4 @@
-import DateRangePicker from '@/components/DateRangePicker.tsx';
+import FYPicker from '@/components/FYPicker.tsx';
 import { useEffect, useState } from 'react';
 import { query } from '@/hooks/dbUtil.ts';
 import { useCompany } from '@/context/CompanyProvider.tsx';
@@ -29,22 +29,22 @@ export default function ProfitAndLoss() {
             net: number;
           }[]
         >(`SELECT ah.code,
-                ah.name,
-                ah.hisaabGroup,
-                ABS(SUM(de.credit) - SUM(de.debit)) AS net
-         FROM account_head AS ah
-                LEFT JOIN daily_entries AS de
-                          ON (ah.code = de.main_code OR ah.code = de.sub_code)
-                            AND de.company = '${company.name}'
-                            AND de.date >= '${startDate}'
-                            AND de.date <= '${endDate}'
-         WHERE ah.company = '${company.name}'
-           AND ah.hisaabGroup IN ('Income', 'Expenses')
-         GROUP BY ah.code, ah.name, ah.hisaabGroup
-         HAVING SUM(de.debit) IS NOT NULL
-             OR SUM(de.credit) IS NOT NULL
-         ORDER BY ah.name;
-      `);
+                  ah.name,
+                  ah.hisaabGroup,
+                  ABS(SUM(de.credit) - SUM(de.debit)) AS net
+           FROM account_head AS ah
+                  LEFT JOIN daily_entries AS de
+                            ON ah.code = de.main_code
+                              AND de.company = '${company.name}'
+                              AND de.date >= '${startDate}'
+                              AND de.date <= '${endDate}'
+           WHERE ah.company = '${company.name}'
+             AND ah.hisaabGroup IN ('Income', 'Expenses')
+           GROUP BY ah.code, ah.name, ah.hisaabGroup
+           HAVING SUM(de.debit) IS NOT NULL
+               OR SUM(de.credit) IS NOT NULL
+           ORDER BY ah.name;
+        `);
         const incomeRows: [string, string, string][] = [];
         const expenseRows: [string, string, string][] = [];
         let incomeTotal = 0;
@@ -74,6 +74,12 @@ export default function ProfitAndLoss() {
         expenseRows.push(['', '', '']);
         expenseRows.push(['Total', '', formatCurrency(incomeTotal, true)]);
 
+        while (incomeRows.length < expenseRows.length) {
+          incomeRows.push(['', '', '']);
+        }
+        incomeRows.pop();
+        incomeRows.push(['Total', '', formatCurrency(incomeTotal, true)]);
+
         setDisplayIncomeRows(incomeRows);
         setDisplayExpenseRows(expenseRows);
       } catch (error) {
@@ -85,12 +91,14 @@ export default function ProfitAndLoss() {
 
   return (
     <div className="p-4">
-      <DateRangePicker
-        onChange={([start, end]) => {
-          setStartDate(start);
-          setEndDate(end);
-        }}
-      />
+      <div className="place-items-center">
+        <FYPicker
+          onChange={([start, end]) => {
+            setStartDate(start);
+            setEndDate(end);
+          }}
+        />
+      </div>
       <div className="flex gap-4 mt-4">
         {[displayExpenseRows, displayIncomeRows].map((type, typeIndex) => (
           <Table key={typeIndex}>
@@ -101,7 +109,7 @@ export default function ProfitAndLoss() {
                     <TableCell
                       key={JSON.stringify(cell) + index}
                       className={cn(
-                        'py-1.5 h-8',
+                        'py-1.5 h-[33px]',
                         index !== 0 ? 'text-right border-l' : ''
                       )}
                     >
