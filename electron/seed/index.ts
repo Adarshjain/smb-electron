@@ -12,7 +12,7 @@ const openingBalanceMap: Record<string, Record<string, number>> = {
     'AUDITOR FEES': 8000,
     'BANK CHARGES': 1894,
     'BANK INTEREST RECEIVED': -9925,
-    'CAPITAL A/C': 2604100.27,
+    'CAPITAL A/C': 4167901.17, //2604100.27,
     CASH: 510061.95,
     'CASH ADJUSTMENT': 84.93,
     'CITY UNION BANK A/C': 6035.27,
@@ -40,10 +40,10 @@ const openingBalanceMap: Record<string, Record<string, number>> = {
     'STATIONARY & POSTAGE': 20099.05,
   },
   'Sri Mahaveer Bankers': {
-    'ADINTEREST RECEIVED ': -280,
+    'ADINTEREST RECEIVED': -280,
     'ADVANCE TAX PAID': 70000,
     ARCHANA: 97138,
-    'ASHOK KUMAR CAPITAL A/C': 2290456.38,
+    'ASHOK KUMAR CAPITAL A/C': 5300208.92, //2290456.38,
     'ASHOK KUMAR-HUF': -4250000,
     'AUCTION CHARGES': 40200,
     'AUCTION INTEREST': -902790,
@@ -191,11 +191,11 @@ export const initAccountHead = () => {
   for (const record of data) {
     const company = toSentenceCase(record.company);
     createAccountHead.push({
-      name: record.acc_name,
+      name: record.acc_name.trim(),
       company,
       code: parseInt('' + record.acc_code),
       hisaabGroup: record.SEARCHBY,
-      openingBalance: openingBalanceMap[company][record.acc_name] ?? 0,
+      openingBalance: openingBalanceMap[company][record.acc_name.trim()] ?? 0,
     });
   }
   try {
@@ -214,7 +214,11 @@ export const initDailyEntries = () => {
 
   const createDailyBalances: Tables['daily_entries']['Row'][] = [];
 
-  for (const record of data) {
+  for (const record of data.filter(
+    (d) =>
+      new Date(new Date(d.date).toISOString().split('T')[0]) >=
+      new Date('2020-04-01')
+  )) {
     if (parseFloat('' + (record.dr || record.cr)) === 0) {
       continue;
     }

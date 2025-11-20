@@ -8,6 +8,7 @@ import { useTabs } from '@/TabManager.tsx';
 import DailyEntries from '@/components/DailyEntries.tsx';
 import CurrentDateCrud from '@/components/CurrentDateCrud.tsx';
 import ProfitAndLoss from '@/components/ProfitAndLoss.tsx';
+import BalanceSheet from '@/components/BalanceSheet.tsx';
 
 const shortCutMapping: {
   shortcutKey: string;
@@ -106,6 +107,13 @@ export function Home() {
           onClick={() => openTab('Profit & Loss', <ProfitAndLoss />)}
         >
           <div className="justify-self-center col-start-2">P&L</div>
+        </Button>
+        <Button
+          variant="outline"
+          className="w-full px-3 border-input font-normal"
+          onClick={() => openTab('Balance Sheet', <BalanceSheet />)}
+        >
+          <div className="justify-self-center col-start-2">Balance Sheet</div>
         </Button>
         <CurrentDateCrud />
         <Button

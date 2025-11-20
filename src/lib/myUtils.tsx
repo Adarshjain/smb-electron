@@ -394,23 +394,13 @@ export function getPrevSerial(
   return [newLetter, number];
 }
 
-export function getFinancialYearRange(
-  type: 'current' | 'previous'
-): [string, string] {
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const isAfterMarch =
-    today.getMonth() > 2 || (today.getMonth() === 2 && today.getDate() > 31);
-
-  // Determine start year of current FY
-  const currentFYStartYear = isAfterMarch ? currentYear : currentYear - 1;
-
-  // Adjust for previous year if needed
-  const fyStartYear =
-    type === 'current' ? currentFYStartYear : currentFYStartYear - 1;
-
-  const startDate = new Date(fyStartYear, 3, 1); // April 1
-  const endDate = new Date(fyStartYear + 1, 2, 31); // March 31
+export function getFinancialYearRange(year: number): [string, string] {
+  const startDate = new Date(year, 3, 1); // April 1
+  const endDate = new Date(year + 1, 2, 31); // March 31
 
   return [format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd')];
+}
+
+export function jsNumberFix(num: number): number {
+  return Number(num.toFixed(2));
 }

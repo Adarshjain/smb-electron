@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button';
 export default function DateRangePicker(props: {
   onChange?: (date: [string, string]) => void;
 }) {
-  const [fyStart, fyEnd] = getFinancialYearRange('previous');
+  const [fyStart, fyEnd] = getFinancialYearRange(2020);
   const [startDate, setStartDate] = useState(fyStart);
   const [endDate, setEndDate] = useState(fyEnd);
 
-  const setFyDates = (type: 'current' | 'previous') => {
-    const [start, end] = getFinancialYearRange(type);
+  const setFyDates = () => {
+    const [start, end] = getFinancialYearRange(2020);
     setStartDate(start);
     setEndDate(end);
   };
@@ -39,18 +39,10 @@ export default function DateRangePicker(props: {
           onInputChange={setEndDate}
         />
       </div>
-      <Button
-        variant="outline"
-        className="w-25"
-        onClick={() => setFyDates('current')}
-      >
+      <Button variant="outline" className="w-25" onClick={() => setFyDates()}>
         Current FY
       </Button>
-      <Button
-        variant="outline"
-        className="w-25"
-        onClick={() => setFyDates('previous')}
-      >
+      <Button variant="outline" className="w-25" onClick={() => setFyDates()}>
         Prev FY
       </Button>
     </div>
