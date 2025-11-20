@@ -5,8 +5,8 @@ import type { Tables } from '@/../tables';
  * Type guard to check if a customer is valid (not null)
  */
 export function isValidCustomer(
-  customer: Tables['customers']['Row'] | null
-): customer is Tables['customers']['Row'] {
+  customer: Tables['customers'] | null
+): customer is Tables['customers'] {
   return customer !== null;
 }
 

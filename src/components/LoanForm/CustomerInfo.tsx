@@ -1,8 +1,8 @@
 import type { Tables } from '@/../tables';
 
 export default function CustomerInfo(props: {
-  customer: Tables['customers']['Row'];
-  area: Tables['areas']['Row'];
+  customer: Tables['customers'];
+  area: Tables['areas'];
   className?: string;
 }) {
   return (

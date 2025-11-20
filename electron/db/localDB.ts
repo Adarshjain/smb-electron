@@ -3,6 +3,8 @@ import type {
   RowOrDeleteOrUpdate,
   TableName,
   Tables,
+  TablesDelete,
+  TablesUpdate,
 } from '../../tables';
 import { db } from './database';
 import {
@@ -21,7 +23,6 @@ export const tables: TableName[] = [
   'releases',
   'interest_rates',
   'products',
-  'address_lines',
 ];
 
 export function fetchUnsynced<K extends TableName>(
@@ -116,10 +117,7 @@ export function migrateSchema() {
   }
 }
 
-export function create<K extends TableName>(
-  table: K,
-  record: Tables[K]['Row']
-): null {
+export function create<K extends TableName>(table: K, record: Tables[K]): null {
   if (!db) return null;
 
   validate(table, record);
@@ -142,7 +140,7 @@ export function create<K extends TableName>(
 
 export function createMultiple<K extends TableName>(
   table: K,
-  records: Tables[K]['Row'][]
+  records: Tables[K][]
 ): null {
   if (!db || !records.length) return null;
 
@@ -176,7 +174,7 @@ export function createMultiple<K extends TableName>(
 
 export function createBatched<K extends TableName>(
   table: K,
-  records: Tables[K]['Row'][]
+  records: Tables[K][]
 ): void {
   if (!db || !records.length) return;
 
@@ -192,7 +190,7 @@ export function createBatched<K extends TableName>(
 
 export function markAsSynced<K extends TableName>(
   table: K,
-  record: Tables[K]['Row']
+  record: Tables[K]
 ): null {
   if (!db) return null;
 
@@ -202,9 +200,7 @@ export function markAsSynced<K extends TableName>(
   }
 
   const whereClauses = pkFields.map((field) => `${field} = ?`).join(' AND ');
-  const whereValues = pkFields.map(
-    (field) => record[field as keyof Tables[K]['Row']]
-  );
+  const whereValues = pkFields.map((field) => record[field as keyof Tables[K]]);
 
   const stmt = db.prepare(
     `UPDATE ${table}
@@ -226,7 +222,7 @@ export function read<K extends TableName>(
 
   conditions = encodeRecord(
     table,
-    conditions as unknown as Tables[K]['Row']
+    conditions as unknown as Tables[K]
   ) as unknown as Partial<LocalTables<K>>;
 
   const [whereClauses, whereValues] = Object.entries(conditions).reduce<
@@ -256,10 +252,7 @@ export function read<K extends TableName>(
   );
 }
 
-export function upsert<K extends TableName>(
-  table: K,
-  record: Tables[K]['Row']
-): null {
+export function upsert<K extends TableName>(table: K, record: Tables[K]): null {
   if (!db) return null;
 
   validate(table, record, true);
@@ -270,9 +263,7 @@ export function upsert<K extends TableName>(
   }
 
   const whereClauses = pkFields.map((field) => `${field} = ?`).join(' AND ');
-  const whereValues = pkFields.map(
-    (field) => record[field as keyof Tables[K]['Row']]
-  );
+  const whereValues = pkFields.map((field) => record[field as keyof Tables[K]]);
 
   const existingStmt = db.prepare(
     `SELECT *
@@ -289,7 +280,7 @@ export function upsert<K extends TableName>(
       .join(', ');
     const updateValues = Object.keys(record)
       .filter((key) => !pkFields.includes(key))
-      .map((key) => record[key as keyof Tables[K]['Row']]);
+      .map((key) => record[key as keyof Tables[K]]);
 
     const updateStmt = db.prepare(
       `UPDATE ${table}
@@ -316,7 +307,7 @@ export function upsert<K extends TableName>(
 
 export function deleteRecord<K extends TableName>(
   table: K,
-  record: Tables[K]['Delete']
+  record: TablesDelete[K]
 ): null {
   if (!db) return null;
 
@@ -324,8 +315,8 @@ export function deleteRecord<K extends TableName>(
 
   record = encodeRecord(
     table,
-    record as Tables[K]['Row']
-  ) as Tables[K]['Delete'];
+    record as unknown as Tables[K]
+  ) as unknown as TablesDelete[K];
 
   const pkFields = TablesSQliteSchema[table].primary;
   if (!pkFields) {
@@ -334,7 +325,7 @@ export function deleteRecord<K extends TableName>(
 
   const whereClauses = pkFields.map((field) => `${field} = ?`).join(' AND ');
   const whereValues = pkFields.map(
-    (field) => record[field as keyof Tables[K]['Delete']]
+    (field) => record[field as keyof TablesDelete[K]]
   );
 
   const stmt = db.prepare(
@@ -349,16 +340,13 @@ export function deleteRecord<K extends TableName>(
 
 export function update<K extends TableName>(
   table: K,
-  record: Tables[K]['Update']
+  record: TablesUpdate[K]
 ): null {
   if (!db) return null;
 
   validate(table, record, true);
 
-  record = encodeRecord(
-    table,
-    record as Tables[K]['Row']
-  ) as Tables[K]['Update'];
+  record = encodeRecord(table, record as Tables[K]) as TablesUpdate[K];
 
   const pkFields = TablesSQliteSchema[table].primary;
   if (!pkFields) {
@@ -367,7 +355,7 @@ export function update<K extends TableName>(
 
   const whereClauses = pkFields.map((field) => `${field} = ?`).join(' AND ');
   const whereValues = pkFields.map(
-    (field) => record[field as keyof Tables[K]['Update']]
+    (field) => record[field as keyof TablesUpdate[K]]
   );
 
   const updateFields = Object.keys(record)
@@ -376,7 +364,7 @@ export function update<K extends TableName>(
     .join(', ');
   const updateValues = Object.keys(record)
     .filter((key) => !pkFields.includes(key))
-    .map((key) => record[key as keyof Tables[K]['Update']]);
+    .map((key) => record[key as keyof TablesUpdate[K]]);
 
   const stmt = db.prepare(
     `UPDATE ${table}

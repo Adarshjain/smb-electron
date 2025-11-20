@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table.tsx';
 
 export default function BillItemsInfo(props: {
-  items: Tables['bill_items']['Row'][];
+  items: Tables['bill_items'][];
 }) {
   return (
     <Table>

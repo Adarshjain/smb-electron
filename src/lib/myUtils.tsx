@@ -127,8 +127,8 @@ export function toastElectronResponse<T>(
 export async function getRate(
   principal: number,
   metalType: MetalType
-): Promise<Tables['interest_rates']['Row'] | undefined> {
-  const cache = new MyCache<Tables['interest_rates']['Row'][]>('IntRates');
+): Promise<Tables['interest_rates'] | undefined> {
+  const cache = new MyCache<Tables['interest_rates'][]>('IntRates');
   let intRates = cache.get('intRates');
   if (!intRates) {
     try {
@@ -199,7 +199,7 @@ export function adjustEndDate(startDate: Date, endDate: Date, n: number): Date {
 
 export function getDocCharges(
   principal: number,
-  rate: Tables['interest_rates']['Row']
+  rate: Tables['interest_rates']
 ): number {
   const { doc_charges: docCharges } = rate;
   if (rate.rate === 2 && principal === 5000) {
@@ -215,7 +215,7 @@ export function getDocCharges(
 export async function loadBillWithDeps(
   serial: string,
   loanNo: number
-): Promise<Tables['full_bill']['Row'] | null> {
+): Promise<Tables['full_bill'] | null> {
   try {
     const loan = await read('bills', {
       serial: serial.toUpperCase(),
@@ -287,7 +287,7 @@ export async function fetchFullCustomer(
 export async function fetchBillsByCustomer(
   customerId: string,
   skipReleased = true
-): Promise<Tables['full_bill']['Row'][] | undefined> {
+): Promise<Tables['full_bill'][] | undefined> {
   const billsResponse = await read(
     'bills',
     skipReleased
@@ -301,14 +301,14 @@ export async function fetchBillsByCustomer(
   );
   const fullCustomer = await fetchFullCustomer(customerId);
   if (fullCustomer && billsResponse?.length) {
-    const fullBills: Tables['full_bill']['Row'][] = [];
+    const fullBills: Tables['full_bill'][] = [];
     for (const bill of billsResponse) {
       try {
         const billItemsResponse = await read('bill_items', {
           serial: bill.serial,
           loan_no: bill.loan_no,
         });
-        let release: Tables['releases']['Row'] | undefined;
+        let release: Tables['releases'] | undefined;
         if (!skipReleased && bill.released === 1) {
           const releaseResponse = await read('releases', {
             serial: bill.serial,
@@ -334,7 +334,7 @@ export async function fetchBillsByCustomer(
   }
 }
 
-export function mergeBillItems(billItems: Tables['bill_items']['Row'][]): {
+export function mergeBillItems(billItems: Tables['bill_items'][]): {
   description: string;
   weight: number;
 } {

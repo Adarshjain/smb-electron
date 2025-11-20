@@ -3,20 +3,18 @@ import SearchSelect from '@/components/SearchSelect.tsx';
 import type { Tables } from '../../tables';
 
 export default function AreaSelector(props: {
-  options: Tables['areas']['Row'][];
-  value?: Tables['areas']['Row'];
+  options: Tables['areas'][];
+  value?: Tables['areas'];
   inputName?: string;
   placeholder?: string;
-  onChange?: (value: Tables['areas']['Row']) => void;
+  onChange?: (value: Tables['areas']) => void;
   triggerWidth?: string;
   onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
   onFocus?: (event: React.FocusEvent<HTMLInputElement>) => void;
   autoFocus?: boolean;
 }) {
   const [search, setSearch] = useState('');
-  const [filteredArea, setFilteredArea] = useState<Tables['areas']['Row'][]>(
-    []
-  );
+  const [filteredArea, setFilteredArea] = useState<Tables['areas'][]>([]);
 
   useEffect(() => {
     if (!search.trim()) {
@@ -37,7 +35,7 @@ export default function AreaSelector(props: {
   }, [props.options, search]);
 
   return (
-    <SearchSelect<Tables['areas']['Row']>
+    <SearchSelect<Tables['areas']>
       options={filteredArea}
       value={props.value}
       onSearchChange={setSearch}
@@ -49,7 +47,7 @@ export default function AreaSelector(props: {
       onFocus={props.onFocus}
       autoFocus={props.autoFocus}
       popoverWidth="w-[700px]"
-      renderRow={(area: Tables['areas']['Row']) => {
+      renderRow={(area: Tables['areas']) => {
         return (
           <div className="w-full">
             <div className="inline-block w-1/3">{area.name}</div>

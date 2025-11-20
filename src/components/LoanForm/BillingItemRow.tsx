@@ -28,9 +28,7 @@ export const BillingItemRow = memo(function BillingItemRow({
   onRemoveItem,
   onNavigateToNext,
 }: BillingItemRowProps) {
-  const [productsTable, setProductsTable] = useState<
-    Tables['products']['Row'][]
-  >([]);
+  const [productsTable, setProductsTable] = useState<Tables['products'][]>([]);
   const products = useMemo(
     () =>
       productsTable
@@ -66,7 +64,7 @@ export const BillingItemRow = memo(function BillingItemRow({
   useEffect(() => {
     const run = async () => {
       const cacheKey = 'products';
-      const cache = new MyCache<Tables['products']['Row'][]>(cacheKey);
+      const cache = new MyCache<Tables['products'][]>(cacheKey);
       if (cache.has(cacheKey)) {
         setProductsTable(cache.get(cacheKey) ?? []);
         return;

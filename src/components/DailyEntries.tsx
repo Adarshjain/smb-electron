@@ -23,15 +23,15 @@ export default function DailyEntries() {
   const { company } = useCompany();
 
   const [date, setDate] = useState(company?.current_date ?? '');
-  const [accountHeads, setAccountHeads] = useState<
-    Tables['account_head']['Row'][]
-  >([]);
+  const [accountHeads, setAccountHeads] = useState<Tables['account_head'][]>(
+    []
+  );
   const [currentAccountHead, setCurrentAccountHead] = useState<
-    Tables['account_head']['Row'] | null
+    Tables['account_head'] | null
   >(null);
-  const [todaysEntries, setTodaysEntries] = useState<
-    Tables['daily_entries']['Row'][]
-  >([]);
+  const [todaysEntries, setTodaysEntries] = useState<Tables['daily_entries'][]>(
+    []
+  );
   const [openingBalance, setOpeningBalance] = useState(0);
 
   const getAccountByName = useCallback(
@@ -40,7 +40,7 @@ export default function DailyEntries() {
   );
 
   const calculateTransactionEffect = useCallback(
-    (entry: Tables['daily_entries']['Row'], accCode: number) => {
+    (entry: Tables['daily_entries'], accCode: number) => {
       const isPrimary = accCode === entry.code_1;
       const credit = isPrimary ? entry.debit : entry.credit;
       const debit = isPrimary ? entry.credit : entry.debit;
@@ -82,7 +82,7 @@ export default function DailyEntries() {
         ORDER BY sortOrder
       `;
 
-      const dailyEntries = await query<Tables['daily_entries']['Row'][]>(q, [
+      const dailyEntries = await query<Tables['daily_entries'][]>(q, [
         currentAccountHead.code,
         currentAccountHead.code,
         MIN_DATE,

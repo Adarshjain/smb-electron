@@ -14,7 +14,7 @@ import { type KeyboardEvent } from 'react';
 
 interface LoanNumberProps<T extends FieldValues> {
   control: Control<T>;
-  onLoanLoad: (loan: Tables['full_bill']['Row']) => void | Promise<void>;
+  onLoanLoad: (loan: Tables['full_bill']) => void | Promise<void>;
   serialFieldName: FieldPath<T>;
   numberFieldName: FieldPath<T>;
   showButton?: boolean;

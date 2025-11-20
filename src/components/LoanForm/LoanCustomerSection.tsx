@@ -36,7 +36,7 @@ export const LoanCustomerSection = memo(function LoanCustomerSection(
     };
   }, []);
 
-  const onCustomerSelect = async (customer: Tables['customers']['Row']) => {
+  const onCustomerSelect = async (customer: Tables['customers']) => {
     try {
       const areaResponse = await read('areas', {
         name: customer.area,
@@ -66,7 +66,7 @@ export const LoanCustomerSection = memo(function LoanCustomerSection(
   return (
     <div>
       <CustomerPicker
-        onSelect={(customer: Tables['customers']['Row']) =>
+        onSelect={(customer: Tables['customers']) =>
           void onCustomerSelect(customer)
         }
         autofocus
@@ -84,7 +84,7 @@ export const LoanCustomerSection = memo(function LoanCustomerSection(
           <DialogTitle className="sr-only">Add Customer</DialogTitle>
           <CustomerCrud
             cantEdit
-            onCreate={(customer: Tables['customers']['Row']) => {
+            onCreate={(customer: Tables['customers']) => {
               setIsModalOpen(false);
               setTimeout(() => {
                 void onCustomerSelect(customer);

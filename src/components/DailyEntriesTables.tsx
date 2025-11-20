@@ -33,9 +33,9 @@ const dailyEntrySchema = z.object({
 export type DailyEntry = z.infer<typeof dailyEntrySchema>;
 
 export function DailyEntriesTables(props: {
-  currentAccountHead: Tables['account_head']['Row'] | null;
-  accountHeads: Tables['account_head']['Row'][];
-  entries: Tables['daily_entries']['Row'][];
+  currentAccountHead: Tables['account_head'] | null;
+  accountHeads: Tables['account_head'][];
+  entries: Tables['daily_entries'][];
   openingBalance: number;
   date: string;
 }) {
@@ -86,7 +86,7 @@ export function DailyEntriesTables(props: {
   );
 
   const calculateTransactionEffect = useCallback(
-    (entry: Tables['daily_entries']['Row'], accCode: number) => {
+    (entry: Tables['daily_entries'], accCode: number) => {
       const isPrimary = accCode === entry.code_1;
       const credit = isPrimary ? entry.debit : entry.credit;
       const debit = isPrimary ? entry.credit : entry.debit;
@@ -182,8 +182,8 @@ export function DailyEntriesTables(props: {
   );
 
   const doEntriesMatch = (
-    entry1: Tables['daily_entries']['Row'],
-    entry2: Tables['daily_entries']['Row']
+    entry1: Tables['daily_entries'],
+    entry2: Tables['daily_entries']
   ): boolean => {
     if (entry1.description !== entry2.description) {
       return false;
@@ -227,7 +227,7 @@ export function DailyEntriesTables(props: {
 
       for (const entry of filteredEntries) {
         const account = getAccountByName(entry.title ?? '');
-        const finalEntry: Tables['daily_entries']['Row'] = {
+        const finalEntry: Tables['daily_entries'] = {
           // intentionally switched
           debit: parseFloat('' + entry.credit || '0'),
           // intentionally switched

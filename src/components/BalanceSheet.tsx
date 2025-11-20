@@ -11,7 +11,7 @@ export default function BalanceSheet() {
   const [endDate, setEndDate] = useState<string | null>(null);
 
   const calculateTransactionEffect = useCallback(
-    (entry: Tables['daily_entries']['Row'], accCode: number) => {
+    (entry: Tables['daily_entries'], accCode: number) => {
       const isPrimary = accCode === entry.code_1;
       const credit = isPrimary ? entry.debit : entry.credit;
       const debit = isPrimary ? entry.credit : entry.debit;
@@ -168,7 +168,7 @@ export default function BalanceSheet() {
         //   string,
         //   {
         //     total: number;
-        //     entries: Tables['account_head']['Row'][];
+        //     entries: Tables['account_head'][];
         //   }
         // > = {};
         // filteredEntries.forEach((entry) => {

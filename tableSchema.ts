@@ -487,43 +487,27 @@ export const TablesSQliteSchema: Record<
     unique: ['rate', 'from_', 'to_'],
     primary: ['rate', 'from_', 'to_'],
   },
-
-  address_lines: {
-    name: 'address_lines',
-    columns: {
-      address: {
-        schema: 'TEXT PRIMARY KEY UNIQUE',
-        encoded: true,
-      },
-      synced: {
-        schema: 'BOOLEAN NOT NULL DEFAULT 0',
-        encoded: false,
-      },
-    },
-    requiredFields: ['address'],
-    primary: ['address'],
-  },
 } as const;
 
 export const decodeRecord = <K extends TableName>(
   tableName: K,
-  record: Tables[K]['Row']
-): Tables[K]['Row'] => encodeDecodeRecord(tableName, record, 'decode');
+  record: Tables[K]
+): Tables[K] => encodeDecodeRecord(tableName, record, 'decode');
 
 export const encodeRecord = <K extends TableName>(
   tableName: K,
-  record: Tables[K]['Row']
-): Tables[K]['Row'] => encodeDecodeRecord(tableName, record, 'encode');
+  record: Tables[K]
+): Tables[K] => encodeDecodeRecord(tableName, record, 'encode');
 
 export function encodeDecodeRecord<K extends TableName>(
   tableName: K,
-  record: Tables[K]['Row'],
+  record: Tables[K],
   type: 'encode' | 'decode'
-): Tables[K]['Row'] {
+): Tables[K] {
   const columnSchema = TablesSQliteSchema[tableName].columns;
   const encodedKeys = Object.keys(record).filter(
     (key) => columnSchema[key]?.encoded
-  ) as (keyof Tables[K]['Row'])[];
+  ) as (keyof Tables[K])[];
 
   if (encodedKeys.length === 0) {
     return record;
@@ -534,9 +518,7 @@ export function encodeDecodeRecord<K extends TableName>(
 
   const encodedRecord = { ...record };
   for (const key of encodedKeys) {
-    encodedRecord[key] = method(
-      record[key] as string
-    ) as Tables[K]['Row'][typeof key];
+    encodedRecord[key] = method(record[key] as string) as Tables[K][typeof key];
   }
 
   return encodedRecord;

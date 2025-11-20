@@ -7,11 +7,11 @@ declare global {
       db: {
         create: <K extends TableName>(
           table: K,
-          record: Tables[K]['Row']
+          record: Tables[K]
         ) => Promise<ElectronToReactResponse<null>>;
         upsert: <K extends TableName>(
           table: K,
-          record: Tables[K]['Row']
+          record: Tables[K]
         ) => Promise<ElectronToReactResponse<null>>;
         read: <K extends TableName>(
           table: K,
@@ -21,11 +21,11 @@ declare global {
         ) => Promise<ElectronToReactResponse<LocalTables<K>[] | null>>;
         update: <K extends TableName>(
           table: K,
-          record: Tables[K]['Update']
+          record: TablesUpdate[K]
         ) => Promise<ElectronToReactResponse<null>>;
         delete: <K extends TableName>(
           table: K,
-          record: Tables[K]['Delete']
+          record: TablesDelete[K]
         ) => Promise<ElectronToReactResponse<null>>;
         query: <T>(
           query: string,

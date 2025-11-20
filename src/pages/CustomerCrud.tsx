@@ -48,9 +48,9 @@ export default function CustomerCrud({
   onCreate,
 }: {
   cantEdit?: boolean;
-  onCreate?: (customer: Tables['customers']['Row']) => void;
+  onCreate?: (customer: Tables['customers']) => void;
 }) {
-  const [areasList, setAreasList] = useState<Tables['areas']['Row'][]>([]);
+  const [areasList, setAreasList] = useState<Tables['areas'][]>([]);
   const [addressList, setAddressList] = useState<string[]>([]);
   const [nameList, setNameList] = useState<string[]>([]);
   const defaultValues: Customer = {
@@ -77,7 +77,7 @@ export default function CustomerCrud({
   const area = watch('area');
   const id = watch('id');
 
-  const onCustomerSelect = async (customer: Tables['customers']['Row']) => {
+  const onCustomerSelect = async (customer: Tables['customers']) => {
     try {
       const areasResponse = await read('areas', { name: customer.area });
       if (!areasResponse?.length) {
@@ -133,7 +133,7 @@ export default function CustomerCrud({
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   async function onSubmit(data: Customer) {
-    const customer: Tables['customers']['Row'] = {
+    const customer: Tables['customers'] = {
       id: `${data.name.substring(0, 3)}${data.fhname.substring(0, 3)}${data.area.name.substring(0, 3)}`,
       name: data.name,
       fhtitle: data.fhtitle,
@@ -200,7 +200,7 @@ export default function CustomerCrud({
         <CustomerPicker
           inputClassName="w-[370px]"
           placeholder="Search Customer"
-          onSelect={(customer: Tables['customers']['Row']) =>
+          onSelect={(customer: Tables['customers']) =>
             void onCustomerSelect(customer)
           }
         />
