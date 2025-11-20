@@ -1,0 +1,119 @@
+import DateRangePicker from '@/components/DateRangePicker.tsx';
+import { useEffect, useState } from 'react';
+import { query } from '@/hooks/dbUtil.ts';
+import { useCompany } from '@/context/CompanyProvider.tsx';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { errorToast, formatCurrency } from '@/lib/myUtils.tsx';
+import { cn } from '@/lib/utils.ts';
+
+export default function ProfitAndLoss() {
+  const { company } = useCompany();
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
+  const [displayExpenseRows, setDisplayExpenseRows] = useState<
+    [string, string, string][]
+  >([]);
+  const [displayIncomeRows, setDisplayIncomeRows] = useState<
+    [string, string, string][]
+  >([]);
+
+  useEffect(() => {
+    if (!startDate || !endDate || !company) return;
+    const fetchDetails = async () => {
+      try {
+        const entries = await query<
+          {
+            code: number;
+            name: string;
+            hisaabGroup: string;
+            net: number;
+          }[]
+        >(`SELECT ah.code,
+                ah.name,
+                ah.hisaabGroup,
+                ABS(SUM(de.credit) - SUM(de.debit)) AS net
+         FROM account_head AS ah
+                LEFT JOIN daily_entries AS de
+                          ON (ah.code = de.code_1 OR ah.code = de.code_2)
+                            AND de.company = '${company.name}'
+                            AND de.date >= '${startDate}'
+                            AND de.date <= '${endDate}'
+         WHERE ah.company = '${company.name}'
+           AND ah.hisaabGroup IN ('Income', 'Expenses')
+         GROUP BY ah.code, ah.name, ah.hisaabGroup
+         HAVING SUM(de.debit) IS NOT NULL
+             OR SUM(de.credit) IS NOT NULL
+         ORDER BY ah.name;
+      `);
+        const incomeRows: [string, string, string][] = [];
+        const expenseRows: [string, string, string][] = [];
+        let incomeTotal = 0;
+        let expenseTotal = 0;
+        entries?.forEach((entry) => {
+          if (entry.hisaabGroup === 'Income') {
+            incomeTotal += entry.net;
+            incomeRows.push([entry.name, formatCurrency(entry.net, true), '']);
+          } else {
+            expenseTotal += entry.net;
+            expenseRows.push([entry.name, formatCurrency(entry.net, true), '']);
+          }
+        });
+        expenseRows.unshift([
+          'Expenses',
+          '',
+          formatCurrency(expenseTotal, true),
+        ]);
+        incomeRows.unshift(['Income', '', formatCurrency(incomeTotal, true)]);
+
+        expenseRows.push([
+          'NETT PROFIT',
+          '',
+          formatCurrency(incomeTotal - expenseTotal, true),
+        ]);
+
+        expenseRows.push(['', '', '']);
+        expenseRows.push(['Total', '', formatCurrency(incomeTotal, true)]);
+
+        setDisplayIncomeRows(incomeRows);
+        setDisplayExpenseRows(expenseRows);
+      } catch (error) {
+        errorToast(error);
+      }
+    };
+    void fetchDetails();
+  });
+
+  return (
+    <div className="p-4">
+      <DateRangePicker
+        onChange={([start, end]) => {
+          setStartDate(start);
+          setEndDate(end);
+        }}
+      />
+      <div className="flex gap-4 mt-4">
+        {[displayExpenseRows, displayIncomeRows].map((type, typeIndex) => (
+          <Table key={typeIndex}>
+            <TableBody>
+              {type.map((row, outerIndex) => (
+                <TableRow key={JSON.stringify(row) + outerIndex}>
+                  {row.map((cell, index) => (
+                    <TableCell
+                      key={JSON.stringify(cell) + index}
+                      className={cn(
+                        'py-1.5 h-8',
+                        index !== 0 ? 'text-right border-l' : ''
+                      )}
+                    >
+                      {cell}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ))}
+      </div>
+    </div>
+  );
+}

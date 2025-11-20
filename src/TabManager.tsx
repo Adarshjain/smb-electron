@@ -127,7 +127,7 @@ export const TabManager: React.FC = () => {
         {tabBar}
 
         {/* Keep all tabs mounted; just hide inactive ones */}
-        <div className="flex-1 relative overflow-hidden">
+        <div className="flex-1 relative">
           {tabs.map((tab) => (
             <div
               key={tab.id}
