@@ -34,7 +34,7 @@ export default function ProfitAndLoss() {
                 ABS(SUM(de.credit) - SUM(de.debit)) AS net
          FROM account_head AS ah
                 LEFT JOIN daily_entries AS de
-                          ON (ah.code = de.code_1 OR ah.code = de.code_2)
+                          ON (ah.code = de.main_code OR ah.code = de.sub_code)
                             AND de.company = '${company.name}'
                             AND de.date >= '${startDate}'
                             AND de.date <= '${endDate}'

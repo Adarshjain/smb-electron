@@ -63,6 +63,7 @@ const createWindow = () => {
   });
   if (process.env.VITE_DEV_SERVER_URL) {
     void win.loadURL(process.env.VITE_DEV_SERVER_URL);
+    win.webContents.openDevTools();
   } else {
     // In production, load the built renderer from app.asar/dist/index.html
     // __dirname points to app.asar/dist-electron/electron when packaged

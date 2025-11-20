@@ -49,7 +49,6 @@ export interface Tables {
   };
 
   daily_entries: {
-    reference: string;
     description: string | null;
     debit: number;
     credit: number;

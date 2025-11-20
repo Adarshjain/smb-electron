@@ -228,11 +228,11 @@ export const TablesSQliteSchema: Record<
         schema: 'REAL NOT NULL',
         encoded: false,
       },
-      code_1: {
+      main_code: {
         schema: 'REAL NOT NULL',
         encoded: false,
       },
-      code_2: {
+      sub_code: {
         schema: 'REAL NOT NULL',
         encoded: false,
       },

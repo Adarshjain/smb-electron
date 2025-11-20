@@ -12,7 +12,7 @@ export default function BalanceSheet() {
 
   const calculateTransactionEffect = useCallback(
     (entry: Tables['daily_entries'], accCode: number) => {
-      const isPrimary = accCode === entry.code_1;
+      const isPrimary = accCode === entry.main_code;
       const credit = isPrimary ? entry.debit : entry.credit;
       const debit = isPrimary ? entry.credit : entry.debit;
       return Number((credit - debit).toFixed(2));
@@ -30,7 +30,7 @@ export default function BalanceSheet() {
     >(`SELECT (SELECT SUM(ABS(de.credit - de.debit))
                          FROM daily_entries de
                                 JOIN account_head ah
-                                     ON ah.code = de.code_1 OR ah.code = de.code_2
+                                     ON ah.code = de.main_code OR ah.code = de.sub_code
                          WHERE de.company = '${company.name}'
                            AND de.date < '${startDate}'
                            AND ah.company = '${company.name}'
@@ -39,7 +39,7 @@ export default function BalanceSheet() {
                         (SELECT SUM(de.credit - de.debit)
                          FROM daily_entries de
                                 JOIN account_head ah
-                                     ON ah.code = de.code_1 OR ah.code = de.code_2
+                                     ON ah.code = de.main_code OR ah.code = de.sub_code
                          WHERE de.company = '${company.name}'
                            AND de.date < '${startDate}'
                            AND ah.company = '${company.name}'
@@ -66,17 +66,17 @@ export default function BalanceSheet() {
       .filter((entry) => entry.date < startDate)
       .forEach((entry) => {
         if (
-          !capitalAccountCodes.includes(entry.code_1) &&
-          !capitalAccountCodes.includes(entry.code_2)
+          !capitalAccountCodes.includes(entry.main_code) &&
+          !capitalAccountCodes.includes(entry.sub_code)
         ) {
           return;
         }
-        const sum = calculateTransactionEffect(entry, entry.code_1);
-        accountHeadByID[entry.code_1].openingBalance = jsNumberFix(
-          (accountHeadByID[entry.code_1].openingBalance ?? 0) + sum
+        const sum = calculateTransactionEffect(entry, entry.main_code);
+        accountHeadByID[entry.main_code].openingBalance = jsNumberFix(
+          (accountHeadByID[entry.main_code].openingBalance ?? 0) + sum
         );
-        accountHeadByID[entry.code_2].openingBalance = jsNumberFix(
-          (accountHeadByID[entry.code_2].openingBalance ?? 0) - sum
+        accountHeadByID[entry.sub_code].openingBalance = jsNumberFix(
+          (accountHeadByID[entry.sub_code].openingBalance ?? 0) - sum
         );
       });
     const mainAcc = accountHeads.find(
@@ -129,27 +129,27 @@ export default function BalanceSheet() {
         //   };
         // });
         // entries.forEach((entry) => {
-        //   const sum = calculateTransactionEffect(entry, entry.code_1);
+        //   const sum = calculateTransactionEffect(entry, entry.main_code);
         //   if (
         //     !(
-        //       accountHeadByID[entry.code_1].entry.hisaabGroup ===
+        //       accountHeadByID[entry.main_code].entry.hisaabGroup ===
         //         'Capital Account' &&
         //       (entry.date < startDate || entry.date > endDate)
         //     )
         //   ) {
-        //     accountHeadByID[entry.code_1].total = jsNumberFix(
-        //       accountHeadByID[entry.code_1].total + sum
+        //     accountHeadByID[entry.main_code].total = jsNumberFix(
+        //       accountHeadByID[entry.main_code].total + sum
         //     );
         //   }
         //   if (
         //     !(
-        //       accountHeadByID[entry.code_1].entry.hisaabGroup ===
+        //       accountHeadByID[entry.main_code].entry.hisaabGroup ===
         //         'Capital Account' &&
         //       (entry.date < startDate || entry.date > endDate)
         //     )
         //   ) {
-        //     accountHeadByID[entry.code_2].total = jsNumberFix(
-        //       accountHeadByID[entry.code_2].total - sum
+        //     accountHeadByID[entry.sub_code].total = jsNumberFix(
+        //       accountHeadByID[entry.sub_code].total - sum
         //     );
         //   }
         // });
