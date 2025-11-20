@@ -227,15 +227,25 @@ export const initDailyEntries = () => {
     if (parseFloat('' + (record.dr || record.cr)) === 0) {
       continue;
     }
-    createDailyBalances.push({
+    const entry = {
       date: new Date(record.date).toISOString().split('T')[0],
       company: toSentenceCase(record.company),
       description: record.description ?? null,
+      sortOrder: parseInt('' + record.rec_id),
+    };
+    createDailyBalances.push({
+      ...entry,
       debit: parseFloat('' + record.dr),
       credit: parseFloat('' + record.cr),
-      code_1: parseInt('' + record.acc_code),
-      code_2: parseInt('' + record.code),
-      sortOrder: parseInt('' + record.rec_id),
+      main_code: parseInt('' + record.code),
+      sub_code: parseInt('' + record.acc_code),
+    });
+    createDailyBalances.push({
+      ...entry,
+      debit: parseFloat('' + record.cr),
+      credit: parseFloat('' + record.dr),
+      main_code: parseInt('' + record.acc_code),
+      sub_code: parseInt('' + record.code),
     });
   }
   try {

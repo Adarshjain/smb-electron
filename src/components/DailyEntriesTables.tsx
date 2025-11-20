@@ -32,7 +32,13 @@ const dailyEntrySchema = z.object({
 });
 export type DailyEntry = z.infer<typeof dailyEntrySchema>;
 
-export function DailyEntriesTables(props: {
+export function DailyEntriesTables({
+  currentAccountHead,
+  accountHeads,
+  entries,
+  openingBalance,
+  date,
+}: {
   currentAccountHead: Tables['account_head'] | null;
   accountHeads: Tables['account_head'][];
   entries: Tables['daily_entries'][];
@@ -81,51 +87,29 @@ export function DailyEntriesTables(props: {
   });
 
   const getAccountById = useCallback(
-    (code: number) => props.accountHeads.find((head) => head.code === code),
-    [props.accountHeads]
+    (code: number) => accountHeads.find((head) => head.code === code),
+    [accountHeads]
   );
 
-  const calculateTransactionEffect = useCallback(
-    (entry: Tables['daily_entries'], accCode: number) => {
-      const isPrimary = accCode === entry.code_1;
-      const credit = isPrimary ? entry.debit : entry.credit;
-      const debit = isPrimary ? entry.credit : entry.debit;
-      return { credit: Number(credit), debit: Number(debit) };
-    },
-    []
-  );
-
-  useEffect(() => {
-    if (!props.currentAccountHead) return;
+  const initialLoad = useCallback(() => {
+    if (!currentAccountHead) return;
     let runningTotal = 0;
 
     const filteredEntries: DailyEntry['entries'] =
-      props.entries
-        ?.filter(
-          (e) =>
-            getAccountById(e.code_1)?.name === props.currentAccountHead?.name ||
-            getAccountById(e.code_2)?.name === props.currentAccountHead?.name
-        )
-        .sort((a, b) => a.sortOrder - b.sortOrder)
+      entries
+        ?.sort((a, b) => a.sortOrder - b.sortOrder)
         .map((entry) => {
-          const { credit, debit } = calculateTransactionEffect(
-            entry,
-            props.currentAccountHead?.code ?? 0
+          runningTotal = Number(
+            (runningTotal + entry.credit - entry.debit).toFixed(2)
           );
-          runningTotal = Number((runningTotal + credit - debit).toFixed(2));
 
-          const title =
-            getAccountById(
-              props.currentAccountHead?.code === entry.code_1
-                ? entry.code_2
-                : entry.code_1
-            )?.name ?? '';
+          const title = getAccountById(entry.sub_code)?.name ?? '';
 
           return {
             title,
             description: entry.description ?? undefined,
-            credit: credit === 0 ? '' : credit.toFixed(2),
-            debit: debit === 0 ? '' : debit.toFixed(2),
+            credit: entry.credit === 0 ? '' : entry.credit.toFixed(2),
+            debit: entry.debit === 0 ? '' : entry.debit.toFixed(2),
             sortOrder: entry.sortOrder,
           };
         }) ?? [];
@@ -141,17 +125,10 @@ export function DailyEntriesTables(props: {
     }
 
     reset({ entries: filteredEntries });
-    setClosingBalance(runningTotal + props.openingBalance);
-  }, [
-    calculateTransactionEffect,
-    getAccountById,
-    props.currentAccountHead,
-    props.entries,
-    props.openingBalance,
-    reset,
-  ]);
+    setClosingBalance(runningTotal + openingBalance);
+  }, [getAccountById, currentAccountHead, entries, openingBalance, reset]);
 
-  useEffect(() => {
+  const calculateClosingBalance = useCallback(() => {
     let runningTotal = 0;
     enteredValues
       .filter(
@@ -168,18 +145,27 @@ export function DailyEntriesTables(props: {
           ).toFixed(2)
         );
       });
-    setClosingBalance(runningTotal + props.openingBalance);
-  }, [
-    calculateTransactionEffect,
-    enteredValues,
-    props.currentAccountHead?.code,
-    props.openingBalance,
-  ]);
+    setClosingBalance(runningTotal + openingBalance);
+  }, [enteredValues, openingBalance]);
 
   const getAccountByName = useCallback(
-    (name: string) => props.accountHeads.find((head) => head.name === name),
-    [props.accountHeads]
+    (name: string) => accountHeads.find((head) => head.name === name),
+    [accountHeads]
   );
+
+  useEffect(() => initialLoad(), [initialLoad]);
+  useEffect(() => calculateClosingBalance(), [calculateClosingBalance]);
+
+  const fetchDeletedRecords = (
+    filteredEntries: DailyEntry['entries']
+  ): number[] => {
+    const arr2SortOrders = new Set(
+      filteredEntries.map((item) => item.sortOrder)
+    );
+    return entries
+      .filter((item) => !arr2SortOrders.has(item.sortOrder))
+      .map((item) => item.sortOrder);
+  };
 
   const doEntriesMatch = (
     entry1: Tables['daily_entries'],
@@ -188,31 +174,12 @@ export function DailyEntriesTables(props: {
     if (entry1.description !== entry2.description) {
       return false;
     }
-    if (
+    return (
       entry1.debit === entry2.debit &&
       entry1.credit === entry2.credit &&
-      entry1.code_1 === entry2.code_1 &&
-      entry1.code_2 === entry2.code_2
-    ) {
-      return true;
-    }
-    return (
-      entry1.debit === entry2.credit &&
-      entry2.debit === entry1.credit &&
-      entry1.code_1 === entry2.code_2 &&
-      entry1.code_2 === entry2.code_1
+      entry1.main_code === entry2.main_code &&
+      entry1.sub_code === entry2.sub_code
     );
-  };
-
-  const fetchDeletedRecords = (
-    filteredEntries: DailyEntry['entries']
-  ): number[] => {
-    const arr2SortOrders = new Set(
-      filteredEntries.map((item) => item.sortOrder)
-    );
-    return props.entries
-      .filter((item) => !arr2SortOrders.has(item.sortOrder))
-      .map((item) => item.sortOrder);
   };
 
   const saveDailyEntry = async () => {
@@ -227,18 +194,16 @@ export function DailyEntriesTables(props: {
 
       for (const entry of filteredEntries) {
         const account = getAccountByName(entry.title ?? '');
-        const finalEntry: Tables['daily_entries'] = {
-          // intentionally switched
-          debit: parseFloat('' + entry.credit || '0'),
-          // intentionally switched
-          credit: parseFloat('' + entry.debit || '0'),
+        const finalEntry = {
           company: company.name ?? '',
-          date: props.date,
+          date: date,
           sortOrder: entry.sortOrder,
           description: entry.description ?? null,
-          code_1: props.currentAccountHead?.code ?? 0,
-          code_2: account?.code ?? 0,
         };
+        const debit = parseFloat('' + entry.debit || '0');
+        const credit = parseFloat('' + entry.credit || '0');
+        const main_code = currentAccountHead?.code ?? 0;
+        const sub_code = account?.code ?? 0;
 
         if (finalEntry.sortOrder === 0) {
           if (latestSortOrder === 0) {
@@ -252,26 +217,70 @@ export function DailyEntriesTables(props: {
           }
           latestSortOrder += 1;
           finalEntry.sortOrder = latestSortOrder;
-          await create('daily_entries', finalEntry);
+          await create('daily_entries', {
+            ...finalEntry,
+            credit,
+            debit,
+            main_code,
+            sub_code,
+          });
+          await create('daily_entries', {
+            ...finalEntry,
+            debit: credit,
+            credit: debit,
+            sub_code: main_code,
+            main_code: sub_code,
+          });
         } else {
-          const matchedEntry = props.entries.find(
+          const matchedEntry = entries.find(
             (entry) => entry.sortOrder === finalEntry.sortOrder
           );
           const shouldUpdate =
-            !matchedEntry || !doEntriesMatch(finalEntry, matchedEntry);
+            !matchedEntry ||
+            !doEntriesMatch(
+              {
+                ...finalEntry,
+                credit,
+                debit,
+                main_code,
+                sub_code,
+              },
+              matchedEntry
+            );
           if (shouldUpdate) {
+            const updateQUery = `UPDATE daily_entries
+                               SET credit = ?,
+                                   debit = ?,
+                                   description = ?
+                               WHERE company = ?
+                                 AND date = ?
+                                 AND main_code = ?
+                                 AND sub_code = ?
+                                 AND sortOrder = ?`;
             await query<null>(
-              `UPDATE daily_entries
-                       SET credit = ?, debit = ?, description = ?, code_1 = ?, code_2 = ?
-                       WHERE company = ? AND date = ? AND sortOrder = ?`,
+              updateQUery,
               [
-                finalEntry.credit,
-                finalEntry.debit,
+                credit,
+                debit,
                 finalEntry.description,
-                finalEntry.code_1,
-                finalEntry.code_2,
                 company.name,
-                props.date,
+                date,
+                main_code,
+                sub_code,
+                finalEntry.sortOrder,
+              ],
+              true
+            );
+            await query<null>(
+              updateQUery,
+              [
+                debit,
+                credit,
+                finalEntry.description,
+                company.name,
+                date,
+                sub_code,
+                main_code,
                 finalEntry.sortOrder,
               ],
               true
@@ -282,13 +291,18 @@ export function DailyEntriesTables(props: {
       const sortOrders = fetchDeletedRecords(filteredEntries);
       for (const order of sortOrders) {
         await query<null>(
-          `DELETE FROM daily_entries where sortOrder = ? AND company = ? AND date = ?`,
-          [order, company.name, props.date],
+          `DELETE
+           FROM daily_entries
+           WHERE company = ?
+             AND date = ?
+             AND sortOrder = ?`,
+          [company.name, date, order],
           true
         );
       }
       alert('Success!');
     } catch (e) {
+      console.log(e);
       errorToast(e);
     }
   };
@@ -326,17 +340,13 @@ export function DailyEntriesTables(props: {
             disabled
             placeholder=""
             className="text-right w-48 !opacity-100"
-            value={
-              props.openingBalance >= 0 ? props.openingBalance.toFixed(2) : ''
-            }
+            value={openingBalance >= 0 ? openingBalance.toFixed(2) : ''}
           />
           <Input
             disabled
             placeholder=""
             className="text-right w-48 !opacity-100"
-            value={
-              props.openingBalance < 0 ? (-props.openingBalance).toFixed(2) : ''
-            }
+            value={openingBalance < 0 ? (-openingBalance).toFixed(2) : ''}
           />
         </div>
         {fieldArray.fields.map((row, index) => (
@@ -351,7 +361,7 @@ export function DailyEntriesTables(props: {
                   onFocus={(e) => {
                     e.currentTarget.select();
                   }}
-                  options={props.accountHeads.map((account) => account.name)}
+                  options={accountHeads.map((account) => account.name)}
                   inputName={`entries.${index}.title`}
                   placeholder=""
                   triggerWidth={`min-w-[480px]`}

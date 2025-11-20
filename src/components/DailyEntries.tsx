@@ -15,9 +15,8 @@ const LOAN_AMOUNT = 'LOAN  AMOUNT';
 const REDEMPTION_AMOUNT = 'REDEMPTION AMOUNT';
 const BEING_REDEEMED_LOAN_INTEREST = 'BEING REDEEMED LOAN INTEREST';
 const CASH_ACCOUNT_NAME = 'CASH';
-const DEFAULT_ACCOUNT_CODE_1 = 14;
-const DEFAULT_ACCOUNT_CODE_2 = 1;
-const MIN_DATE = '2020-03-31';
+const CASH_ACCOUNT_CODE = 14;
+const CAPITAL_ACCOUNT_CODE = 1;
 
 export default function DailyEntries() {
   const { company } = useCompany();
@@ -39,16 +38,6 @@ export default function DailyEntries() {
     [accountHeads]
   );
 
-  const calculateTransactionEffect = useCallback(
-    (entry: Tables['daily_entries'], accCode: number) => {
-      const isPrimary = accCode === entry.code_1;
-      const credit = isPrimary ? entry.debit : entry.credit;
-      const debit = isPrimary ? entry.credit : entry.debit;
-      return { credit: Number(credit), debit: Number(debit) };
-    },
-    []
-  );
-
   const loadAccountHeads = useCallback(async () => {
     if (!company?.name) return;
 
@@ -64,6 +53,7 @@ export default function DailyEntries() {
         sorted.find((head) => head.name === CASH_ACCOUNT_NAME) ?? null;
       setCurrentAccountHead(cashAccount);
     } catch (error) {
+      console.error(error);
       errorToast(error);
     }
   }, [company]);
@@ -73,37 +63,27 @@ export default function DailyEntries() {
 
     try {
       const q = `
-        SELECT *
-        FROM daily_entries
-        WHERE (code_1 = ? OR code_2 = ?)
-          AND "date" > ?
-          AND "date" < ?
-          AND company = ?
-        ORDER BY sortOrder
+        select SUM(credit - debit) as balance
+        from daily_entries
+        where company = ?
+          and date < ?
+          and main_code = ?;
       `;
 
-      const dailyEntries = await query<Tables['daily_entries'][]>(q, [
-        currentAccountHead.code,
-        currentAccountHead.code,
-        MIN_DATE,
-        date,
+      const dailyEntries = await query<[{ balance: number }]>(q, [
         company.name,
+        date,
+        currentAccountHead.code,
       ]);
 
-      const total =
-        dailyEntries?.reduce((sum, entry) => {
-          const { credit, debit } = calculateTransactionEffect(
-            entry,
-            currentAccountHead.code
-          );
-          return Number((sum + credit - debit).toFixed(2));
-        }, 0) ?? 0;
-
-      setOpeningBalance(currentAccountHead.openingBalance + total);
+      setOpeningBalance(
+        currentAccountHead.openingBalance + (dailyEntries?.[0].balance ?? 0)
+      );
     } catch (error) {
+      console.error(error);
       errorToast(error);
     }
-  }, [company, currentAccountHead, date, calculateTransactionEffect]);
+  }, [company, currentAccountHead, date]);
 
   const upsertDailyEntry = useCallback(
     async (
@@ -117,31 +97,63 @@ export default function DailyEntries() {
 
       if (existingEntry) {
         if (credit !== existingEntry.credit || debit !== existingEntry.debit) {
+          const updateQUery = `UPDATE daily_entries
+                               SET credit = ?,
+                                   debit = ?,
+                                   description = ?
+                               WHERE company = ?
+                                 AND date = ?
+                                 AND main_code = ?
+                                 AND sub_code = ?
+                                 AND sortOrder = ?`;
           await query<null>(
-            `UPDATE daily_entries
-           SET credit = ?, debit = ?
-           WHERE company = ? AND date = ? AND description = ? AND sortOrder = ?`,
+            updateQUery,
             [
               credit,
               debit,
+              description,
               company.name,
               date,
+              existingEntry.main_code,
+              existingEntry.sub_code,
+              existingEntry.sortOrder,
+            ],
+            true
+          );
+          await query<null>(
+            updateQUery,
+            [
+              debit,
+              credit,
               description,
+              company.name,
+              date,
+              existingEntry.sub_code,
+              existingEntry.main_code,
               existingEntry.sortOrder,
             ],
             true
           );
         }
       } else {
-        // Create new entry
         await create('daily_entries', {
           company: company.name,
           date,
-          code_1: DEFAULT_ACCOUNT_CODE_1,
-          code_2: DEFAULT_ACCOUNT_CODE_2,
+          main_code: CASH_ACCOUNT_CODE,
+          sub_code: CAPITAL_ACCOUNT_CODE,
           description,
           credit,
           debit,
+          sortOrder,
+        });
+        await create('daily_entries', {
+          company: company.name,
+          date,
+          main_code: CAPITAL_ACCOUNT_CODE,
+          sub_code: CASH_ACCOUNT_CODE,
+          description,
+          debit: credit,
+          credit: debit,
           sortOrder,
         });
       }
@@ -227,6 +239,7 @@ export default function DailyEntries() {
           );
         }
       } catch (error) {
+        console.error(error);
         errorToast(error);
       }
     },
@@ -250,13 +263,20 @@ export default function DailyEntries() {
       setTodaysEntries(
         (await read('daily_entries', {
           company: company.name,
+          main_code: currentAccountHead?.code ?? 0,
           date,
         })) ?? []
       );
     } catch (error) {
+      console.error(error);
       errorToast(error);
     }
-  }, [company, date, loadTodaysLoansAndReleases]);
+  }, [
+    company?.name,
+    currentAccountHead?.code,
+    date,
+    loadTodaysLoansAndReleases,
+  ]);
 
   useEffect(() => {
     void loadAccountHeads();
