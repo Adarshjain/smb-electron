@@ -6,6 +6,9 @@ import { errorToast, formatCurrency, jsNumberFix } from '@/lib/myUtils.tsx';
 import type { LocalTables } from '../../tables';
 import { cn } from '@/lib/utils.ts';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { SearchIcon } from 'lucide-react';
+import EntriesByHead from '@/components/EntriesByHead.tsx';
+import { useTabs } from '@/TabManager.tsx';
 
 const TypeVsHisaabGroup = {
   liabilities: ['Bank OD A/c', 'Sundry Creditors'],
@@ -28,14 +31,15 @@ const HisaabGroupVsType: Record<string, 'liabilities' | 'assets'> = {
 
 export default function BalanceSheet() {
   const { company } = useCompany();
+  const { openTab } = useTabs();
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
 
   const [displayLiabilitiesRows, setDisplayLiabilitiesRows] = useState<
-    [string, string, string][]
+    [string, string, string, number | undefined][]
   >([]);
   const [displayAssetRows, setDisplayAssetRows] = useState<
-    [string, string, string][]
+    [string, string, string, number | undefined][]
   >([]);
 
   const calcCapitalAcc = useCallback(
@@ -98,7 +102,7 @@ export default function BalanceSheet() {
     if (!startDate || !endDate || !company) return;
     const fetchDetails = async () => {
       const capitalEntriesQuery = query<
-        { code: string; name: string; net: number }[]
+        { code: number; name: string; net: number }[]
       >(
         `SELECT ah.code,
                     ah.name,
@@ -119,7 +123,7 @@ export default function BalanceSheet() {
         [company.name, startDate, endDate, company.name]
       );
       const entriesByHisaabGroupQuery = query<
-        { code: string; name: string; hisaabGroup: string; net: number }[]
+        { code: number; name: string; hisaabGroup: string; net: number }[]
       >(
         `SELECT ah.code,
                       ah.name,
@@ -138,77 +142,48 @@ export default function BalanceSheet() {
               `,
         [company.name, endDate, company.name]
       );
-      const netProfitQuery = query<[{ netProfit: number }]>(
-        `SELECT (SELECT SUM(ABS(de.credit - de.debit))
-                     FROM daily_entries de
-                            JOIN account_head ah
-                                 ON ah.code = de.main_code
-                     WHERE de.company = ?
-                       AND ah.company = ?
-                       AND de.date >= ?
-                       AND de.date <= ?
-                       AND ah.hisaabGroup = 'Income')
-                      -
-                    (SELECT SUM(de.credit - de.debit)
-                     FROM daily_entries de
-                            JOIN account_head ah
-                                 ON ah.code = de.main_code
-                     WHERE de.company = ?
-                       AND ah.company = ?
-                       AND de.date >= ?
-                       AND de.date <= ?
-                       AND ah.hisaabGroup = 'Expenses')
-                      AS netProfit`,
-        [
-          company.name,
-          company.name,
-          startDate,
-          endDate,
-          company.name,
-          company.name,
-          startDate,
-          endDate,
-        ]
-      );
       try {
-        const [
-          capitalEntries,
-          entriesByHisaabGroup,
-          mainAccountHead,
-          netProfitResponse,
-        ] = await Promise.all([
-          capitalEntriesQuery,
-          entriesByHisaabGroupQuery,
-          read('account_head', {
-            company: company.name,
-            name: 'CAPITAL A/C',
-          }),
-          netProfitQuery,
-        ]);
+        const [capitalEntries, entriesByHisaabGroup, mainAccountHead] =
+          await Promise.all([
+            capitalEntriesQuery,
+            entriesByHisaabGroupQuery,
+            read('account_head', {
+              company: company.name,
+              name: 'CAPITAL A/C',
+            }),
+          ]);
 
-        const assetRows: [string, string, string][] = [];
-        const liabilitiesRows: [string, string, string][] = [];
-        const netProfit = netProfitResponse?.[0].netProfit ?? 0;
+        const assetRows: [string, string, string, number | undefined][] = [];
+        const liabilitiesRows: [string, string, string, number | undefined][] =
+          [];
 
         const openingBalance = await calcCapitalAcc(mainAccountHead?.[0]);
         let capitalTotal = openingBalance;
         if (capitalEntries?.length) {
-          const capitalRows: [string, string, string][] = [];
+          const capitalRows: [string, string, string, number | undefined][] =
+            [];
 
           capitalEntries.forEach((entry) => {
             capitalTotal = jsNumberFix(capitalTotal + entry.net);
-            capitalRows.push([entry.name, formatCurrency(entry.net, true), '']);
+            capitalRows.push([
+              entry.name,
+              formatCurrency(entry.net, true),
+              '',
+              entry.code,
+            ]);
           });
 
           capitalRows.unshift([
             'Capital Account Opening Balance',
             formatCurrency(openingBalance, true),
             '',
+            undefined,
           ]);
           capitalRows.unshift([
             'Capital Account',
             '',
             formatCurrency(capitalTotal, true),
+            undefined,
           ]);
           liabilitiesRows.push(...capitalRows);
         }
@@ -218,7 +193,7 @@ export default function BalanceSheet() {
           {
             name: string;
             total: number;
-            entries: [string, string, string][];
+            entries: [string, string, string, number | undefined][];
           }
         > = {};
 
@@ -230,10 +205,11 @@ export default function BalanceSheet() {
             HisaabGroupVsType[entry.hisaabGroup] === 'liabilities'
               ? -entry.net
               : entry.net;
-          const lineItem: [string, string, string] = [
+          const lineItem: [string, string, string, number | undefined] = [
             entry.name,
             formatCurrency(netValue, true),
             '',
+            entry.code,
           ];
           if (!entries[entry.hisaabGroup]) {
             entries[entry.hisaabGroup] = {
@@ -261,47 +237,61 @@ export default function BalanceSheet() {
             type,
             '',
             formatCurrency(entries[type].total, true),
+            undefined,
           ]);
           liabilitiesRows.push(...entries[type].entries);
         });
         TypeVsHisaabGroup.assets.forEach((type) => {
           if (!entries[type]) {
-            console.log(type);
             return;
           }
           assetsTotal = jsNumberFix(assetsTotal + entries[type].total);
 
-          assetRows.push([type, '', formatCurrency(entries[type].total, true)]);
+          assetRows.push([
+            type,
+            '',
+            formatCurrency(entries[type].total, true),
+            undefined,
+          ]);
           assetRows.push(...entries[type].entries);
         });
 
-        liabilitiesRows.push(['', '', '']);
-        assetRows.push(['', '', '']);
+        liabilitiesRows.push(['', '', '', undefined]);
+        assetRows.push(['', '', '', undefined]);
 
         while (liabilitiesRows.length < assetRows.length) {
-          liabilitiesRows.push(['', '', '']);
+          liabilitiesRows.push(['', '', '', undefined]);
         }
         while (assetRows.length < liabilitiesRows.length) {
-          assetRows.push(['', '', '']);
+          assetRows.push(['', '', '', undefined]);
         }
+        const netProfit = assetsTotal - liabilitesTotal - capitalTotal;
         liabilitiesRows.push([
           'Net Profit',
           '',
           formatCurrency(netProfit, true),
+          undefined,
         ]);
         liabilitiesRows.push([
           'Total',
           '',
           formatCurrency(netProfit + capitalTotal + liabilitesTotal, true),
+          undefined,
         ]);
         liabilitiesRows.push([
           'Capital Account Closing Balance',
           '',
           formatCurrency(netProfit + capitalTotal, true),
+          undefined,
         ]);
-        assetRows.push(['', '', '']);
-        assetRows.push(['Total', '', formatCurrency(assetsTotal, true)]);
-        assetRows.push(['', '', '']);
+        assetRows.push(['', '', '', undefined]);
+        assetRows.push([
+          'Total',
+          '',
+          formatCurrency(assetsTotal, true),
+          undefined,
+        ]);
+        assetRows.push(['', '', '', undefined]);
 
         setDisplayLiabilitiesRows(liabilitiesRows);
         setDisplayAssetRows(assetRows);
@@ -330,18 +320,40 @@ export default function BalanceSheet() {
           <Table key={typeIndex}>
             <TableBody>
               {type.map((row, outerIndex) => (
-                <TableRow key={JSON.stringify(row) + outerIndex}>
-                  {row.map((cell, index) => (
-                    <TableCell
-                      key={JSON.stringify(cell) + index}
-                      className={cn(
-                        'py-1.5 h-[33px]',
-                        index !== 0 ? 'text-right border-l' : ''
-                      )}
-                    >
-                      {cell}
-                    </TableCell>
-                  ))}
+                <TableRow
+                  key={JSON.stringify(row) + outerIndex}
+                  className="group"
+                >
+                  {row.map((cell, index) =>
+                    index < 3 ? (
+                      <TableCell
+                        key={JSON.stringify(cell) + index}
+                        className={cn(
+                          'py-1.5 h-[33px]',
+                          index !== 0 ? 'text-right border-l' : ''
+                        )}
+                      >
+                        <div className="flex justify-between">
+                          {index === 1 && row[3] !== undefined && (
+                            <SearchIcon
+                              size={18}
+                              className="opacity-0 group-hover:opacity-100 cursor-pointer"
+                              onClick={() => {
+                                openTab(
+                                  'Entry Details',
+                                  <EntriesByHead
+                                    accountHeadCode={row[3]!}
+                                    range={[startDate ?? '', endDate ?? '']}
+                                  />
+                                );
+                              }}
+                            />
+                          )}
+                          <div className="flex-1">{cell}</div>
+                        </div>
+                      </TableCell>
+                    ) : null
+                  )}
                 </TableRow>
               ))}
             </TableBody>

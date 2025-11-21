@@ -57,10 +57,14 @@ export const TabManager: React.FC = () => {
 
   const closeTab = useCallback(
     (id: string) => {
+      const matchedIndex = tabs.findIndex((tab) => tab.id === id);
+      if (activeTabId === id)
+        setActiveTabId(
+          matchedIndex !== -1 ? tabs[matchedIndex - 1].id : 'main'
+        );
       setTabs((prev) => prev.filter((t) => t.id !== id));
-      if (activeTabId === id) setActiveTabId('main');
     },
-    [activeTabId]
+    [activeTabId, tabs]
   );
 
   const switchTab = (id: string) => setActiveTabId(id);

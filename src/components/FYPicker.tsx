@@ -15,19 +15,53 @@ for (let i = 2020; i < new Date().getFullYear() + 1; i++) {
 
 export default function FYPicker(props: {
   onChange?: (date: [string, string]) => void;
+  year?: number;
+  range?: [string, string];
 }) {
   const [year, setYear] = useState<number>(new Date().getFullYear() - 1);
-  const [useDatePicker, setuseDatePicker] = useState(false);
+  const [startDate, setStartDate] = useState(
+    props.range ? props.range[0] : getFinancialYearRange(year)[0]
+  );
+  const [endDate, setEndDate] = useState(
+    props.range ? props.range[1] : getFinancialYearRange(year)[1]
+  );
+  const [useDatePicker, setUseDatePicker] = useState<boolean>(
+    props.range !== undefined
+  );
 
   useEffect(() => {
-    props.onChange?.(getFinancialYearRange(year));
-  }, [year, props]);
+    if (props.year) {
+      setYear(props.year);
+      setUseDatePicker(false);
+    }
+    if (props.range) {
+      setStartDate(props.range[0]);
+      setEndDate(props.range[1]);
+      setUseDatePicker(true);
+    }
+  }, [props.range, props.year]);
+
+  useEffect(() => {
+    if (!useDatePicker) {
+      const [start, end] = getFinancialYearRange(year);
+      setStartDate(start);
+      setEndDate(end);
+      props.onChange?.([start, end]);
+    }
+  }, [year, props, useDatePicker]);
+
+  useEffect(() => {
+    if (useDatePicker) {
+      props.onChange?.([startDate, endDate]);
+    }
+  }, [endDate, props, startDate, useDatePicker]);
 
   return (
     <div className="flex gap-4">
       {useDatePicker ? (
-        <div>
-          <DatePicker />
+        <div className="flex gap-2 items-center">
+          <DatePicker value={startDate} onInputChange={setStartDate} /> -
+          <DatePicker value={endDate} onInputChange={setEndDate} />
         </div>
       ) : (
         <NativeSelect
@@ -45,7 +79,7 @@ export default function FYPicker(props: {
         <Checkbox
           id="use_date_picker"
           checked={useDatePicker}
-          onCheckedChange={(e) => setuseDatePicker(!!e)}
+          onCheckedChange={(e) => setUseDatePicker(!!e)}
         />
         <Label htmlFor="use_date_picker">Date Picker</Label>
       </div>

@@ -6,16 +6,19 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { errorToast, formatCurrency } from '@/lib/myUtils.tsx';
 import { cn } from '@/lib/utils.ts';
 import { SearchIcon } from 'lucide-react';
+import { useTabs } from '@/TabManager.tsx';
+import EntriesByHead from '@/components/EntriesByHead.tsx';
 
 export default function ProfitAndLoss() {
   const { company } = useCompany();
+  const { openTab } = useTabs();
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
   const [displayExpenseRows, setDisplayExpenseRows] = useState<
-    [string, string, string][]
+    [string, string, string, number | undefined][]
   >([]);
   const [displayIncomeRows, setDisplayIncomeRows] = useState<
-    [string, string, string][]
+    [string, string, string, number | undefined][]
   >([]);
 
   useEffect(() => {
@@ -54,40 +57,67 @@ export default function ProfitAndLoss() {
         `,
           [company.name, startDate, endDate, company.name]
         );
-        const incomeRows: [string, string, string][] = [];
-        const expenseRows: [string, string, string][] = [];
+        const incomeRows: [string, string, string, number | undefined][] = [];
+        const expenseRows: [string, string, string, number | undefined][] = [];
         let incomeTotal = 0;
         let expenseTotal = 0;
         entries?.forEach((entry) => {
           if (entry.hisaabGroup === 'Income') {
             incomeTotal += entry.net;
-            incomeRows.push([entry.name, formatCurrency(entry.net, true), '']);
+            incomeRows.push([
+              entry.name,
+              formatCurrency(entry.net, true),
+              '',
+              entry.code,
+            ]);
           } else {
             expenseTotal += entry.net;
-            expenseRows.push([entry.name, formatCurrency(entry.net, true), '']);
+            expenseRows.push([
+              entry.name,
+              formatCurrency(entry.net, true),
+              '',
+              entry.code,
+            ]);
           }
         });
         expenseRows.unshift([
           'Expenses',
           '',
           formatCurrency(expenseTotal, true),
+          undefined,
         ]);
-        incomeRows.unshift(['Income', '', formatCurrency(incomeTotal, true)]);
+        incomeRows.unshift([
+          'Income',
+          '',
+          formatCurrency(incomeTotal, true),
+          undefined,
+        ]);
 
         expenseRows.push([
           'NETT PROFIT',
           '',
           formatCurrency(incomeTotal - expenseTotal, true),
+          undefined,
         ]);
 
-        expenseRows.push(['', '', '']);
-        expenseRows.push(['Total', '', formatCurrency(incomeTotal, true)]);
+        expenseRows.push(['', '', '', undefined]);
+        expenseRows.push([
+          'Total',
+          '',
+          formatCurrency(incomeTotal, true),
+          undefined,
+        ]);
 
         while (incomeRows.length < expenseRows.length) {
-          incomeRows.push(['', '', '']);
+          incomeRows.push(['', '', '', undefined]);
         }
         incomeRows.pop();
-        incomeRows.push(['Total', '', formatCurrency(incomeTotal, true)]);
+        incomeRows.push([
+          'Total',
+          '',
+          formatCurrency(incomeTotal, true),
+          undefined,
+        ]);
 
         setDisplayIncomeRows(incomeRows);
         setDisplayExpenseRows(expenseRows);
@@ -96,7 +126,7 @@ export default function ProfitAndLoss() {
       }
     };
     void fetchDetails();
-  });
+  }, [company, endDate, startDate]);
 
   return (
     <div className="p-4">
@@ -117,25 +147,36 @@ export default function ProfitAndLoss() {
                   key={JSON.stringify(row) + outerIndex}
                   className="group"
                 >
-                  {row.map((cell, index) => (
-                    <TableCell
-                      key={JSON.stringify(cell) + index}
-                      className={cn(
-                        'py-1.5 h-[33px]',
-                        index !== 0 ? 'text-right border-l' : ''
-                      )}
-                    >
-                      <div className="flex justify-between">
-                        {index === 1 && (
-                          <SearchIcon
-                            size={18}
-                            className="opacity-0 group-hover:opacity-100 cursor-pointer"
-                          />
+                  {row.map((cell, index) =>
+                    index < 3 ? (
+                      <TableCell
+                        key={JSON.stringify(cell) + index}
+                        className={cn(
+                          'py-1.5 h-[33px]',
+                          index !== 0 ? 'text-right border-l' : ''
                         )}
-                        <div className="flex-1">{cell}</div>
-                      </div>
-                    </TableCell>
-                  ))}
+                      >
+                        <div className="flex justify-between">
+                          {index === 1 && row[3] !== undefined && (
+                            <SearchIcon
+                              size={18}
+                              className="opacity-0 group-hover:opacity-100 cursor-pointer"
+                              onClick={() => {
+                                openTab(
+                                  'Entry Details',
+                                  <EntriesByHead
+                                    accountHeadCode={row[3]!}
+                                    range={[startDate ?? '', endDate ?? '']}
+                                  />
+                                );
+                              }}
+                            />
+                          )}
+                          <div className="flex-1">{cell}</div>
+                        </div>
+                      </TableCell>
+                    ) : null
+                  )}
                 </TableRow>
               ))}
             </TableBody>

@@ -31,7 +31,7 @@ const openingBalanceMap: Record<string, Record<string, number>> = {
     'INTEREST RECEIVED': 887635,
     'INTEREST RECEIVED FROM ASHOK KUMAR JAIN': -235302,
     'INTEREST RECEIVED FROM GHISULAL TALEDA': -14625,
-    'JEWELS (207.14G)': -17364,
+    'JEWELS (207.14G)': 17364,
     LIC: 118768,
     'LOAN ACCOUNT': 3693255,
     'MANTRA MODEM': 4700,
@@ -41,7 +41,7 @@ const openingBalanceMap: Record<string, Record<string, number>> = {
     NOVOPAY: 19783.79,
     'NOVOPAY TDS': 124,
     SALARY: 130000,
-    'SILVER ARTICLES (14.206.5KG)': -12628,
+    'SILVER ARTICLES (14.206.5KG)': 12628,
     'STATIONARY & POSTAGE': 20099.05,
   },
   'Sri Mahaveer Bankers': {
