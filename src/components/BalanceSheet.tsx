@@ -49,7 +49,7 @@ export default function BalanceSheet() {
       if (!company || !startDate || !endDate) return 0;
       const [netProfitResponse, capSumResponse] = await Promise.all([
         query<[{ netProfit: number }]>(
-          `SELECT (SELECT SUM(ABS(de.credit - de.debit))
+          `SELECT (SELECT ABS(SUM(de.credit - de.debit))
                  FROM daily_entries de
                         JOIN account_head ah
                              ON ah.code = de.main_code
