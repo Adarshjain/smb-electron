@@ -5,6 +5,7 @@ import { useCompany } from '@/context/CompanyProvider.tsx';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { errorToast, formatCurrency } from '@/lib/myUtils.tsx';
 import { cn } from '@/lib/utils.ts';
+import { SearchIcon } from 'lucide-react';
 
 export default function ProfitAndLoss() {
   const { company } = useCompany();
@@ -104,7 +105,10 @@ export default function ProfitAndLoss() {
           <Table key={typeIndex}>
             <TableBody>
               {type.map((row, outerIndex) => (
-                <TableRow key={JSON.stringify(row) + outerIndex}>
+                <TableRow
+                  key={JSON.stringify(row) + outerIndex}
+                  className="group"
+                >
                   {row.map((cell, index) => (
                     <TableCell
                       key={JSON.stringify(cell) + index}
@@ -113,7 +117,15 @@ export default function ProfitAndLoss() {
                         index !== 0 ? 'text-right border-l' : ''
                       )}
                     >
-                      {cell}
+                      <div className="flex justify-between">
+                        {index === 1 && (
+                          <SearchIcon
+                            size={18}
+                            className="opacity-0 group-hover:opacity-100 cursor-pointer"
+                          />
+                        )}
+                        <div className="flex-1">{cell}</div>
+                      </div>
                     </TableCell>
                   ))}
                 </TableRow>

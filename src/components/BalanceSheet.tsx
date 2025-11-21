@@ -97,15 +97,10 @@ export default function BalanceSheet() {
   useEffect(() => {
     if (!startDate || !endDate || !company) return;
     const fetchDetails = async () => {
-      try {
-        const [
-          capitalEntries,
-          entriesByHisaabGroup,
-          mainAccountHead,
-          netProfitResponse,
-        ] = await Promise.all([
-          query<{ code: string; name: string; net: number }[]>(
-            `SELECT ah.code,
+      const capitalEntriesQuery = query<
+        { code: string; name: string; net: number }[]
+      >(
+        `SELECT ah.code,
                     ah.name,
                     -(SUM(de.credit) - SUM(de.debit)) AS net
              FROM account_head AS ah
@@ -121,12 +116,12 @@ export default function BalanceSheet() {
                OR SUM(de.credit) IS NOT NULL)
                 AND net != 0
              ORDER BY ah.name;`,
-            [company.name, startDate, endDate, company.name]
-          ),
-          query<
-            { code: string; name: string; hisaabGroup: string; net: number }[]
-          >(
-            `SELECT ah.code,
+        [company.name, startDate, endDate, company.name]
+      );
+      const entriesByHisaabGroupQuery = query<
+        { code: string; name: string; hisaabGroup: string; net: number }[]
+      >(
+        `SELECT ah.code,
                       ah.name,
                       ah.hisaabGroup,
                       ah.openingBalance + (COALESCE(SUM(de.credit), 0) - COALESCE(SUM(de.debit), 0)) AS net
@@ -138,18 +133,13 @@ export default function BalanceSheet() {
                WHERE ah.company = ?
                  AND ah.hisaabGroup NOT IN ('Income', 'Expenses', 'Capital Account')
                GROUP BY ah.code, ah.name, ah.hisaabGroup, ah.openingBalance
-               HAVING (SUM(de.debit) IS NOT NULL OR SUM(de.credit) IS NOT NULL)
-                  AND net != 0
+               HAVING ABS(net) > 0.001
                ORDER BY ah.name;
               `,
-            [company.name, endDate, company.name]
-          ),
-          read('account_head', {
-            company: company.name,
-            name: 'CAPITAL A/C',
-          }),
-          query<[{ netProfit: number }]>(
-            `SELECT (SELECT SUM(ABS(de.credit - de.debit))
+        [company.name, endDate, company.name]
+      );
+      const netProfitQuery = query<[{ netProfit: number }]>(
+        `SELECT (SELECT SUM(ABS(de.credit - de.debit))
                      FROM daily_entries de
                             JOIN account_head ah
                                  ON ah.code = de.main_code
@@ -169,17 +159,31 @@ export default function BalanceSheet() {
                        AND de.date <= ?
                        AND ah.hisaabGroup = 'Expenses')
                       AS netProfit`,
-            [
-              company.name,
-              company.name,
-              startDate,
-              endDate,
-              company.name,
-              company.name,
-              startDate,
-              endDate,
-            ]
-          ),
+        [
+          company.name,
+          company.name,
+          startDate,
+          endDate,
+          company.name,
+          company.name,
+          startDate,
+          endDate,
+        ]
+      );
+      try {
+        const [
+          capitalEntries,
+          entriesByHisaabGroup,
+          mainAccountHead,
+          netProfitResponse,
+        ] = await Promise.all([
+          capitalEntriesQuery,
+          entriesByHisaabGroupQuery,
+          read('account_head', {
+            company: company.name,
+            name: 'CAPITAL A/C',
+          }),
+          netProfitQuery,
         ]);
 
         const assetRows: [string, string, string][] = [];
@@ -262,6 +266,7 @@ export default function BalanceSheet() {
         });
         TypeVsHisaabGroup.assets.forEach((type) => {
           if (!entries[type]) {
+            console.log(type);
             return;
           }
           assetsTotal = jsNumberFix(assetsTotal + entries[type].total);
@@ -295,11 +300,7 @@ export default function BalanceSheet() {
           formatCurrency(netProfit + capitalTotal, true),
         ]);
         assetRows.push(['', '', '']);
-        assetRows.push([
-          'Total',
-          '',
-          formatCurrency(netProfit + capitalTotal + liabilitesTotal, true),
-        ]);
+        assetRows.push(['Total', '', formatCurrency(assetsTotal, true)]);
         assetRows.push(['', '', '']);
 
         setDisplayLiabilitiesRows(liabilitiesRows);
