@@ -60,9 +60,11 @@ export default function ReleaseLoan() {
     async (data: ReleaseLoan) => {
       if (loadedLoan?.released === 0) {
         const loan_amount = parseFloat(data.loan_amount ?? 0);
+        const interest_rate = 1;
         const releaseDate = company?.current_date ?? viewableDate();
+        const monthsDiff = getTaxedMonthDiff(loadedLoan.date, releaseDate);
         const tax_interest_amount =
-          (loan_amount * getTaxedMonthDiff(releaseDate, loadedLoan.date)) / 100;
+          (loan_amount * interest_rate * monthsDiff) / 100;
 
         await create('releases', {
           serial: data.serial,

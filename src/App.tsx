@@ -6,19 +6,22 @@ import NewLoan from '@/pages/NewLoan.tsx';
 import ReleaseLoan from '@/pages/ReleaseLoan.tsx';
 import DayBook from '@/pages/DayBook.tsx';
 import CustomerCrud from '@/pages/CustomerCrud.tsx';
+import { ErrorBoundary } from '@/components/ErrorBoundary.tsx';
 
 export function App() {
   return (
-    <HashRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/table-view" element={<TableView />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/new-loan" element={<NewLoan />} />
-        <Route path="/release-loan" element={<ReleaseLoan />} />
-        <Route path="/day-book" element={<DayBook />} />
-        <Route path="/customer-crud" element={<CustomerCrud />} />
-      </Routes>
-    </HashRouter>
+    <ErrorBoundary>
+      <HashRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/table-view" element={<TableView />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/new-loan" element={<NewLoan />} />
+          <Route path="/release-loan" element={<ReleaseLoan />} />
+          <Route path="/day-book" element={<DayBook />} />
+          <Route path="/customer-crud" element={<CustomerCrud />} />
+        </Routes>
+      </HashRouter>
+    </ErrorBoundary>
   );
 }

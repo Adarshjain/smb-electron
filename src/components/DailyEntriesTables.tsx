@@ -302,7 +302,6 @@ export function DailyEntriesTables({
       }
       alert('Success!');
     } catch (e) {
-      console.log(e);
       errorToast(e);
     }
   };

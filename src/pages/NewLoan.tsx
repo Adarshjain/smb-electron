@@ -313,7 +313,7 @@ export default function NewLoan() {
           ignore_weight: parseFloat(item.ignore_weight || '0'),
           net_weight:
             parseFloat(item.gross_weight || '0') +
-            parseFloat(item.ignore_weight || ''),
+            parseFloat(item.ignore_weight || '0'),
           product: item.product,
           quantity: item.quantity,
           quality: item.quality,

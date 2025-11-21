@@ -14,8 +14,6 @@ import { Input } from '@/components/ui/input.tsx';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
 import { TablesSQliteSchema } from '../../tableSchema.ts';
 import { cn } from '@/lib/utils.ts';
-import { toast } from 'sonner';
-import { toastStyles } from '@/constants/loanForm.ts';
 
 export default function DataView<K extends TableName>(props: {
   table: K;
@@ -46,8 +44,9 @@ export default function DataView<K extends TableName>(props: {
           errorToast(error);
         }
       })
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      .catch((e) => toast.error(e, { className: toastStyles.error }));
+      .catch((e: unknown) => {
+        errorToast(e);
+      });
   }, [props.table]);
 
   const filteredData = useMemo(() => {

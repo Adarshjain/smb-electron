@@ -94,6 +94,7 @@ export function successToast(msg: string) {
 }
 // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export function errorToast(msg: string | Error | unknown) {
+  console.error(msg);
   if (msg instanceof Error) {
     rpcError({
       success: false,
@@ -288,49 +289,73 @@ export async function fetchBillsByCustomer(
   customerId: string,
   skipReleased = true
 ): Promise<Tables['full_bill'][] | undefined> {
-  const billsResponse = await read(
-    'bills',
-    skipReleased
-      ? {
-          customer_id: customerId,
-          released: 0,
-        }
-      : {
-          customer_id: customerId,
-        }
-  );
-  const fullCustomer = await fetchFullCustomer(customerId);
-  if (fullCustomer && billsResponse?.length) {
+  try {
+    const [billsResponse, fullCustomer] = await Promise.all([
+      read(
+        'bills',
+        skipReleased
+          ? {
+              customer_id: customerId,
+              released: 0,
+            }
+          : {
+              customer_id: customerId,
+            }
+      ),
+      fetchFullCustomer(customerId),
+    ]);
+
+    if (!fullCustomer || !billsResponse?.length) {
+      return undefined;
+    }
+
+    // Batch fetch all bill items and releases
+    const billItemsPromises = billsResponse.map((bill) =>
+      read('bill_items', {
+        serial: bill.serial,
+        loan_no: bill.loan_no,
+      })
+    );
+
+    const releasePromises = !skipReleased
+      ? billsResponse.map((bill) =>
+          bill.released === 1
+            ? read('releases', {
+                serial: bill.serial,
+                loan_no: bill.loan_no,
+              })
+            : Promise.resolve(null)
+        )
+      : [];
+
+    const [allBillItems, allReleases] = await Promise.all([
+      Promise.all(billItemsPromises),
+      releasePromises.length > 0
+        ? Promise.all(releasePromises)
+        : Promise.resolve([]),
+    ]);
+
+    // Combine results
     const fullBills: Tables['full_bill'][] = [];
-    for (const bill of billsResponse) {
-      try {
-        const billItemsResponse = await read('bill_items', {
-          serial: bill.serial,
-          loan_no: bill.loan_no,
+    for (let i = 0; i < billsResponse.length; i++) {
+      const bill = billsResponse[i];
+      const billItems = allBillItems[i];
+      const release = allReleases[i]?.[0];
+
+      if (billItems?.length) {
+        fullBills.push({
+          ...bill,
+          full_customer: fullCustomer,
+          bill_items: billItems,
+          releasedEntry: release,
         });
-        let release: Tables['releases'] | undefined;
-        if (!skipReleased && bill.released === 1) {
-          const releaseResponse = await read('releases', {
-            serial: bill.serial,
-            loan_no: bill.loan_no,
-          });
-          if (releaseResponse?.length) {
-            release = releaseResponse[0];
-          }
-        }
-        if (billItemsResponse?.length) {
-          fullBills.push({
-            ...bill,
-            full_customer: fullCustomer,
-            bill_items: billItemsResponse,
-            releasedEntry: release,
-          });
-        }
-      } catch (e) {
-        errorToast(e);
       }
     }
+
     return fullBills;
+  } catch (e) {
+    errorToast(e);
+    return undefined;
   }
 }
 
