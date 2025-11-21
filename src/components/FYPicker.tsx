@@ -13,7 +13,7 @@ for (let i = 2020; i < new Date().getFullYear() + 1; i++) {
 export default function FYPicker(props: {
   onChange?: (date: [string, string]) => void;
 }) {
-  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [year, setYear] = useState<number>(new Date().getFullYear() - 1);
 
   useEffect(() => {
     props.onChange?.(getFinancialYearRange(year));

@@ -7,6 +7,25 @@ import type { LocalTables } from '../../tables';
 import { cn } from '@/lib/utils.ts';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 
+const TypeVsHisaabGroup = {
+  liabilities: ['Bank OD A/c', 'Sundry Creditors'],
+  assets: [
+    'Loans & Advances',
+    'Fixed Assets',
+    'Sundry Debtors',
+    'Bank Account',
+  ],
+};
+
+const HisaabGroupVsType: Record<string, 'liabilities' | 'assets'> = {
+  'Bank OD A/c': 'liabilities',
+  'Sundry Creditors': 'liabilities',
+  'Loans & Advances': 'assets',
+  'Fixed Assets': 'assets',
+  'Sundry Debtors': 'assets',
+  'Bank Account': 'assets',
+};
+
 export default function BalanceSheet() {
   const { company } = useCompany();
   const [startDate, setStartDate] = useState<string | null>(null);
@@ -70,7 +89,6 @@ export default function BalanceSheet() {
       const capSum = jsNumberFix(capSumResponse?.[0].cap_sum ?? 0);
       const openingBalance = mainAccountHead?.openingBalance ?? 0;
 
-      console.log({ netProfit, openingBalance, capSum });
       return jsNumberFix(netProfit + openingBalance - capSum);
     },
     [company, endDate, startDate]
@@ -80,10 +98,14 @@ export default function BalanceSheet() {
     if (!startDate || !endDate || !company) return;
     const fetchDetails = async () => {
       try {
-        const [capitalEntries, entriesByHisaabGroup, mainAccountHead] =
-          await Promise.all([
-            query<{ code: string; name: string; net: number }[]>(
-              `SELECT ah.code,
+        const [
+          capitalEntries,
+          entriesByHisaabGroup,
+          mainAccountHead,
+          netProfitResponse,
+        ] = await Promise.all([
+          query<{ code: string; name: string; net: number }[]>(
+            `SELECT ah.code,
                     ah.name,
                     -(SUM(de.credit) - SUM(de.debit)) AS net
              FROM account_head AS ah
@@ -99,12 +121,12 @@ export default function BalanceSheet() {
                OR SUM(de.credit) IS NOT NULL)
                 AND net != 0
              ORDER BY ah.name;`,
-              [company.name, startDate, endDate, company.name]
-            ),
-            query<
-              { code: string; name: string; hisaabGroup: string; net: number }[]
-            >(
-              `SELECT ah.code,
+            [company.name, startDate, endDate, company.name]
+          ),
+          query<
+            { code: string; name: string; hisaabGroup: string; net: number }[]
+          >(
+            `SELECT ah.code,
                       ah.name,
                       ah.hisaabGroup,
                       ah.openingBalance + (COALESCE(SUM(de.credit), 0) - COALESCE(SUM(de.debit), 0)) AS net
@@ -118,47 +140,172 @@ export default function BalanceSheet() {
                GROUP BY ah.code, ah.name, ah.hisaabGroup, ah.openingBalance
                HAVING (SUM(de.debit) IS NOT NULL OR SUM(de.credit) IS NOT NULL)
                   AND net != 0
-               ORDER BY ah.hisaabGroup;
+               ORDER BY ah.name;
               `,
-              [company.name, endDate, company.name]
-            ),
-            read('account_head', {
-              company: company.name,
-              name: 'CAPITAL A/C',
-            }),
-          ]);
+            [company.name, endDate, company.name]
+          ),
+          read('account_head', {
+            company: company.name,
+            name: 'CAPITAL A/C',
+          }),
+          query<[{ netProfit: number }]>(
+            `SELECT (SELECT SUM(ABS(de.credit - de.debit))
+                     FROM daily_entries de
+                            JOIN account_head ah
+                                 ON ah.code = de.main_code
+                     WHERE de.company = ?
+                       AND ah.company = ?
+                       AND de.date >= ?
+                       AND de.date <= ?
+                       AND ah.hisaabGroup = 'Income')
+                      -
+                    (SELECT SUM(de.credit - de.debit)
+                     FROM daily_entries de
+                            JOIN account_head ah
+                                 ON ah.code = de.main_code
+                     WHERE de.company = ?
+                       AND ah.company = ?
+                       AND de.date >= ?
+                       AND de.date <= ?
+                       AND ah.hisaabGroup = 'Expenses')
+                      AS netProfit`,
+            [
+              company.name,
+              company.name,
+              startDate,
+              endDate,
+              company.name,
+              company.name,
+              startDate,
+              endDate,
+            ]
+          ),
+        ]);
 
         const assetRows: [string, string, string][] = [];
         const liabilitiesRows: [string, string, string][] = [];
+        const netProfit = netProfitResponse?.[0].netProfit ?? 0;
 
+        const openingBalance = await calcCapitalAcc(mainAccountHead?.[0]);
+        let capitalTotal = openingBalance;
         if (capitalEntries?.length) {
-          const openingBalance = await calcCapitalAcc(mainAccountHead?.[0]);
-          let total = openingBalance;
+          const capitalRows: [string, string, string][] = [];
 
           capitalEntries.forEach((entry) => {
-            total = jsNumberFix(total + entry.net);
-            liabilitiesRows.push([
-              entry.name,
-              formatCurrency(entry.net, true),
-              '',
-            ]);
+            capitalTotal = jsNumberFix(capitalTotal + entry.net);
+            capitalRows.push([entry.name, formatCurrency(entry.net, true), '']);
           });
 
-          liabilitiesRows.unshift([
+          capitalRows.unshift([
             'Capital Account Opening Balance',
             formatCurrency(openingBalance, true),
             '',
           ]);
-          liabilitiesRows.unshift([
+          capitalRows.unshift([
             'Capital Account',
             '',
-            formatCurrency(total, true),
+            formatCurrency(capitalTotal, true),
           ]);
+          liabilitiesRows.push(...capitalRows);
         }
+
+        const entries: Record<
+          string,
+          {
+            name: string;
+            total: number;
+            entries: [string, string, string][];
+          }
+        > = {};
+
+        entriesByHisaabGroup?.forEach((entry) => {
+          if (entry.name === 'CASH' || entry.hisaabGroup === 'Sundry Debtors') {
+            entry.hisaabGroup = 'Bank Account';
+          }
+          const netValue =
+            HisaabGroupVsType[entry.hisaabGroup] === 'liabilities'
+              ? -entry.net
+              : entry.net;
+          const lineItem: [string, string, string] = [
+            entry.name,
+            formatCurrency(netValue, true),
+            '',
+          ];
+          if (!entries[entry.hisaabGroup]) {
+            entries[entry.hisaabGroup] = {
+              name: entry.hisaabGroup,
+              total: netValue,
+              entries: [lineItem],
+            };
+          } else {
+            entries[entry.hisaabGroup].entries.push(lineItem);
+            entries[entry.hisaabGroup].total = jsNumberFix(
+              entries[entry.hisaabGroup].total + netValue
+            );
+          }
+        });
+
+        let liabilitesTotal = 0;
+        let assetsTotal = 0;
+
+        TypeVsHisaabGroup.liabilities.forEach((type) => {
+          if (!entries[type]) {
+            return;
+          }
+          liabilitesTotal = jsNumberFix(liabilitesTotal + entries[type].total);
+          liabilitiesRows.push([
+            type,
+            '',
+            formatCurrency(entries[type].total, true),
+          ]);
+          liabilitiesRows.push(...entries[type].entries);
+        });
+        TypeVsHisaabGroup.assets.forEach((type) => {
+          if (!entries[type]) {
+            return;
+          }
+          assetsTotal = jsNumberFix(assetsTotal + entries[type].total);
+
+          assetRows.push([type, '', formatCurrency(entries[type].total, true)]);
+          assetRows.push(...entries[type].entries);
+        });
+
+        liabilitiesRows.push(['', '', '']);
+        assetRows.push(['', '', '']);
+
+        while (liabilitiesRows.length < assetRows.length) {
+          liabilitiesRows.push(['', '', '']);
+        }
+        while (assetRows.length < liabilitiesRows.length) {
+          assetRows.push(['', '', '']);
+        }
+        liabilitiesRows.push([
+          'Net Profit',
+          '',
+          formatCurrency(netProfit, true),
+        ]);
+        liabilitiesRows.push([
+          'Total',
+          '',
+          formatCurrency(netProfit + capitalTotal + liabilitesTotal, true),
+        ]);
+        liabilitiesRows.push([
+          'Capital Account Closing Balance',
+          '',
+          formatCurrency(netProfit + capitalTotal, true),
+        ]);
+        assetRows.push(['', '', '']);
+        assetRows.push([
+          'Total',
+          '',
+          formatCurrency(netProfit + capitalTotal + liabilitesTotal, true),
+        ]);
+        assetRows.push(['', '', '']);
+
         setDisplayLiabilitiesRows(liabilitiesRows);
-        console.log({ capitalEntries, entriesByHisaabGroup });
+        setDisplayAssetRows(assetRows);
       } catch (error) {
-        console.log(error);
+        console.error(error);
         errorToast(error);
       }
     };
@@ -167,15 +314,17 @@ export default function BalanceSheet() {
 
   return (
     <div className="p-4">
-      <div className="place-items-center">
+      <div className="flex justify-around">
+        <div className="text-xl">Liabilities</div>
         <FYPicker
           onChange={([start, end]) => {
             setStartDate(start);
             setEndDate(end);
           }}
         />
+        <div className="text-xl">Assets</div>
       </div>
-      <div className="flex gap-4 mt-4">
+      <div className="flex gap-2 mt-2">
         {[displayLiabilitiesRows, displayAssetRows].map((type, typeIndex) => (
           <Table key={typeIndex}>
             <TableBody>
