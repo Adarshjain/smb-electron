@@ -29,23 +29,31 @@ export default function ProfitAndLoss() {
             hisaabGroup: string;
             net: number;
           }[]
-        >(`SELECT ah.code,
+        >(
+          `SELECT ah.code,
                   ah.name,
                   ah.hisaabGroup,
-                  ABS(SUM(de.credit) - SUM(de.debit)) AS net
+                  CASE
+                    WHEN ah.hisaabGroup = 'Income'
+                      THEN ABS(SUM(de.credit) - SUM(de.debit))
+                    ELSE
+                      (SUM(de.credit) - SUM(de.debit))
+                                                       END AS net
            FROM account_head AS ah
                   LEFT JOIN daily_entries AS de
                             ON ah.code = de.main_code
-                              AND de.company = '${company.name}'
-                              AND de.date >= '${startDate}'
-                              AND de.date <= '${endDate}'
-           WHERE ah.company = '${company.name}'
+                              AND de.company = ?
+                              AND de.date >= ?
+                              AND de.date <= ?
+           WHERE ah.company = ?
              AND ah.hisaabGroup IN ('Income', 'Expenses')
            GROUP BY ah.code, ah.name, ah.hisaabGroup
            HAVING SUM(de.debit) IS NOT NULL
                OR SUM(de.credit) IS NOT NULL
            ORDER BY ah.name;
-        `);
+        `,
+          [company.name, startDate, endDate, company.name]
+        );
         const incomeRows: [string, string, string][] = [];
         const expenseRows: [string, string, string][] = [];
         let incomeTotal = 0;
