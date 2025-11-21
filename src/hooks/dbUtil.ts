@@ -1,4 +1,10 @@
-import type { LocalTables, TableName, Tables } from '../../tables';
+import type {
+  LocalTables,
+  TableName,
+  Tables,
+  TablesDelete,
+  TablesUpdate,
+} from '../../tables';
 import type { ElectronToReactResponse } from '../../shared-types';
 
 export const create = async <K extends TableName>(

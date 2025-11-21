@@ -9,8 +9,6 @@ import {
 import type { Tables } from '@/../tables';
 import { read, update } from '../hooks/dbUtil.ts';
 import { errorToast, getNextSerial } from '@/lib/myUtils.tsx';
-import { toast } from 'sonner';
-import { toastStyles } from '@/constants/loanForm.ts';
 
 interface CompanyContextType {
   company: Tables['companies'] | null;
@@ -64,8 +62,9 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
           setCompany(companyMatch);
         }
       })
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      .catch((e) => toast.error(e, { className: toastStyles.error }));
+      .catch((e: unknown) => {
+        errorToast(e);
+      });
   }, []);
 
   useEffect(() => {

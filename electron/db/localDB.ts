@@ -257,6 +257,8 @@ export function upsert<K extends TableName>(table: K, record: Tables[K]): null {
 
   validate(table, record, true);
 
+  record = encodeRecord<K>(table, record);
+
   const pkFields = TablesSQliteSchema[table].primary;
   if (!pkFields) {
     throw new Error(`Primary key fields not defined for table ${table}`);
