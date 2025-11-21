@@ -2,218 +2,202 @@ import FYPicker from '@/components/FYPicker.tsx';
 import { useCallback, useEffect, useState } from 'react';
 import { query, read } from '@/hooks/dbUtil.ts';
 import { useCompany } from '@/context/CompanyProvider.tsx';
-import { errorToast, jsNumberFix } from '@/lib/myUtils.tsx';
-import type { LocalTables, Tables } from '../../tables';
+import { errorToast, formatCurrency, jsNumberFix } from '@/lib/myUtils.tsx';
+import type { LocalTables } from '../../tables';
+import { cn } from '@/lib/utils.ts';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 
 export default function BalanceSheet() {
   const { company } = useCompany();
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
 
-  const calculateTransactionEffect = useCallback(
-    (entry: Tables['daily_entries'], accCode: number) => {
-      const isPrimary = accCode === entry.main_code;
-      const credit = isPrimary ? entry.debit : entry.credit;
-      const debit = isPrimary ? entry.credit : entry.debit;
-      return Number((credit - debit).toFixed(2));
+  const [displayLiabilitiesRows, setDisplayLiabilitiesRows] = useState<
+    [string, string, string][]
+  >([]);
+  const [displayAssetRows, setDisplayAssetRows] = useState<
+    [string, string, string][]
+  >([]);
+
+  const calcCapitalAcc = useCallback(
+    async (
+      mainAccountHead: LocalTables<'account_head'> | undefined
+    ): Promise<number> => {
+      if (!company || !startDate || !endDate) return 0;
+      const [netProfitResponse, capSumResponse] = await Promise.all([
+        query<[{ netProfit: number }]>(
+          `SELECT (SELECT SUM(ABS(de.credit - de.debit))
+                 FROM daily_entries de
+                        JOIN account_head ah
+                             ON ah.code = de.main_code
+                 WHERE de.company = ?
+                   AND ah.company = ?
+                   AND de.date < ?
+                   AND ah.hisaabGroup = 'Income')
+                             -
+                (SELECT SUM(de.credit - de.debit)
+                 FROM daily_entries de
+                        JOIN account_head ah
+                             ON ah.code = de.main_code
+                 WHERE de.company = ?
+                   AND ah.company = ?
+                   AND de.date < ?
+                   AND ah.hisaabGroup = 'Expenses')
+                             AS netProfit`,
+          [
+            company.name,
+            company.name,
+            startDate,
+            company.name,
+            company.name,
+            startDate,
+          ]
+        ),
+        query<[{ cap_sum: number }]>(
+          `SELECT SUM(de.credit - de.debit) AS cap_sum
+         FROM account_head ah
+                LEFT JOIN daily_entries de
+                          ON de.main_code = ah.code
+         WHERE ah.hisaabGroup = 'Capital Account'
+           ANd ah.company = ?
+           ANd de.company = ?
+           and de.date < ?`,
+          [company.name, company.name, startDate]
+        ),
+      ]);
+
+      const netProfit = jsNumberFix(netProfitResponse?.[0].netProfit ?? 0);
+      const capSum = jsNumberFix(capSumResponse?.[0].cap_sum ?? 0);
+      const openingBalance = mainAccountHead?.openingBalance ?? 0;
+
+      console.log({ netProfit, openingBalance, capSum });
+      return jsNumberFix(netProfit + openingBalance - capSum);
     },
-    []
+    [company, endDate, startDate]
   );
-
-  const calcCapitalAcc = async (
-    accountHeads: LocalTables<'account_head'>[],
-    entries: LocalTables<'daily_entries'>[]
-  ): Promise<number> => {
-    if (!company || !startDate || !endDate) return 0;
-    const netProfitResponse = await query<
-      [{ netProfit: number }]
-    >(`SELECT (SELECT SUM(ABS(de.credit - de.debit))
-                         FROM daily_entries de
-                                JOIN account_head ah
-                                     ON ah.code = de.main_code OR ah.code = de.sub_code
-                         WHERE de.company = '${company.name}'
-                           AND de.date < '${startDate}'
-                           AND ah.company = '${company.name}'
-                           AND ah.hisaabGroup = 'Income')
-                          -
-                        (SELECT SUM(de.credit - de.debit)
-                         FROM daily_entries de
-                                JOIN account_head ah
-                                     ON ah.code = de.main_code OR ah.code = de.sub_code
-                         WHERE de.company = '${company.name}'
-                           AND de.date < '${startDate}'
-                           AND ah.company = '${company.name}'
-                           AND ah.hisaabGroup = 'Expenses')
-                          AS netProfit`);
-    const netProfit = jsNumberFix(netProfitResponse?.[0].netProfit ?? 0);
-
-    const capitalAccountCodes = accountHeads
-      .filter((accountHead) => accountHead.hisaabGroup === 'Capital Account')
-      .map((accountHead) => accountHead.code);
-
-    const accountHeadByID: Record<number, LocalTables<'account_head'>> = {};
-
-    accountHeads?.forEach((accountHead) => {
-      if (accountHead.name !== 'ASHOK KUMAR CAPITAL A/C') {
-        accountHead.openingBalance = 0;
-      }
-      accountHeadByID[accountHead.code] = JSON.parse(
-        JSON.stringify(accountHead)
-      ) as LocalTables<'account_head'>;
-    });
-
-    entries
-      .filter((entry) => entry.date < startDate)
-      .forEach((entry) => {
-        if (
-          !capitalAccountCodes.includes(entry.main_code) &&
-          !capitalAccountCodes.includes(entry.sub_code)
-        ) {
-          return;
-        }
-        const sum = calculateTransactionEffect(entry, entry.main_code);
-        accountHeadByID[entry.main_code].openingBalance = jsNumberFix(
-          (accountHeadByID[entry.main_code].openingBalance ?? 0) + sum
-        );
-        accountHeadByID[entry.sub_code].openingBalance = jsNumberFix(
-          (accountHeadByID[entry.sub_code].openingBalance ?? 0) - sum
-        );
-      });
-    const mainAcc = accountHeads.find(
-      (accountHead) => accountHead.name === 'ASHOK KUMAR CAPITAL A/C'
-    );
-    const capSum = Object.values(accountHeadByID).reduce((sum, accountHead) => {
-      if (
-        accountHead.openingBalance &&
-        accountHead.hisaabGroup === 'Capital Account' &&
-        accountHead.name !== 'ASHOK KUMAR CAPITAL A/C'
-      ) {
-        sum = jsNumberFix(sum + accountHead.openingBalance);
-      }
-      return sum;
-    }, 0);
-    console.log({ capSum, netProfit, main: mainAcc?.openingBalance ?? 0 });
-    return jsNumberFix(-capSum + netProfit + (mainAcc?.openingBalance ?? 0));
-  };
 
   useEffect(() => {
     if (!startDate || !endDate || !company) return;
     const fetchDetails = async () => {
       try {
-        const [accountHeads, entries] = await Promise.all([
-          read('account_head', {
-            company: company.name,
-          }),
-          query<LocalTables<'daily_entries'>[]>(
-            `SELECT * FROM daily_entries WHERE company = ? AND date <= ? order by sortOrder`,
-            [company.name, endDate]
-          ),
-        ]);
-        if (!accountHeads?.length || !entries?.length) {
-          return;
+        const [capitalEntries, entriesByHisaabGroup, mainAccountHead] =
+          await Promise.all([
+            query<{ code: string; name: string; net: number }[]>(
+              `SELECT ah.code,
+                    ah.name,
+                    -(SUM(de.credit) - SUM(de.debit)) AS net
+             FROM account_head AS ah
+                    LEFT JOIN daily_entries AS de
+                              ON ah.code = de.main_code
+                                AND de.company = ?
+                                AND de.date >= ?
+                                AND de.date <= ?
+             WHERE ah.company = ?
+               AND ah.hisaabGroup = 'Capital Account'
+             GROUP BY ah.code, ah.name, ah.hisaabGroup
+             HAVING (SUM(de.debit) IS NOT NULL
+               OR SUM(de.credit) IS NOT NULL)
+                AND net != 0
+             ORDER BY ah.name;`,
+              [company.name, startDate, endDate, company.name]
+            ),
+            query<
+              { code: string; name: string; hisaabGroup: string; net: number }[]
+            >(
+              `SELECT ah.code,
+                      ah.name,
+                      ah.hisaabGroup,
+                      ah.openingBalance + (COALESCE(SUM(de.credit), 0) - COALESCE(SUM(de.debit), 0)) AS net
+               FROM account_head AS ah
+                      LEFT JOIN daily_entries AS de
+                                ON ah.code = de.main_code
+                                  AND de.company = ?
+                                  AND de.date <= ?
+               WHERE ah.company = ?
+                 AND ah.hisaabGroup NOT IN ('Income', 'Expenses', 'Capital Account')
+               GROUP BY ah.code, ah.name, ah.hisaabGroup, ah.openingBalance
+               HAVING (SUM(de.debit) IS NOT NULL OR SUM(de.credit) IS NOT NULL)
+                  AND net != 0
+               ORDER BY ah.hisaabGroup;
+              `,
+              [company.name, endDate, company.name]
+            ),
+            read('account_head', {
+              company: company.name,
+              name: 'CAPITAL A/C',
+            }),
+          ]);
+
+        const assetRows: [string, string, string][] = [];
+        const liabilitiesRows: [string, string, string][] = [];
+
+        if (capitalEntries?.length) {
+          const openingBalance = await calcCapitalAcc(mainAccountHead?.[0]);
+          let total = openingBalance;
+
+          capitalEntries.forEach((entry) => {
+            total = jsNumberFix(total + entry.net);
+            liabilitiesRows.push([
+              entry.name,
+              formatCurrency(entry.net, true),
+              '',
+            ]);
+          });
+
+          liabilitiesRows.unshift([
+            'Capital Account Opening Balance',
+            formatCurrency(openingBalance, true),
+            '',
+          ]);
+          liabilitiesRows.unshift([
+            'Capital Account',
+            '',
+            formatCurrency(total, true),
+          ]);
         }
-        // const accountHeadByID: Record<
-        console.log(
-          'calcCapitalAcc',
-          await calcCapitalAcc(accountHeads, entries)
-        );
-        //   number,
-        //   { total: number; entry: LocalTables<'account_head'> }
-        // > = {};
-        // accountHeads?.forEach((accountHead) => {
-        //   accountHeadByID[accountHead.code] = {
-        //     entry: JSON.parse(
-        //       JSON.stringify(accountHead)
-        //     ) as LocalTables<'account_head'>,
-        //     total: 0,
-        //   };
-        // });
-        // entries.forEach((entry) => {
-        //   const sum = calculateTransactionEffect(entry, entry.main_code);
-        //   if (
-        //     !(
-        //       accountHeadByID[entry.main_code].entry.hisaabGroup ===
-        //         'Capital Account' &&
-        //       (entry.date < startDate || entry.date > endDate)
-        //     )
-        //   ) {
-        //     accountHeadByID[entry.main_code].total = jsNumberFix(
-        //       accountHeadByID[entry.main_code].total + sum
-        //     );
-        //   }
-        //   if (
-        //     !(
-        //       accountHeadByID[entry.main_code].entry.hisaabGroup ===
-        //         'Capital Account' &&
-        //       (entry.date < startDate || entry.date > endDate)
-        //     )
-        //   ) {
-        //     accountHeadByID[entry.sub_code].total = jsNumberFix(
-        //       accountHeadByID[entry.sub_code].total - sum
-        //     );
-        //   }
-        // });
-        // const filteredEntries = Object.values(accountHeadByID)
-        //   .filter((accountHead) => {
-        //     debugger;
-        //     return (
-        //       accountHead.total !== 0 &&
-        //       accountHead.entry.hisaabGroup !== 'Income' &&
-        //       accountHead.entry.hisaabGroup !== 'Expenses'
-        //     );
-        //   })
-        //   .sort((a, b) => a.entry.name.localeCompare(b.entry.name));
-        // // console.table(filteredEntries);
-        // const byHisaabGroup: Record<
-        //   string,
-        //   {
-        //     total: number;
-        //     entries: Tables['account_head'][];
-        //   }
-        // > = {};
-        // filteredEntries.forEach((entry) => {
-        //   if (entry.entry.name === 'ASHOK KUMAR CAPITAL A/C') {
-        //     return;
-        //   }
-        //   if (
-        //     entry.entry.hisaabGroup === 'Cash Transaction' ||
-        //     entry.entry.hisaabGroup === 'Sundry Debtors' ||
-        //     entry.entry.hisaabGroup === 'Bank Account'
-        //   ) {
-        //     entry.entry.hisaabGroup = 'Current Assets';
-        //   }
-        //   if (!byHisaabGroup[entry.entry.hisaabGroup]) {
-        //     byHisaabGroup[entry.entry.hisaabGroup] = {
-        //       total: entry.total,
-        //       entries: [entry.entry],
-        //     };
-        //   } else {
-        //     byHisaabGroup[entry.entry.hisaabGroup].total = jsNumberFix(
-        //       byHisaabGroup[entry.entry.hisaabGroup].total + entry.total
-        //     );
-        //     byHisaabGroup[entry.entry.hisaabGroup].entries = [
-        //       ...byHisaabGroup[entry.entry.hisaabGroup].entries,
-        //       entry.entry,
-        //     ];
-        //   }
-        // });
-        // console.log(byHisaabGroup);
+        setDisplayLiabilitiesRows(liabilitiesRows);
+        console.log({ capitalEntries, entriesByHisaabGroup });
       } catch (error) {
         console.log(error);
         errorToast(error);
       }
     };
     void fetchDetails();
-  });
+  }, [calcCapitalAcc, company, endDate, startDate]);
 
   return (
     <div className="p-4">
-      <FYPicker
-        onChange={([start, end]) => {
-          setStartDate(start);
-          setEndDate(end);
-        }}
-      />
+      <div className="place-items-center">
+        <FYPicker
+          onChange={([start, end]) => {
+            setStartDate(start);
+            setEndDate(end);
+          }}
+        />
+      </div>
+      <div className="flex gap-4 mt-4">
+        {[displayLiabilitiesRows, displayAssetRows].map((type, typeIndex) => (
+          <Table key={typeIndex}>
+            <TableBody>
+              {type.map((row, outerIndex) => (
+                <TableRow key={JSON.stringify(row) + outerIndex}>
+                  {row.map((cell, index) => (
+                    <TableCell
+                      key={JSON.stringify(cell) + index}
+                      className={cn(
+                        'py-1.5 h-[33px]',
+                        index !== 0 ? 'text-right border-l' : ''
+                      )}
+                    >
+                      {cell}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ))}
+      </div>
     </div>
   );
 }

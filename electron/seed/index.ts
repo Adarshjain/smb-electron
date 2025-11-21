@@ -48,7 +48,7 @@ const openingBalanceMap: Record<string, Record<string, number>> = {
     'ADINTEREST RECEIVED': -280,
     'ADVANCE TAX PAID': 70000,
     ARCHANA: 97138,
-    'ASHOK KUMAR CAPITAL A/C': 5300208.92, //2290456.38,
+    'CAPITAL A/C': 5300208.92, //2290456.38,
     'ASHOK KUMAR-HUF': -4250000,
     'AUCTION CHARGES': 40200,
     'AUCTION INTEREST': -902790,
@@ -195,12 +195,16 @@ export const initAccountHead = () => {
 
   for (const record of data) {
     const company = toSentenceCase(record.company);
+    const name =
+      record.acc_name === 'ASHOK KUMAR CAPITAL A/C'
+        ? 'CAPITAL A/C'
+        : record.acc_name.trim();
     createAccountHead.push({
-      name: record.acc_name.trim(),
+      name,
       company,
       code: parseInt('' + record.acc_code),
       hisaabGroup: record.SEARCHBY,
-      openingBalance: openingBalanceMap[company][record.acc_name.trim()] ?? 0,
+      openingBalance: openingBalanceMap[company][name] ?? 0,
     });
   }
   try {
