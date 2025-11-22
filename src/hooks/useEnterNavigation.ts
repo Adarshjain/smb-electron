@@ -4,12 +4,14 @@ interface UseEnterNavigationOptions<T> {
   fields: (T | string)[]; // ordered list of field "name" attributes
   onSubmit?: () => void; // optional submit callback
   submitField?: T | string;
+  canMoves?: Record<string, () => boolean>;
 }
 
 export function useEnterNavigation<T = string>({
   fields,
   onSubmit,
   submitField,
+  canMoves = {},
 }: UseEnterNavigationOptions<T>) {
   const formRef = useRef<HTMLElement>(null);
 
@@ -28,9 +30,10 @@ export function useEnterNavigation<T = string>({
 
       const fieldName = activeElement.getAttribute('name');
       if (!fieldName) return;
+      const canMove = canMoves[fieldName] ? canMoves[fieldName]() : true;
 
       if (fieldName === submitField) {
-        if (onSubmit) onSubmit();
+        if (onSubmit && canMove) onSubmit?.();
       }
 
       const currentIndex = fields.indexOf(fieldName);
@@ -43,13 +46,13 @@ export function useEnterNavigation<T = string>({
         const nextField = form.querySelector<HTMLElement>(
           `[name="${nextName as string}"]`
         );
-        nextField?.focus();
+        if (canMove) nextField?.focus();
       } else {
         // When last field is reached, submit
-        if (onSubmit) onSubmit();
+        if (onSubmit && canMove) onSubmit();
       }
     },
-    [fields, onSubmit]
+    [canMoves, fields, onSubmit, submitField]
   );
 
   const handleKeyDown = useCallback(
