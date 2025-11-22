@@ -1,6 +1,6 @@
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import { useEffect, useMemo, useState } from 'react';
-import { read } from '@/hooks/dbUtil.ts';
+import { query, read } from '@/hooks/dbUtil.ts';
 import type { Tables } from '../../tables';
 import DatePicker from '@/components/DatePicker.tsx';
 import {
@@ -59,9 +59,10 @@ export default function DayBook() {
   useEffect(() => {
     const run = async () => {
       try {
-        const billsPromise = read('bills', {
-          date,
-        });
+        const billsPromise = query<Tables['bills'][]>(
+          `SELECT * from bills where date = ? order by loan_no`,
+          [date]
+        );
         const releasesPromise = read('releases', {
           date,
         });
