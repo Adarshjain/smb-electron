@@ -67,7 +67,7 @@ const createWindow = () => {
   } else {
     // In production, load the built renderer from app.asar/dist/index.html
     // __dirname points to app.asar/dist-electron/electron when packaged
-    const prodIndex = path.join(__dirname, '..', '..', 'dist', 'index.html');
+    const prodIndex = path.join(app.getAppPath(), 'dist', 'index.html');
     void win.loadFile(prodIndex);
   }
   win.maximize();
