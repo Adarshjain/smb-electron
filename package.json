@@ -22,7 +22,6 @@
     "type-check": "tsc --noEmit && tsc -p electron/tsconfig.json --noEmit",
     "check-all": "npm run type-check && npm run lint && npm run format:check",
     "postinstall": "electron-rebuild -f -w better-sqlite3",
-    "rebuild": "electron-rebuild -f -w better-sqlite3",
     "build:app:portable": "electron-builder --win portable --x64"
   },
   "build": {
