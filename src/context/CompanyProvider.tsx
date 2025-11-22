@@ -24,6 +24,7 @@ const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 export function CompanyProvider({ children }: { children: ReactNode }) {
   const [company, setCompany] = useState<Tables['companies'] | null>(null);
   const [allCompanies, setAllCompanies] = useState<Tables['companies'][]>([]);
+
   const setCurrentDate = async (current_date: string) => {
     if (company) {
       try {
@@ -49,6 +50,9 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         name: company.name,
       });
       setCompany({ ...company, next_serial });
+      allCompanies[
+        allCompanies.findIndex((c) => company.name === c.name)
+      ].next_serial = next_serial;
     }
   };
 
