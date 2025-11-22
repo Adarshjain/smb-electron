@@ -54,9 +54,11 @@ import { BillingItemsTable } from '@/components/LoanForm/BillingItemsTable.tsx';
 import BillsByCustomer from '@/components/LoanForm/BillsByCustomer.tsx';
 import { cn } from '@/lib/utils.ts';
 import GoHome from '@/components/GoHome.tsx';
+import { useThanglish } from '@/context/ThanglishProvider.tsx';
 
 export default function NewLoan() {
   const { company, setNextSerial } = useCompany();
+  const { setIsTamil } = useThanglish();
   const [serial, loanNo] = useMemo(
     () => (!company ? '' : company.next_serial).split('-'),
     [company]
@@ -131,6 +133,10 @@ export default function NewLoan() {
     loadedLoan?.loan_no,
     loadedLoan?.serial,
   ]);
+
+  useEffect(() => {
+    setIsTamil(true);
+  }, [setIsTamil]);
 
   useEffect(() => {
     billingItemValues.forEach((item, index) => {
