@@ -25,7 +25,7 @@ export function ThanglishProvider({ children }: { children: ReactNode }) {
   // Toggle isTamil when F10 is pressed
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'F10') {
+      if (event.key === 'F12') {
         event.preventDefault();
         setIsTamil((prev) => !prev);
       }
