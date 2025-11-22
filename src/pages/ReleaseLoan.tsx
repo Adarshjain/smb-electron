@@ -56,12 +56,15 @@ export default function ReleaseLoan() {
       defaultValues,
     });
 
+  const interestAmount = useWatch({ control, name: 'interest_amount' });
+  const reDate = useWatch({ control, name: 'date' });
+
   const onSubmit = useCallback(
     async (data: ReleaseLoan) => {
       if (loadedLoan?.released === 0) {
         const loan_amount = parseFloat(data.loan_amount ?? 0);
         const interest_rate = 1;
-        const releaseDate = company?.current_date ?? viewableDate();
+        const releaseDate = reDate ?? company?.current_date ?? viewableDate();
         const monthsDiff = getTaxedMonthDiff(loadedLoan.date, releaseDate);
         const tax_interest_amount =
           (loan_amount * interest_rate * monthsDiff) / 100;
@@ -119,7 +122,13 @@ export default function ReleaseLoan() {
       }
       nextRef.current?.('loan_no');
     },
-    [loadedLoan, company, reset]
+    [
+      loadedLoan?.released,
+      loadedLoan?.date,
+      reDate,
+      company?.current_date,
+      reset,
+    ]
   );
 
   const handleFormSubmit = useCallback(() => {
@@ -137,7 +146,17 @@ export default function ReleaseLoan() {
     nextRef.current = next;
   }, [next]);
 
-  const interestAmount = useWatch({ control, name: 'interest_amount' });
+  useEffect(() => {
+    if (!reDate || !loadedLoan) return;
+
+    const monthDiff = getMonthDiff(loadedLoan.date, reDate);
+    const interestAmount = getInterest(
+      loadedLoan.loan_amount,
+      loadedLoan.interest_rate,
+      monthDiff
+    );
+    setValue('interest_amount', interestAmount.toFixed(2));
+  }, [loadedLoan, reDate, setValue]);
 
   useEffect(() => {
     if (!loadedLoan) {

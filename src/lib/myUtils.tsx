@@ -1,12 +1,5 @@
 import { toast } from 'sonner';
-import {
-  addMonths,
-  differenceInMonths,
-  format,
-  isBefore,
-  startOfDay,
-  subDays,
-} from 'date-fns';
+import { format, isBefore, startOfDay, subDays } from 'date-fns';
 import type { ElectronToReactResponse } from '../../shared-types';
 import type { FullCustomer, MetalType, Tables } from '../../tables';
 import MyCache from '../../MyCache.ts';
@@ -153,32 +146,21 @@ export function getInterest(principal: number, intRate: number, months = 1) {
   return Math.round(+(principal * (intRate / 100) * months).toFixed(2));
 }
 
-export function getMonthDiff(from: string, to?: string) {
+export function getMonthDiff(from: string | Date, to?: string | Date): number {
   const now = to ? new Date(to) : new Date();
   const start = new Date(from);
   let months =
     (now.getFullYear() - start.getFullYear()) * 12 +
     (now.getMonth() - start.getMonth());
   if (now.getDate() < start.getDate()) months--;
+  if (+start === +now) {
+    return 0;
+  }
   return start.getDate() === now.getDate() ? months - 1 : months;
 }
 
 export function getTaxedMonthDiff(from: string | Date, to?: string | Date) {
-  const start = new Date(from);
-  const end = adjustEndDate(start, to ? new Date(to) : new Date(), 0);
-  return monthDiffRoundedUp(start, end);
-}
-
-export function monthDiffRoundedUp(startDate: Date, endDate: Date): number {
-  let diff = differenceInMonths(endDate, startDate);
-
-  const dateAfterDiff = addMonths(startDate, diff);
-
-  if (isBefore(dateAfterDiff, endDate)) {
-    diff += 1; // round up
-  }
-
-  return diff;
+  return getMonthDiff(from, to) + 1;
 }
 
 export function adjustEndDate(startDate: Date, endDate: Date, n: number): Date {
