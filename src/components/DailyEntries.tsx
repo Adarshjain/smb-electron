@@ -7,7 +7,7 @@ import DatePicker from '@/components/DatePicker.tsx';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import { create, query, read } from '@/hooks/dbUtil.ts';
 import type { LocalTables, Tables } from '../../tables';
-import { errorToast } from '@/lib/myUtils.tsx';
+import { errorToast, successToast } from '@/lib/myUtils.tsx';
 import { DailyEntriesTables } from '@/components/DailyEntriesTables.tsx';
 
 // Constants
@@ -97,6 +97,17 @@ export default function DailyEntries() {
 
       if (existingEntry) {
         if (credit !== existingEntry.credit || debit !== existingEntry.debit) {
+          if (credit === 0 && debit === 0) {
+            await query<null>(
+              `DELETE
+                     FROM daily_entries
+                     WHERE company = ?
+                       AND sortOrder = ?`,
+              [company?.name, existingEntry.sortOrder],
+              true
+            );
+            return;
+          }
           const updateQUery = `UPDATE daily_entries
                                SET credit = ?,
                                    debit = ?,
@@ -135,28 +146,31 @@ export default function DailyEntries() {
             true
           );
         }
-      } else {
-        await create('daily_entries', {
-          company: company.name,
-          date,
-          main_code: CASH_ACCOUNT_CODE,
-          sub_code: CAPITAL_ACCOUNT_CODE,
-          description,
-          credit,
-          debit,
-          sortOrder,
-        });
-        await create('daily_entries', {
-          company: company.name,
-          date,
-          main_code: CAPITAL_ACCOUNT_CODE,
-          sub_code: CASH_ACCOUNT_CODE,
-          description,
-          debit: credit,
-          credit: debit,
-          sortOrder,
-        });
+        return;
       }
+      if (credit === 0 && debit === 0) {
+        return;
+      }
+      await create('daily_entries', {
+        company: company.name,
+        date,
+        main_code: CASH_ACCOUNT_CODE,
+        sub_code: CAPITAL_ACCOUNT_CODE,
+        description,
+        credit,
+        debit,
+        sortOrder,
+      });
+      await create('daily_entries', {
+        company: company.name,
+        date,
+        main_code: CAPITAL_ACCOUNT_CODE,
+        sub_code: CASH_ACCOUNT_CODE,
+        description,
+        debit: credit,
+        credit: debit,
+        sortOrder,
+      });
     },
     [company?.name, date]
   );
@@ -197,47 +211,41 @@ export default function DailyEntries() {
           (entry) => entry.description === LOAN_AMOUNT
         );
         const newLoanAmount = loanAmountTotal?.[0].total ?? 0;
-        if (newLoanAmount > 0) {
-          await upsertDailyEntry(
-            LOAN_AMOUNT,
-            newLoanAmount,
-            0,
-            loanAmountEntry,
-            sortOrder
-          );
-          if (!loanAmountEntry) sortOrder += 1;
-        }
+        await upsertDailyEntry(
+          LOAN_AMOUNT,
+          newLoanAmount,
+          0,
+          loanAmountEntry,
+          sortOrder
+        );
+        if (newLoanAmount > 0 && !loanAmountEntry) sortOrder += 1;
 
         // Process redemption amount
         const redemptionAmountEntry = dailyEntry?.find(
           (entry) => entry.description?.trim() === REDEMPTION_AMOUNT
         );
         const newReleaseAmount = releaseTotalResponse?.[0].principal ?? 0;
-        if (newReleaseAmount > 0) {
-          await upsertDailyEntry(
-            REDEMPTION_AMOUNT,
-            0,
-            newReleaseAmount,
-            redemptionAmountEntry,
-            sortOrder
-          );
-          if (!redemptionAmountEntry) sortOrder += 1;
-        }
+        await upsertDailyEntry(
+          REDEMPTION_AMOUNT,
+          0,
+          newReleaseAmount,
+          redemptionAmountEntry,
+          sortOrder
+        );
+        if (newReleaseAmount > 0 && !redemptionAmountEntry) sortOrder += 1;
 
         // Process redemption interest
         const redemptionInterestEntry = dailyEntry?.find(
           (entry) => entry.description === BEING_REDEEMED_LOAN_INTEREST
         );
         const newReleaseInterest = releaseTotalResponse?.[0].interest ?? 0;
-        if (newReleaseInterest > 0) {
-          await upsertDailyEntry(
-            BEING_REDEEMED_LOAN_INTEREST,
-            0,
-            newReleaseInterest,
-            redemptionInterestEntry,
-            sortOrder
-          );
-        }
+        await upsertDailyEntry(
+          BEING_REDEEMED_LOAN_INTEREST,
+          0,
+          newReleaseInterest,
+          redemptionInterestEntry,
+          sortOrder
+        );
       } catch (error) {
         console.error(error);
         errorToast(error);
@@ -246,19 +254,24 @@ export default function DailyEntries() {
     [company?.name, date, upsertDailyEntry]
   );
 
+  const loadTodayFromLoans = async () => {
+    if (!company?.name || !date) return;
+
+    const dailyEntriesResponse = await read('daily_entries', {
+      company: company.name,
+      date,
+    });
+
+    // Update with today's loans and releases
+    await loadTodaysLoansAndReleases(dailyEntriesResponse);
+    await loadDailyEntries();
+    successToast('Loaded!');
+  };
+
   const loadDailyEntries = useCallback(async () => {
     if (!company?.name || !date) return;
 
     try {
-      // Load initial entries
-      const dailyEntriesResponse = await read('daily_entries', {
-        company: company.name,
-        date,
-      });
-
-      // Update with today's loans and releases
-      await loadTodaysLoansAndReleases(dailyEntriesResponse);
-
       // Reload entries after updates
       setTodaysEntries(
         (await read('daily_entries', {
@@ -271,12 +284,7 @@ export default function DailyEntries() {
       console.error(error);
       errorToast(error);
     }
-  }, [
-    company?.name,
-    currentAccountHead?.code,
-    date,
-    loadTodaysLoansAndReleases,
-  ]);
+  }, [company?.name, currentAccountHead?.code, date]);
 
   useEffect(() => {
     void loadAccountHeads();
@@ -321,6 +329,7 @@ export default function DailyEntries() {
         entries={todaysEntries}
         currentAccountHead={currentAccountHead}
         date={date}
+        onLoadToday={loadTodayFromLoans}
       />
     </div>
   );

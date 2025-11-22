@@ -38,12 +38,14 @@ export function DailyEntriesTables({
   entries,
   openingBalance,
   date,
+  onLoadToday,
 }: {
   currentAccountHead: Tables['account_head'] | null;
   accountHeads: Tables['account_head'][];
   entries: Tables['daily_entries'][];
   openingBalance: number;
   date: string;
+  onLoadToday: () => Promise<void>;
 }) {
   const { setIsTamil } = useThanglish();
   const { company } = useCompany();
@@ -457,7 +459,14 @@ export function DailyEntriesTables({
           />
         </div>
       </form>
-      <div className="flex justify-center fixed bottom-0 left-0 right-0 py-3 border-t bg-gray-100 border-gray-200">
+      <div className="flex justify-center gap-12 fixed bottom-0 left-0 right-0 py-3 border-t bg-gray-100 border-gray-200">
+        <Button
+          className="border-black"
+          variant="outline"
+          onClick={() => void onLoadToday()}
+        >
+          Load Today's Entries
+        </Button>
         <Button className="border-black" onClick={() => void saveDailyEntry()}>
           Update
         </Button>
