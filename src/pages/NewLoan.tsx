@@ -389,6 +389,9 @@ export default function NewLoan() {
       'doc_charges',
     ],
     onSubmit: handleFormSubmit,
+    canMoves: {
+      customer_picker: () => selectedCustomer !== null,
+    },
   });
 
   const handleMetalTypeChange = () => {
