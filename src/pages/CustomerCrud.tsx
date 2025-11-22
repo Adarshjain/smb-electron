@@ -21,6 +21,7 @@ import { toastStyles } from '@/constants/loanForm.ts';
 import { Button } from '@/components/ui/button';
 import CustomerPicker from '@/components/CustomerPicker.tsx';
 import { Label } from '@/components/ui/label';
+import GoHome from '@/components/GoHome.tsx';
 
 const CustomerSchema = z.object({
   id: z.string(),
@@ -193,8 +194,11 @@ export default function CustomerCrud({
 
   return (
     <form ref={setFormRef} className="flex gap-3 flex-col p-2 w-[465px]">
-      <div className="text-xl text-center">
-        {id ? 'Editing Customer' : 'New Customer'}
+      <div className="flex gap-6">
+        <GoHome />
+        <div className="text-xl text-center">
+          {id ? 'Editing Customer' : 'New Customer'}
+        </div>
       </div>
       {!cantEdit ? (
         <CustomerPicker
