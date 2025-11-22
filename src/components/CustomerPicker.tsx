@@ -17,10 +17,12 @@ import {
 } from '@/components/ui/popover';
 import { useEffect, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { read } from '@/hooks/dbUtil.ts';
+import { query } from '@/hooks/dbUtil.ts';
 import type { Tables } from '@/../tables';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
 import { Kbd } from '@/components/ui/kbd';
+import { encode } from '../../thanglish/TsciiConverter.ts';
+import { decodeRecord } from '../../tableSchema.ts';
 
 interface SearchableSelectProps {
   onSelect?: (value: Tables['customers']) => void;
@@ -57,13 +59,11 @@ export default function CustomerPicker({
   useEffect(() => {
     let active = true;
     const run = async () => {
-      const customers = await read(
-        'customers',
-        { name: `${search}%` },
-        undefined,
-        true
+      const customers = await query<Tables['customers'][]>(
+        `select * from customers where name LIKE '${encode(search)}%' order by name, area`
       );
-      if (active) setItems(customers ?? []);
+      if (active)
+        setItems(customers?.map((c) => decodeRecord('customers', c)) ?? []);
     };
     if (search.length === 0) {
       setItems([]);
