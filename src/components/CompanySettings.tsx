@@ -8,7 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table.tsx';
 import { Badge } from '@/components/ui/badge';
-import { toastElectronResponse, viewableDate } from '@/lib/myUtils.tsx';
+import { errorToast, viewableDate } from '@/lib/myUtils.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { CrudCompany } from '@/components/CrudCompany.tsx';
 import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
@@ -19,17 +19,20 @@ export default function CompanySettings() {
   const { allCompanies, refetch } = useCompany();
 
   const deleteCompany = async (company: Tables['companies']) => {
-    if (company.is_default) {
-      alert(
-        'Cannot delete the default company. Please set another company as default before deleting this one.'
-      );
-      return;
+    try {
+      if (company.is_default) {
+        alert(
+          'Cannot delete the default company. Please set another company as default before deleting this one.'
+        );
+        return;
+      }
+      await deleteRecord('companies', {
+        name: company.name,
+      });
+      refetch();
+    } catch (error) {
+      errorToast(error);
     }
-    const response = await deleteRecord('companies', {
-      name: company.name,
-    });
-    toastElectronResponse(response);
-    refetch();
   };
 
   return (
