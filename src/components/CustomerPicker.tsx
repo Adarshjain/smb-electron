@@ -74,7 +74,7 @@ export default function CustomerPicker({
   }, [search]);
 
   useEffect(() => {
-    if (items.length > 0) {
+    if (items.length > 0 && document.activeElement === inputRef.current) {
       setHighlightedIndex(0);
       setIsKeyboardNavigating(true);
       setOpen(true);
@@ -129,10 +129,13 @@ export default function CustomerPicker({
 
   const handleSelect = (opt: Tables['customers']) => {
     onSelect?.(opt);
-    setOpen(false);
-    setSearch('');
+    setSearch(opt.name);
     setHighlightedIndex(-1);
     setIsKeyboardNavigating(false);
+    inputRef.current?.blur();
+    requestAnimationFrame(() => {
+      setOpen(false);
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
