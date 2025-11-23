@@ -47,11 +47,18 @@ export default function CustomerPicker({
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const parentRef = useRef<HTMLDivElement>(null);
 
+  const segmenter = new Intl.Segmenter('ta', { granularity: 'grapheme' });
+  const deleteLastGrapheme = (str: string) => {
+    const g = [...segmenter.segment(str)].map((s) => s.segment);
+    g.pop();
+    return g.join('');
+  };
+
   const virtualizer = useVirtualizer({
     count: items.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 34, // Approximate height of each item in pixels
-    overscan: 5, // Number of items to render outside the visible area
+    estimateSize: () => 34,
+    overscan: 5,
   });
 
   useEffect(() => {
@@ -99,6 +106,19 @@ export default function CustomerPicker({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace') {
+      const cursorAtEnd =
+        inputRef.current &&
+        inputRef.current.selectionStart === inputRef.current.value.length &&
+        inputRef.current.selectionEnd === inputRef.current.value.length;
+
+      if (cursorAtEnd) {
+        e.preventDefault();
+        setSearch((prev) => deleteLastGrapheme(prev));
+        return;
+      }
+    }
+
     if ((!open || items.length === 0) && e.key !== 'Enter') return;
 
     switch (e.key) {
