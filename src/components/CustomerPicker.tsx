@@ -253,6 +253,9 @@ export default function CustomerPicker({
               setSearch(convert(e.target.value));
               setOpen(true);
             }}
+            onFocus={(e) => {
+              e.currentTarget.select();
+            }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
           />
