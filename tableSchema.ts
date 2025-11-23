@@ -491,13 +491,17 @@ export const TablesSQliteSchema: Record<
 
 export const decodeRecord = <K extends TableName>(
   tableName: K,
-  record: Tables[K]
-): Tables[K] => encodeDecodeRecord(tableName, record, 'decode');
+  record: Tables[K],
+  shouldEncodeDecode = false
+): Tables[K] =>
+  shouldEncodeDecode ? encodeDecodeRecord(tableName, record, 'decode') : record;
 
 export const encodeRecord = <K extends TableName>(
   tableName: K,
-  record: Tables[K]
-): Tables[K] => encodeDecodeRecord(tableName, record, 'encode');
+  record: Tables[K],
+  shouldEncodeDecode = false
+): Tables[K] =>
+  shouldEncodeDecode ? encodeDecodeRecord(tableName, record, 'encode') : record;
 
 export function encodeDecodeRecord<K extends TableName>(
   tableName: K,

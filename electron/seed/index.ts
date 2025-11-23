@@ -7,7 +7,7 @@ import {
   type Tables,
   type TablesInsert,
 } from '../../tables';
-import { TablesSQliteSchema } from '../../tableSchema';
+import { decodeRecord, TablesSQliteSchema } from '../../tableSchema';
 import { addMonths, differenceInMonths, isBefore } from 'date-fns';
 
 const openingBalanceMap: Record<string, Record<string, number>> = {
@@ -163,12 +163,13 @@ export const initAreas = () => {
 
   for (const record of data) {
     if (!map[record.name]) {
-      createAreas.push({
+      const areaRecord = {
         name: record.name,
         pincode: record.pincode,
         post: record.post,
         town: record.town,
-      });
+      };
+      createAreas.push(decodeRecord('areas', areaRecord, true));
       map[record.name] = true;
     }
   }
@@ -304,27 +305,30 @@ export const initProducts = () => {
   const createProducts: Tables['products'][] = [];
 
   for (const record of itemDesMasterData) {
-    createProducts.push({
+    const productRecord: Tables['products'] = {
       name: record.name,
       product_type: 'product',
       metal_type: toSentenceCase(record.itemtype) as MetalType,
-    });
+    };
+    createProducts.push(decodeRecord('products', productRecord, true));
   }
 
   for (const record of goldQualityData) {
-    createProducts.push({
+    const productRecord: Tables['products'] = {
       name: record.quality,
       product_type: 'quality',
       metal_type: 'Other',
-    });
+    };
+    createProducts.push(decodeRecord('products', productRecord, true));
   }
 
   for (const record of goldQuality1Data) {
-    createProducts.push({
+    const productRecord: Tables['products'] = {
       name: record.quality,
       product_type: 'seal',
       metal_type: 'Other',
-    });
+    };
+    createProducts.push(decodeRecord('products', productRecord, true));
   }
   try {
     createBatched('products', createProducts);
@@ -359,7 +363,7 @@ export const initBills = () => {
         (item) => item.serial === record.serial && item.loanno === record.nos
       )
       .forEach((item) => {
-        createBillItems.push({
+        const billItemRecord = {
           serial: record.serial,
           loan_no: parseInt(record.nos),
           gross_weight: Number(
@@ -375,12 +379,13 @@ export const initBills = () => {
           quality: item.quality,
           extra: item.ituch,
           quantity: item.qty ? parseInt(item.qty) : 0,
-        });
+        };
+        createBillItems.push(decodeRecord('bill_items', billItemRecord, true));
       });
     const loanAmount = parseFloat(record.loan || '0');
     const interestPaid = parseFloat(record.totint || '0');
     const interestDiscount = parseFloat(record.dis || '0');
-    createBills.push({
+    const billRecord: Tables['bills'] = {
       serial: record.serial,
       loan_no: parseInt(record.nos),
       date: new Date(record.date).toISOString().split('T')[0],
@@ -392,7 +397,8 @@ export const initBills = () => {
       interest_rate: parseFloat(record.intrate || '0'),
       loan_amount: loanAmount,
       released: record.STATUS === 'Redeemed' ? 1 : 0,
-    });
+    };
+    createBills.push(decodeRecord('bills', billRecord, true));
     if (record.STATUS === 'Redeemed') {
       const tax_interest_amount =
         (loanAmount *
@@ -401,7 +407,7 @@ export const initBills = () => {
             new Date(record.redate).toISOString().split('T')[0]
           )) /
         100;
-      createReleases.push({
+      const releaseRecord = {
         serial: record.serial,
         loan_no: parseInt(record.nos),
         date: new Date(record.redate).toISOString().split('T')[0],
@@ -411,7 +417,8 @@ export const initBills = () => {
         interest_amount: interestPaid - interestDiscount,
         total_amount: loanAmount + interestPaid - interestDiscount,
         company: toSentenceCase(record.company),
-      });
+      };
+      createReleases.push(decodeRecord('releases', releaseRecord, true));
     }
   }
 
@@ -433,7 +440,6 @@ export const initCustomers = () => {
 
   const addresses = new Set<string>();
   const createCustomers: Tables['customers'][] = [];
-
   for (const record of data) {
     if (record.address1.trim()) {
       addresses.add(record.address1);
@@ -441,7 +447,7 @@ export const initCustomers = () => {
     if (record.address2.trim()) {
       addresses.add(record.address2);
     }
-    createCustomers.push({
+    const customerRecord = {
       id: record.code,
       name: record.name,
       fhname: record.fhname,
@@ -453,7 +459,8 @@ export const initCustomers = () => {
       phone_no: record.cell,
       id_proof: record.id,
       id_proof_value: record.id_det,
-    });
+    };
+    createCustomers.push(decodeRecord('customers', customerRecord, true));
   }
   try {
     createBatched('customers', createCustomers);
