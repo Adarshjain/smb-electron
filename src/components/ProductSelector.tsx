@@ -13,6 +13,7 @@ export default function ProductSelector(props: {
   onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
   onFocus?: (event: React.FocusEvent<HTMLInputElement>) => void;
   autoFocus?: boolean;
+  autoConvert: boolean;
 }) {
   const [search, setSearch] = useState('');
   const [filteredProducts, setFilteredProducts] = useState<string[]>([]);
@@ -36,29 +37,16 @@ export default function ProductSelector(props: {
   }, [props.options, search]);
 
   return (
-    <>
-      <AutocompleteSelect<string>
-        options={filteredProducts}
-        onSelect={props.onChange}
-        onSearchChange={setSearch}
-        placeholder={props.placeholder}
-        autofocus={props.autoFocus}
-        inputClassName={props.inputClassName}
-        triggerWidth={props.triggerWidth}
-        inputName={props.inputName}
-      />
-      {/*<SearchSelect*/}
-      {/*  options={filteredProducts}*/}
-      {/*  value={props.value}*/}
-      {/*  onSearchChange={setSearch}*/}
-      {/*  placeholder={props.placeholder}*/}
-      {/*  onChange={props.onChange}*/}
-      {/*  triggerWidth={props.triggerWidth}*/}
-      {/*  popoverWidth={props.popoverWidth}*/}
-      {/*  onKeyDown={props.onKeyDown}*/}
-      {/*  onFocus={props.onFocus}*/}
-      {/*  autoFocus={props.autoFocus}*/}
-      {/*/>*/}
-    </>
+    <AutocompleteSelect<string>
+      options={filteredProducts}
+      onSelect={props.onChange}
+      onSearchChange={setSearch}
+      placeholder={props.placeholder}
+      autofocus={props.autoFocus}
+      inputClassName={props.inputClassName}
+      triggerWidth={props.triggerWidth}
+      inputName={props.inputName}
+      autoConvert={props.autoConvert}
+    />
   );
 }

@@ -226,6 +226,7 @@ export default function CustomerCrud({
               triggerWidth="w-[370px]"
               popoverWidth="w-[370px]"
               autoFocus
+              autoConvert
             />
           )}
         />
@@ -269,6 +270,7 @@ export default function CustomerCrud({
               placeholder="Father/Husband Name"
               triggerWidth="w-[280px]"
               popoverWidth="w-[280px]"
+              autoConvert
             />
           )}
         />
@@ -305,6 +307,7 @@ export default function CustomerCrud({
               placeholder="Address Line 1"
               triggerWidth="w-[280px]"
               popoverWidth="w-[280px]"
+              autoConvert
             />
           )}
         />
@@ -325,6 +328,7 @@ export default function CustomerCrud({
               placeholder="Address Line 2"
               triggerWidth="w-[370px]"
               popoverWidth="w-[370px]"
+              autoConvert
             />
           )}
         />

@@ -127,6 +127,7 @@ export const BillingItemRow = memo(function BillingItemRow({
             options={products}
             inputName={`billing_items.${index}.product`}
             placeholder=""
+            autoConvert
           />
         )}
       />
@@ -149,6 +150,7 @@ export const BillingItemRow = memo(function BillingItemRow({
               'border-l-0 !rounded-none border-r-0'
             )}
             triggerWidth={FIELD_WIDTHS.QUALITY_FIELD}
+            autoConvert
           />
         )}
       />
@@ -172,6 +174,7 @@ export const BillingItemRow = memo(function BillingItemRow({
               'border-l-0 !rounded-none'
             )}
             triggerWidth={FIELD_WIDTHS.SEAL_FIELD}
+            autoConvert
           />
         )}
       />

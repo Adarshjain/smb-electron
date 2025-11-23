@@ -365,7 +365,9 @@ export function DailyEntriesTables({
                   options={accountHeads.map((account) => account.name)}
                   inputName={`entries.${index}.title`}
                   placeholder=""
-                  triggerWidth={`min-w-[480px]`}
+                  triggerWidth="min-w-[480px]"
+                  autoConvert={false}
+                  inputClassName="!border-0"
                 />
               )}
             />
