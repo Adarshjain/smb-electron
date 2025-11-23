@@ -54,6 +54,7 @@ export default function CustomerPicker({
       onSearchChange={setSearch}
       placeholder={placeholder}
       inputClassName={inputClassName}
+      inputName="customer_picker"
       autofocus={autofocus}
       showShortcut={showShortcut}
       getDisplayValue={(customer) => customer.name}
@@ -66,6 +67,7 @@ export default function CustomerPicker({
           <div style={{ width: 200 }}>{customer.area}</div>
         </>
       )}
+      autoConvert
     />
   );
 }

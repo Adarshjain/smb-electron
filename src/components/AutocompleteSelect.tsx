@@ -152,7 +152,6 @@ export default function AutocompleteSelect<T = string>({
     setSearch(displayValueGetter(opt));
     setHighlightedIndex(-1);
     setIsKeyboardNavigating(false);
-    inputRef.current?.blur();
     requestAnimationFrame(() => {
       setOpen(false);
     });
