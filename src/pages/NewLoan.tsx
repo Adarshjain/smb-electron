@@ -394,6 +394,10 @@ export default function NewLoan() {
     },
   });
 
+  useEffect(() => {
+    next('metal_type');
+  }, [next, selectedCustomer]);
+
   const handleMetalTypeChange = () => {
     fieldArray.replace([DEFAULT_BILLING_ITEM as BillingItemType]);
     setTimeout(() => {

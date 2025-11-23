@@ -4,10 +4,11 @@ import { Input } from '@/components/ui/input';
 import ProductSelector from '@/components/ProductSelector';
 import type { MetalType, Tables } from '@/../tables';
 import type { Loan } from '@/types/loanForm';
-import { KEYBOARD_SHORTCUTS } from '@/constants/loanForm';
+import { FIELD_WIDTHS, KEYBOARD_SHORTCUTS } from '@/constants/loanForm';
 import MyCache from '../../../MyCache.ts';
 import { read } from '@/hooks/dbUtil.ts';
 import { errorToast } from '@/lib/myUtils.tsx';
+import { cn } from '@/lib/utils.ts';
 
 interface BillingItemRowProps {
   index: number;
@@ -115,13 +116,17 @@ export const BillingItemRow = memo(function BillingItemRow({
           <ProductSelector
             value={field.value}
             onChange={field.onChange}
+            inputClassName={cn(
+              FIELD_WIDTHS.PRODUCT_FIELD,
+              'border-l-0 rounded-none !rounded-bl border-r-0'
+            )}
+            triggerWidth={FIELD_WIDTHS.PRODUCT_FIELD}
             onFocus={(e) => {
               e.currentTarget.select();
             }}
             options={products}
             inputName={`billing_items.${index}.product`}
             placeholder=""
-            triggerWidth="min-w-[280px]"
           />
         )}
       />
@@ -139,7 +144,11 @@ export const BillingItemRow = memo(function BillingItemRow({
             options={quality}
             inputName={`billing_items.${index}.quality`}
             placeholder=""
-            triggerWidth="min-w-[280px]"
+            inputClassName={cn(
+              FIELD_WIDTHS.QUALITY_FIELD,
+              'border-l-0 !rounded-none border-r-0'
+            )}
+            triggerWidth={FIELD_WIDTHS.QUALITY_FIELD}
           />
         )}
       />
@@ -158,7 +167,11 @@ export const BillingItemRow = memo(function BillingItemRow({
             options={extra}
             inputName={`billing_items.${index}.extra`}
             placeholder=""
-            triggerWidth="min-w-[120px] w-[120px] max-w-[120px]"
+            inputClassName={cn(
+              FIELD_WIDTHS.SEAL_FIELD,
+              'border-l-0 !rounded-none'
+            )}
+            triggerWidth={FIELD_WIDTHS.SEAL_FIELD}
           />
         )}
       />
