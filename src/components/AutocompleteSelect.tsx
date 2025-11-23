@@ -24,6 +24,7 @@ interface AutocompleteSelectProps<T> {
   estimatedRowHeight?: number;
   dropdownWidth?: string;
   triggerWidth?: string;
+  autoConvert: boolean;
 }
 
 export default function AutocompleteSelect<T = string>({
@@ -41,6 +42,7 @@ export default function AutocompleteSelect<T = string>({
   estimatedRowHeight = 34,
   dropdownWidth = 'w-[610px]',
   triggerWidth = 'w-[500px]',
+  autoConvert,
 }: AutocompleteSelectProps<T>) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -269,7 +271,9 @@ export default function AutocompleteSelect<T = string>({
             id="autocomplete_select"
             name={inputName}
             onChange={(e) => {
-              const value = convert(e.target.value);
+              const value = autoConvert
+                ? convert(e.target.value)
+                : e.target.value;
               setSearch(value);
               onSearchChange?.(value);
               setOpen(true);
