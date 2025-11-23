@@ -395,7 +395,13 @@ export default function NewLoan() {
   });
 
   useEffect(() => {
-    next('metal_type');
+    if (
+      selectedCustomer &&
+      document.activeElement ===
+        document.getElementsByName('customer_picker')[0]
+    ) {
+      next('metal_type');
+    }
   }, [next, selectedCustomer]);
 
   const handleMetalTypeChange = () => {
