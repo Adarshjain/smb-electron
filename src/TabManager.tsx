@@ -25,6 +25,8 @@ interface Tab {
 
 interface TabContextType {
   openTab: (title: string, component: ReactNode) => void;
+  switchToMain: () => void;
+  closeTab: (id?: string) => void;
 }
 
 const TabContext = createContext<TabContextType | null>(null);
@@ -55,13 +57,19 @@ export const TabManager: React.FC = () => {
     setActiveTabId(id);
   };
 
+  const switchToMain = () => {
+    setActiveTabId('main');
+  };
+
   const closeTab = useCallback(
-    (id: string) => {
+    (id?: string) => {
+      id ??= activeTabId;
       const matchedIndex = tabs.findIndex((tab) => tab.id === id);
-      if (activeTabId === id)
+      if (activeTabId === id) {
         setActiveTabId(
           matchedIndex !== -1 ? tabs[matchedIndex - 1].id : 'main'
         );
+      }
       setTabs((prev) => prev.filter((t) => t.id !== id));
     },
     [activeTabId, tabs]
@@ -126,7 +134,7 @@ export const TabManager: React.FC = () => {
   );
 
   return (
-    <TabContext.Provider value={{ openTab }}>
+    <TabContext.Provider value={{ openTab, switchToMain, closeTab }}>
       <div className="flex flex-col h-screen">
         {tabBar}
 

@@ -31,7 +31,7 @@ const HisaabGroupVsType: Record<string, 'liabilities' | 'assets'> = {
 
 export default function BalanceSheet() {
   const { company } = useCompany();
-  const { openTab } = useTabs();
+  const { openTab, closeTab } = useTabs();
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
 
@@ -41,6 +41,20 @@ export default function BalanceSheet() {
   const [displayAssetRows, setDisplayAssetRows] = useState<
     [string, string, string, number | undefined][]
   >([]);
+
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      if (e.key === 'F6') {
+        closeTab();
+      }
+    };
+
+    window.addEventListener('keydown', listener);
+
+    return () => {
+      window.removeEventListener('keydown', listener);
+    };
+  }, [closeTab]);
 
   const calcCapitalAcc = useCallback(
     async (
