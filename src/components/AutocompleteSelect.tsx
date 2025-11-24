@@ -11,6 +11,7 @@ import { Kbd } from '@/components/ui/kbd';
 
 interface AutocompleteSelectProps<T> {
   options: T[];
+  value?: T;
   onSelect?: (value: T) => void;
   onSearchChange?: (searchValue: string) => void;
   placeholder?: string;
@@ -29,6 +30,7 @@ interface AutocompleteSelectProps<T> {
 
 export default function AutocompleteSelect<T = string>({
   options,
+  value,
   onSelect,
   onSearchChange,
   placeholder = 'Search...',
@@ -92,6 +94,14 @@ export default function AutocompleteSelect<T = string>({
     estimateSize: () => estimatedRowHeight,
     overscan: 5,
   });
+
+  // Sync search state with external value prop
+  useEffect(() => {
+    if (value !== undefined) {
+      const displayValue = displayValueGetter(value);
+      setSearch(displayValue);
+    }
+  }, [value, displayValueGetter]);
 
   useEffect(() => {
     if (options.length > 0 && document.activeElement === inputRef.current) {
