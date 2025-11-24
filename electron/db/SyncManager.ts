@@ -92,7 +92,7 @@ export class SyncManager {
 
   private async pushChanges<K extends TableName>(tableName: K): Promise<void> {
     try {
-      const unsynced: LocalTables<K>[] | null = fetchUnsynced(tableName);
+      const unsynced: LocalTables<K>[] | null = await fetchUnsynced(tableName);
 
       if (unsynced == null) {
         console.warn(`DB not initialized`);

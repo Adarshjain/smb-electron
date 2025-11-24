@@ -7,7 +7,7 @@ import type {
   TablesUpdate,
 } from '../../tables';
 import { db } from './database';
-import { decodeRecord, TablesSQliteSchema } from '../../tableSchema';
+import { TablesSQliteSchema } from '../../tableSchema';
 import { query } from '../../src/hooks/dbUtil';
 
 export const tables: TableName[] = [
@@ -237,8 +237,7 @@ export function read<K extends TableName>(
     },
     [[], []]
   );
-  whereClauses.push('deleted IS ?');
-  whereValues.push('NULL');
+  whereClauses.push('deleted IS NULL');
 
   const whereClause = whereClauses.join(' AND ');
 
@@ -248,9 +247,7 @@ export function read<K extends TableName>(
          ${whereClauses.length ? `WHERE ${whereClause}` : ''}`
   );
 
-  return (stmt.all(...whereValues) as LocalTables<K>[]).map((record) =>
-    decodeRecord(table, record)
-  );
+  return stmt.all(...whereValues) as LocalTables<K>[];
 }
 
 export function deleteRecord<K extends TableName>(
