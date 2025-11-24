@@ -11,7 +11,7 @@ import EntriesByHead from '@/components/EntriesByHead.tsx';
 
 export default function ProfitAndLoss() {
   const { company } = useCompany();
-  const { openTab } = useTabs();
+  const { openTab, closeTab } = useTabs();
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
   const [displayExpenseRows, setDisplayExpenseRows] = useState<
@@ -20,6 +20,20 @@ export default function ProfitAndLoss() {
   const [displayIncomeRows, setDisplayIncomeRows] = useState<
     [string, string, string, number | undefined][]
   >([]);
+
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      if (e.key === 'F6') {
+        closeTab();
+      }
+    };
+
+    window.addEventListener('keydown', listener);
+
+    return () => {
+      window.removeEventListener('keydown', listener);
+    };
+  }, [closeTab]);
 
   useEffect(() => {
     if (!startDate || !endDate || !company) return;

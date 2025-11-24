@@ -9,6 +9,7 @@ import { create, deleteRecord, query, read } from '@/hooks/dbUtil.ts';
 import type { LocalTables, Tables } from '../../tables';
 import { errorToast, successToast } from '@/lib/myUtils.tsx';
 import { DailyEntriesTables } from '@/components/DailyEntriesTables.tsx';
+import { useTabs } from '@/TabManager.tsx';
 
 // Constants
 const LOAN_AMOUNT = 'LOAN  AMOUNT';
@@ -20,6 +21,7 @@ const CAPITAL_ACCOUNT_CODE = 1;
 
 export default function DailyEntries() {
   const { company } = useCompany();
+  const { closeTab } = useTabs();
 
   const [date, setDate] = useState(company?.current_date ?? '');
   const [accountHeads, setAccountHeads] = useState<Tables['account_head'][]>(
@@ -32,6 +34,20 @@ export default function DailyEntries() {
     []
   );
   const [openingBalance, setOpeningBalance] = useState(0);
+
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      if (e.key === 'F6') {
+        closeTab();
+      }
+    };
+
+    window.addEventListener('keydown', listener);
+
+    return () => {
+      window.removeEventListener('keydown', listener);
+    };
+  }, [closeTab]);
 
   const getAccountByName = useCallback(
     (name: string) => accountHeads.find((head) => head.name === name),

@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTabs } from '@/TabManager.tsx';
 
 const cache: Record<number, Tables['account_head'] | undefined> = {};
 
@@ -29,6 +30,7 @@ export default function EntriesByHead({
   range?: [string, string];
 }) {
   const { company } = useCompany();
+  const { closeTab } = useTabs();
   const [currentAccountHead, setCurrentAccountHead] = useState<
     Tables['account_head'] | null
   >(null);
@@ -42,6 +44,20 @@ export default function EntriesByHead({
 
   const [openingBalance, setOpeningBalance] = useState(0);
   const [closingBalance, setClosingBalance] = useState(0);
+
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      if (e.key === 'F6') {
+        closeTab();
+      }
+    };
+
+    window.addEventListener('keydown', listener);
+
+    return () => {
+      window.removeEventListener('keydown', listener);
+    };
+  }, [closeTab]);
 
   const getAccountByName = useCallback(
     (name: string) => accountHeads.find((head) => head.name === name),
