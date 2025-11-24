@@ -17,7 +17,6 @@ import {
 import type {
   LocalTables,
   TableName,
-  Tables,
   TablesDelete,
   TablesUpdate,
 } from '../tables';

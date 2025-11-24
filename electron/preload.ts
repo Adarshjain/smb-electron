@@ -2,7 +2,6 @@ import { contextBridge, ipcRenderer } from 'electron';
 import {
   type LocalTables,
   type TableName,
-  type Tables,
   type TablesDelete,
   type TablesUpdate,
 } from '../tables';

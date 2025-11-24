@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import DatePicker from '@/components/DatePicker.tsx';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { Tables } from '@/../tables';
+import type { LocalTables, Tables } from '@/../tables';
 import { toast } from 'sonner';
 import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/field';
 import { format } from 'date-fns';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
-import { create, update } from '@/hooks/dbUtil.ts';
+import { create, query, update } from '@/hooks/dbUtil.ts';
 import { errorToast, successToast } from '@/lib/myUtils.tsx';
 import { toastStyles } from '@/constants/loanForm.ts';
 
@@ -91,7 +91,7 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
         isCreate ? 'Creating company...' : 'Saving changes...'
       );
       try {
-        const payload: Partial<LocalTables<'companies'>> = {
+        const payload: Tables['companies'] = {
           name: data.name,
           current_date: data.current_date,
           next_serial: `${data.next_serial_letter.toUpperCase()}-${data.next_serial_number}`,
@@ -99,8 +99,8 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
         };
 
         if (data.is_default) {
-          await window.api.db.query(
-            'UPDATE companies SET is_default = 0',
+          await query<null>(
+            'UPDATE companies SET is_default = 0, synced = 0 where true',
             undefined,
             true
           );
