@@ -210,8 +210,10 @@ export interface FullCustomer {
 
 export type LocalTables<K extends TableName> = Tables[K] & {
   synced: 0 | 1;
+  deleted: 0 | 1 | null;
 };
+
 export type RowOrDeleteOrUpdate<K extends TableName> =
-  | Tables[K]
+  | LocalTables<K>
   | TablesDelete[K]
   | TablesUpdate[K];

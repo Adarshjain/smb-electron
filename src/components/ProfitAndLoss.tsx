@@ -41,7 +41,7 @@ export default function ProfitAndLoss() {
                       THEN ABS(SUM(de.credit) - SUM(de.debit))
                     ELSE
                       (SUM(de.credit) - SUM(de.debit))
-                                                       END AS net
+                    END AS net
            FROM account_head AS ah
                   LEFT JOIN daily_entries AS de
                             ON ah.code = de.main_code
@@ -50,11 +50,13 @@ export default function ProfitAndLoss() {
                               AND de.date <= ?
            WHERE ah.company = ?
              AND ah.hisaabGroup IN ('Income', 'Expenses')
+             AND ah.deleted IS NULL
+             AND de.deleted IS NULL
            GROUP BY ah.code, ah.name, ah.hisaabGroup
            HAVING SUM(de.debit) IS NOT NULL
                OR SUM(de.credit) IS NOT NULL
            ORDER BY ah.name;
-        `,
+          `,
           [company.name, startDate, endDate, company.name]
         );
         const incomeRows: [string, string, string, number | undefined][] = [];

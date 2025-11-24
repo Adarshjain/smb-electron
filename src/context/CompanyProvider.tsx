@@ -6,14 +6,14 @@ import {
   useEffect,
   useState,
 } from 'react';
-import type { Tables } from '@/../tables';
+import type { LocalTables } from '@/../tables';
 import { read, update } from '../hooks/dbUtil.ts';
 import { errorToast, getNextSerial } from '@/lib/myUtils.tsx';
 
 interface CompanyContextType {
-  company: Tables['companies'] | null;
-  allCompanies: Tables['companies'][];
-  setCompany: (company: Tables['companies']) => void;
+  company: LocalTables<'companies'> | null;
+  allCompanies: LocalTables<'companies'>[];
+  setCompany: (company: LocalTables<'companies'>) => void;
   setCurrentDate: (date: string) => Promise<void>;
   setNextSerial: (date?: string) => Promise<void>;
   refetch: () => void;
@@ -22,8 +22,10 @@ interface CompanyContextType {
 const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 
 export function CompanyProvider({ children }: { children: ReactNode }) {
-  const [company, setCompany] = useState<Tables['companies'] | null>(null);
-  const [allCompanies, setAllCompanies] = useState<Tables['companies'][]>([]);
+  const [company, setCompany] = useState<LocalTables<'companies'> | null>(null);
+  const [allCompanies, setAllCompanies] = useState<LocalTables<'companies'>[]>(
+    []
+  );
 
   const setCurrentDate = async (current_date: string) => {
     if (company) {

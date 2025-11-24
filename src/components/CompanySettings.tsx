@@ -18,7 +18,7 @@ import type { Tables } from '@/../tables';
 export default function CompanySettings() {
   const { allCompanies, refetch } = useCompany();
 
-  const deleteCompany = async (company: Tables['companies']) => {
+  const deleteCompany = async (company: LocalTables<'companies'>) => {
     try {
       if (company.is_default) {
         alert(

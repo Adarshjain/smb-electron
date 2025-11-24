@@ -30,7 +30,7 @@ export default function CustomerPicker({
 
     const run = async () => {
       const results = await query<Tables['customers'][]>(
-        `select * from customers where name LIKE '${search}%' order by name, area`
+        `select * from customers where name LIKE '${search}%' and deleted IS NULL order by name, area`
       );
       if (active) setCustomers(results ?? []);
     };

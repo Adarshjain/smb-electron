@@ -1,10 +1,4 @@
-import type {
-  LocalTables,
-  TableName,
-  Tables,
-  TablesDelete,
-  TablesUpdate,
-} from '../../tables';
+import type { LocalTables, TableName, Tables, TablesUpdate } from '@/../tables';
 import type { ElectronToReactResponse } from '../../shared-types';
 
 export const create = async <K extends TableName>(
@@ -18,20 +12,6 @@ export const create = async <K extends TableName>(
   }
   throw new Error(createResponse.error, {
     cause: createResponse.stack,
-  });
-};
-
-export const upsert = async <K extends TableName>(
-  table: K,
-  record: Tables[K]
-): Promise<null> => {
-  const upsertResponse: ElectronToReactResponse<null> =
-    await window.api.db.upsert(table, record);
-  if (upsertResponse.success) {
-    return null;
-  }
-  throw new Error(upsertResponse.error, {
-    cause: upsertResponse.stack,
   });
 };
 
@@ -70,7 +50,7 @@ export const update = async <K extends TableName>(
 
 export const deleteRecord = async <K extends TableName>(
   table: K,
-  record: TablesDelete[K]
+  record: Partial<Tables[K]>
 ): Promise<null> => {
   const response = await window.api.db.delete(table, record);
   if (response.success) {

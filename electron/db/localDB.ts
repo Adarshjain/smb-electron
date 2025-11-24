@@ -7,11 +7,8 @@ import type {
   TablesUpdate,
 } from '../../tables';
 import { db } from './database';
-import {
-  decodeRecord,
-  encodeRecord,
-  TablesSQliteSchema,
-} from '../../tableSchema';
+import { decodeRecord, TablesSQliteSchema } from '../../tableSchema';
+import { query } from '../../src/hooks/dbUtil';
 
 export const tables: TableName[] = [
   'areas',
@@ -27,8 +24,14 @@ export const tables: TableName[] = [
 
 export function fetchUnsynced<K extends TableName>(
   table: K
-): LocalTables<K>[] | null {
-  return read<K>(table, { synced: 0 } as Partial<LocalTables<K>>);
+): Promise<LocalTables<K>[] | null> {
+  return query<LocalTables<K>[] | null>(
+    `SELECT *
+     from ?
+     where synced = 0
+        OR deleted IS NOT NULL`,
+    [table]
+  );
 }
 
 export function validate<K extends TableName>(
@@ -122,15 +125,13 @@ export function create<K extends TableName>(table: K, record: Tables[K]): null {
 
   validate(table, record);
 
-  record = encodeRecord<K>(table, record);
-
   const keys = Object.keys(record);
   const values = Object.values(record);
   const placeholders = keys.map(() => '?').join(', ');
 
   const stmt = db.prepare(
-    `INSERT INTO ${table} (${keys.join(', ')}, synced)
-         VALUES (${placeholders}, 0)`
+    `INSERT INTO ${table} (${keys.join(', ')}, synced, deleted)
+         VALUES (${placeholders}, 0, NULL)`
   );
 
   stmt.run(...values);
@@ -144,26 +145,23 @@ export function createMultiple<K extends TableName>(
 ): null {
   if (!db || !records.length) return null;
 
-  // Validate and encode all records
-  const encodedRecords = records.map((record) => {
+  for (const record of records) {
     validate(table, record);
-    return encodeRecord<K>(table, record);
-  });
+  }
 
   // Assume all records have same keys (should be consistent schema)
-  const keys = Object.keys(encodedRecords[0]);
-  const placeholders = `(${keys.map(() => '?').join(', ')}, 0)`;
+  const keys = Object.keys(records[0]);
+  const placeholders = `(${keys.map(() => '?').join(', ')}, 0, NULL)`;
 
-  // Flatten all record values
   const values: (string | number | null)[] = [];
-  for (const record of encodedRecords) {
+  for (const record of records) {
     values.push(...Object.values(record));
   }
 
   // Build the SQL with multiple value groups
   const sql = `
-    INSERT INTO ${table} (${keys.join(', ')}, synced)
-    VALUES ${encodedRecords.map(() => placeholders).join(', ')}
+    INSERT INTO ${table} (${keys.join(', ')}, synced, deleted)
+    VALUES ${records.map(() => placeholders).join(', ')}
   `;
 
   const stmt = db.prepare(sql);
@@ -179,18 +177,18 @@ export function createBatched<K extends TableName>(
   if (!db || !records.length) return;
 
   const cols = Object.keys(records[0]).length;
-  const MAX_VARS = 999;
+  const MAX_VARS = 900;
   const BATCH_SIZE = Math.floor(MAX_VARS / cols);
 
   for (let i = 0; i < records.length; i += BATCH_SIZE) {
     const batch = records.slice(i, i + BATCH_SIZE);
-    createMultiple(table, batch); // your existing function
+    createMultiple(table, batch);
   }
 }
 
 export function markAsSynced<K extends TableName>(
   table: K,
-  record: Tables[K]
+  record: LocalTables<K>
 ): null {
   if (!db) return null;
 
@@ -200,15 +198,21 @@ export function markAsSynced<K extends TableName>(
   }
 
   const whereClauses = pkFields.map((field) => `${field} = ?`).join(' AND ');
-  const whereValues = pkFields.map((field) => record[field as keyof Tables[K]]);
+  const whereValues = pkFields.map(
+    (field) => record[field as keyof LocalTables<K>]
+  );
 
-  const stmt = db.prepare(
+  db.prepare(
     `UPDATE ${table}
          SET synced = 1
          WHERE ${whereClauses}`
-  );
+  ).run(...whereValues);
 
-  stmt.run(...whereValues);
+  db.prepare(
+    `DELETE
+     from ${table}
+     WHERE deleted IS NOT NULL`
+  ).run();
   return null;
 }
 
@@ -219,11 +223,6 @@ export function read<K extends TableName>(
   isLikeQuery = false
 ): LocalTables<K>[] | null {
   if (!db) return null;
-
-  conditions = encodeRecord(
-    table,
-    conditions as unknown as Tables[K]
-  ) as unknown as Partial<LocalTables<K>>;
 
   const [whereClauses, whereValues] = Object.entries(conditions).reduce<
     [string[], (string | number | boolean)[]]
@@ -238,6 +237,8 @@ export function read<K extends TableName>(
     },
     [[], []]
   );
+  whereClauses.push('deleted IS ?');
+  whereValues.push('NULL');
 
   const whereClause = whereClauses.join(' AND ');
 
@@ -247,64 +248,9 @@ export function read<K extends TableName>(
          ${whereClauses.length ? `WHERE ${whereClause}` : ''}`
   );
 
-  return (stmt.all(...whereValues) as LocalTables<K>[]).map(
-    (record) => decodeRecord(table, record) as LocalTables<K>
+  return (stmt.all(...whereValues) as LocalTables<K>[]).map((record) =>
+    decodeRecord(table, record)
   );
-}
-
-export function upsert<K extends TableName>(table: K, record: Tables[K]): null {
-  if (!db) return null;
-
-  validate(table, record, true);
-
-  record = encodeRecord<K>(table, record);
-
-  const pkFields = TablesSQliteSchema[table].primary;
-  if (!pkFields) {
-    throw new Error(`Primary key fields not defined for table ${table}`);
-  }
-
-  const whereClauses = pkFields.map((field) => `${field} = ?`).join(' AND ');
-  const whereValues = pkFields.map((field) => record[field as keyof Tables[K]]);
-
-  const existingStmt = db.prepare(
-    `SELECT *
-         FROM ${table}
-         WHERE ${whereClauses}`
-  );
-
-  const existing = existingStmt.get(...whereValues);
-
-  if (existing) {
-    const updateFields = Object.keys(record)
-      .filter((key) => !pkFields.includes(key))
-      .map((key) => `${key} = ?`)
-      .join(', ');
-    const updateValues = Object.keys(record)
-      .filter((key) => !pkFields.includes(key))
-      .map((key) => record[key as keyof Tables[K]]);
-
-    const updateStmt = db.prepare(
-      `UPDATE ${table}
-             SET ${updateFields},
-                 synced = 0
-             WHERE ${whereClauses}`
-    );
-
-    updateStmt.run(...updateValues, ...whereValues);
-  } else {
-    const keys = Object.keys(record);
-    const values = Object.values(record);
-    const placeholders = keys.map(() => '?').join(', ');
-
-    const insertStmt = db.prepare(
-      `INSERT INTO ${table} (${keys.join(', ')}, synced)
-             VALUES (${placeholders}, 0)`
-    );
-
-    insertStmt.run(...values);
-  }
-  return null;
 }
 
 export function deleteRecord<K extends TableName>(
@@ -312,13 +258,6 @@ export function deleteRecord<K extends TableName>(
   record: TablesDelete[K]
 ): null {
   if (!db) return null;
-
-  validate(table, record, true);
-
-  record = encodeRecord(
-    table,
-    record as unknown as Tables[K]
-  ) as unknown as TablesDelete[K];
 
   const pkFields = TablesSQliteSchema[table].primary;
   if (!pkFields) {
@@ -331,9 +270,10 @@ export function deleteRecord<K extends TableName>(
   );
 
   const stmt = db.prepare(
-    `DELETE
-         FROM ${table}
-         WHERE ${whereClauses}`
+    `UPDATE ${table}
+     SET synced = 0,
+         deleted = 1
+     WHERE ${whereClauses}`
   );
 
   stmt.run(...whereValues);
@@ -347,8 +287,6 @@ export function update<K extends TableName>(
   if (!db) return null;
 
   validate(table, record, true);
-
-  record = encodeRecord(table, record as Tables[K]) as TablesUpdate[K];
 
   const pkFields = TablesSQliteSchema[table].primary;
   if (!pkFields) {
