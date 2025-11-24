@@ -250,7 +250,7 @@ export function DailyEntriesTables({
               matchedEntry
             );
           if (shouldUpdate) {
-            const updateQUery = `UPDATE daily_entries
+            const updateQuery = `UPDATE daily_entries
                                SET credit = ?,
                                    debit = ?,
                                    description = ?
@@ -258,9 +258,10 @@ export function DailyEntriesTables({
                                  AND date = ?
                                  AND main_code = ?
                                  AND sub_code = ?
-                                 AND sortOrder = ?`;
+                                 AND sortOrder = ?
+                                 AND deleted IS NULL`;
             await query<null>(
-              updateQUery,
+              updateQuery,
               [
                 credit,
                 debit,
@@ -274,7 +275,7 @@ export function DailyEntriesTables({
               true
             );
             await query<null>(
-              updateQUery,
+              updateQuery,
               [
                 debit,
                 credit,
@@ -297,7 +298,8 @@ export function DailyEntriesTables({
            FROM daily_entries
            WHERE company = ?
              AND date = ?
-             AND sortOrder = ?`,
+             AND sortOrder = ?
+             AND deleted IS NULL`,
           [company.name, date, order],
           true
         );

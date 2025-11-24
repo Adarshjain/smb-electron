@@ -47,7 +47,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export interface CrudCompanyProps {
-  company?: Tables['companies'];
+  company?: LocalTables<'companies'>;
   label?: JSX.Element;
   onSave?: () => void;
 }
@@ -91,7 +91,7 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
         isCreate ? 'Creating company...' : 'Saving changes...'
       );
       try {
-        const payload: Partial<Tables['companies']> = {
+        const payload: Partial<LocalTables<'companies'>> = {
           name: data.name,
           current_date: data.current_date,
           next_serial: `${data.next_serial_letter.toUpperCase()}-${data.next_serial_number}`,
@@ -108,8 +108,8 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
 
         try {
           await (isCreate
-            ? create('companies', payload as Tables['companies'])
-            : update('companies', payload as Tables['companies']));
+            ? create('companies', payload)
+            : update('companies', payload));
           successToast('Success');
         } catch (e) {
           errorToast(e);

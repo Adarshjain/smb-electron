@@ -1,4 +1,4 @@
-import type { TableName, Tables } from './tables';
+import type { LocalTables, TableName, Tables } from './tables';
 import { decode, encode } from './thanglish/TsciiConverter.js';
 
 interface TableSchema {
@@ -459,29 +459,34 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
   },
 } as const;
 
-export const decodeRecord = <K extends TableName>(
+export const decodeRecord = <
+  K extends TableName,
+  T extends Tables[K] | LocalTables<K>,
+>(
   tableName: K,
-  record: Tables[K],
+  record: T,
   shouldEncodeDecode = false
-): Tables[K] =>
+): T =>
   shouldEncodeDecode ? encodeDecodeRecord(tableName, record, 'decode') : record;
 
-export const encodeRecord = <K extends TableName>(
+export const encodeRecord = <
+  K extends TableName,
+  T extends Tables[K] | LocalTables<K>,
+>(
   tableName: K,
-  record: Tables[K],
+  record: T,
   shouldEncodeDecode = false
-): Tables[K] =>
+): T =>
   shouldEncodeDecode ? encodeDecodeRecord(tableName, record, 'encode') : record;
 
-export function encodeDecodeRecord<K extends TableName>(
-  tableName: K,
-  record: Tables[K],
-  type: 'encode' | 'decode'
-): Tables[K] {
+export function encodeDecodeRecord<
+  K extends TableName,
+  T extends Tables[K] | LocalTables<K>,
+>(tableName: K, record: T, type: 'encode' | 'decode'): T {
   const columnSchema = TablesSQliteSchema[tableName].columns;
   const encodedKeys = Object.keys(record).filter(
     (key) => columnSchema[key]?.encoded
-  ) as (keyof Tables[K])[];
+  ) as (keyof T)[];
 
   if (encodedKeys.length === 0) {
     return record;
@@ -492,7 +497,7 @@ export function encodeDecodeRecord<K extends TableName>(
 
   const encodedRecord = { ...record };
   for (const key of encodedKeys) {
-    encodedRecord[key] = method(record[key] as string) as Tables[K][typeof key];
+    encodedRecord[key] = method(record[key] as string) as T[typeof key];
   }
 
   return encodedRecord;

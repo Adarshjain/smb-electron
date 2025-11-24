@@ -144,6 +144,7 @@ export default function EntriesByHead({
            and main_code = ?
            and date >= ?
            and date <= ?
+           and deleted IS NULL
          order by date`,
         [company.name, currentAccountHead?.code, startDate, endDate]
       );

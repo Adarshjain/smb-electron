@@ -13,7 +13,6 @@ import {
   read,
   tables,
   update,
-  upsert,
 } from './db/localDB';
 import type {
   LocalTables,
@@ -220,7 +219,7 @@ ipcMain.handle(
   <K extends TableName>(
     _event: IpcMainInvokeEvent,
     table: K,
-    record: Tables[K]
+    record: LocalTables<K>
   ): ElectronToReactResponse<null> => {
     try {
       return { success: true, data: create(table, record) };
@@ -287,26 +286,6 @@ ipcMain.handle(
   ): ElectronToReactResponse<null> => {
     try {
       deleteRecord(table, record);
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      };
-    }
-  }
-);
-
-ipcMain.handle(
-  'db:upsert',
-  <K extends TableName>(
-    _event: IpcMainInvokeEvent,
-    table: K,
-    record: Tables[K]
-  ): ElectronToReactResponse<null> => {
-    try {
-      upsert(table, record);
       return { success: true };
     } catch (error) {
       return {

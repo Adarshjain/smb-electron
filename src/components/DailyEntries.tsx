@@ -5,7 +5,7 @@ import {
 } from '@/components/ui/native-select';
 import DatePicker from '@/components/DatePicker.tsx';
 import { useCompany } from '@/context/CompanyProvider.tsx';
-import { create, query, read } from '@/hooks/dbUtil.ts';
+import { create, deleteRecord, query, read } from '@/hooks/dbUtil.ts';
 import type { LocalTables, Tables } from '../../tables';
 import { errorToast, successToast } from '@/lib/myUtils.tsx';
 import { DailyEntriesTables } from '@/components/DailyEntriesTables.tsx';
@@ -67,6 +67,7 @@ export default function DailyEntries() {
         from daily_entries
         where company = ?
           and date < ?
+          and deleted IS NULL
           and main_code = ?;
       `;
 
@@ -98,27 +99,32 @@ export default function DailyEntries() {
       if (existingEntry) {
         if (credit !== existingEntry.credit || debit !== existingEntry.debit) {
           if (credit === 0 && debit === 0) {
-            await query<null>(
-              `DELETE
-                     FROM daily_entries
-                     WHERE company = ?
-                       AND sortOrder = ?`,
-              [company?.name, existingEntry.sortOrder],
-              true
-            );
+            await deleteRecord('daily_entries', {
+              company: company?.name,
+              sortOrder: existingEntry.sortOrder,
+            });
+            // await query<null>(
+            //   `DELETE
+            //          FROM daily_entries
+            //          WHERE company = ?
+            //            AND sortOrder = ?`,
+            //   [company?.name, existingEntry.sortOrder],
+            //   true
+            // );
             return;
           }
-          const updateQUery = `UPDATE daily_entries
+          const updateQuery = `UPDATE daily_entries
                                SET credit = ?,
                                    debit = ?,
-                                   description = ?
+                                   description = ?,
+                                   synced = 0
                                WHERE company = ?
                                  AND date = ?
                                  AND main_code = ?
                                  AND sub_code = ?
                                  AND sortOrder = ?`;
           await query<null>(
-            updateQUery,
+            updateQuery,
             [
               credit,
               debit,
@@ -132,7 +138,7 @@ export default function DailyEntries() {
             true
           );
           await query<null>(
-            updateQUery,
+            updateQuery,
             [
               debit,
               credit,
