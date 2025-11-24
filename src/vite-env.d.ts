@@ -25,7 +25,7 @@ declare global {
         ) => Promise<ElectronToReactResponse<null>>;
         delete: <K extends TableName>(
           table: K,
-          record: TablesDelete[K]
+          record: Partial<Tables[K]>
         ) => Promise<ElectronToReactResponse<null>>;
         query: <T>(
           query: string,
