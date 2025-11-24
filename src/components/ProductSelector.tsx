@@ -47,6 +47,7 @@ export default function ProductSelector(props: {
       triggerWidth={props.triggerWidth}
       inputName={props.inputName}
       autoConvert={props.autoConvert}
+      value={props.value}
     />
   );
 }
