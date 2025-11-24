@@ -36,14 +36,14 @@ export class ErrorBoundary extends Component<
   render(): ReactNode {
     if (this.state.hasError) {
       return (
-        this.props.fallback || (
+        this.props.fallback ?? (
           <div className="flex h-screen items-center justify-center p-4">
             <div className="max-w-md rounded-lg border border-destructive bg-card p-6 text-center">
               <h2 className="mb-2 text-2xl font-bold text-destructive">
                 Something went wrong
               </h2>
               <p className="mb-4 text-muted-foreground">
-                {this.state.error?.message ||
+                {this.state.error?.message ??
                   'An unexpected error occurred. Please refresh the page.'}
               </p>
               <button
@@ -61,4 +61,3 @@ export class ErrorBoundary extends Component<
     return this.props.children;
   }
 }
-

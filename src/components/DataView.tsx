@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { read } from '@/hooks/dbUtil.ts';
-import type { TableName, Tables } from '../../tables';
+import type { LocalTables, TableName } from '@/../tables';
 import { errorToast } from '@/lib/myUtils.tsx';
 import {
   Table,

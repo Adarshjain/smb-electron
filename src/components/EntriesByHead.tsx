@@ -124,7 +124,7 @@ export default function EntriesByHead({
       console.error(error);
       errorToast(error);
     }
-  }, [company, currentAccountHead, startDate]);
+  }, [company, currentAccountHead, endDate, startDate]);
 
   useEffect(() => {
     void loadAccountHeads();
