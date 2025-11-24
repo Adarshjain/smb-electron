@@ -3,6 +3,7 @@
 import type {
   LocalTables,
   TableName,
+  Tables,
   TablesDelete,
   TablesUpdate,
 } from './tables';
@@ -24,12 +25,16 @@ declare global {
       db: {
         create: <K extends TableName>(
           table: K,
-          record: LocalTables<K>
+          record: Tables[K]
+        ) => Promise<ElectronToReactResponse<null>>;
+        upsert: <K extends TableName>(
+          table: K,
+          record: Tables[K]
         ) => Promise<ElectronToReactResponse<null>>;
         read: <K extends TableName>(
           table: K,
           conditions: Partial<LocalTables<K>>,
-          fields?: keyof LocalTables<K> | '*',
+          fields: keyof LocalTables<K> | '*' = '*',
           isLikeQuery?: boolean
         ) => Promise<ElectronToReactResponse<LocalTables<K>[] | null>>;
         update: <K extends TableName>(
@@ -38,13 +43,13 @@ declare global {
         ) => Promise<ElectronToReactResponse<null>>;
         delete: <K extends TableName>(
           table: K,
-          record: TablesDelete[K]
+          record: Partial<Tables[K]>
         ) => Promise<ElectronToReactResponse<null>>;
-        query: (
+        query: <T>(
           query: string,
           params?: unknown[],
           justRun?: boolean
-        ) => Promise<ElectronToReactResponse<unknown>>;
+        ) => Promise<ElectronToReactResponse<T | null>>;
         initSeed: () => Promise<ElectronToReactResponse<void>>;
       };
       supabase: {
