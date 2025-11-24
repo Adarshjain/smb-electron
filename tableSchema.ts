@@ -1,25 +1,40 @@
 import type { TableName, Tables } from './tables';
 import { decode, encode } from './thanglish/TsciiConverter.js';
 
-export const TablesSQliteSchema: Record<
-  TableName,
-  {
-    name: TableName;
-    columns: Record<
-      string,
-      {
-        schema: string;
-        encoded: boolean;
-      }
-    >;
-    requiredFields: string[];
-    unique?: string[];
-    primary: string[];
-  }
-> = {
+interface TableSchema {
+  name: TableName;
+  columns: Record<
+    string,
+    {
+      schema: string;
+      encoded: boolean;
+    }
+  >;
+  requiredFields: string[];
+  unique?: string[];
+  primary: string[];
+}
+
+const localizedColumns = (
+  columns: TableSchema['columns']
+): TableSchema['columns'] => {
+  return {
+    ...columns,
+    synced: {
+      schema: 'BOOLEAN NOT NULL DEFAULT 0',
+      encoded: false,
+    },
+    deleted: {
+      schema: 'BOOLEAN',
+      encoded: false,
+    },
+  };
+};
+
+export const TablesSQliteSchema: Record<TableName, TableSchema> = {
   areas: {
     name: 'areas',
-    columns: {
+    columns: localizedColumns({
       name: {
         schema: 'TEXT PRIMARY KEY UNIQUE',
         encoded: true,
@@ -36,18 +51,14 @@ export const TablesSQliteSchema: Record<
         schema: 'TEXT',
         encoded: false,
       },
-      synced: {
-        schema: 'BOOLEAN NOT NULL DEFAULT 0',
-        encoded: false,
-      },
-    },
+    }),
     requiredFields: ['name'],
     primary: ['name'],
   },
 
   companies: {
     name: 'companies',
-    columns: {
+    columns: localizedColumns({
       name: {
         schema: 'TEXT PRIMARY KEY UNIQUE',
         encoded: false,
@@ -64,18 +75,14 @@ export const TablesSQliteSchema: Record<
         schema: 'BOOLEAN NOT NULL DEFAULT 0',
         encoded: false,
       },
-      synced: {
-        schema: 'BOOLEAN NOT NULL DEFAULT 0',
-        encoded: false,
-      },
-    },
+    }),
     requiredFields: ['name', 'current_date', 'next_serial'],
     primary: ['name'],
   },
 
   products: {
     name: 'products',
-    columns: {
+    columns: localizedColumns({
       name: {
         schema: 'TEXT PRIMARY KEY',
         encoded: true,
@@ -90,18 +97,14 @@ export const TablesSQliteSchema: Record<
           "TEXT NOT NULL CHECK(product_type IN ('product', 'quality', 'seal'))",
         encoded: false,
       },
-      synced: {
-        schema: 'BOOLEAN NOT NULL DEFAULT 0',
-        encoded: false,
-      },
-    },
+    }),
     requiredFields: ['name', 'metal_type', 'product_type'],
     primary: ['name'],
   },
 
   customers: {
     name: 'customers',
-    columns: {
+    columns: localizedColumns({
       id: {
         schema: 'TEXT PRIMARY KEY',
         encoded: false,
@@ -146,18 +149,14 @@ export const TablesSQliteSchema: Record<
         schema: 'TEXT',
         encoded: false,
       },
-      synced: {
-        schema: 'BOOLEAN NOT NULL DEFAULT 0',
-        encoded: false,
-      },
-    },
+    }),
     requiredFields: ['id', 'fhtitle', 'fhname', 'name'],
     primary: ['id'],
   },
 
   daily_balances: {
     name: 'daily_balances',
-    columns: {
+    columns: localizedColumns({
       date: {
         schema: 'TEXT NOT NULL',
         encoded: false,
@@ -174,11 +173,7 @@ export const TablesSQliteSchema: Record<
         schema: 'TEXT NOT NULL',
         encoded: false,
       },
-      synced: {
-        schema: 'BOOLEAN NOT NULL DEFAULT 0',
-        encoded: false,
-      },
-    },
+    }),
     requiredFields: ['date', 'opening', 'closing', 'company'],
     unique: ['date', 'company'],
     primary: ['date', 'company'],
@@ -186,7 +181,7 @@ export const TablesSQliteSchema: Record<
 
   account_head: {
     name: 'account_head',
-    columns: {
+    columns: localizedColumns({
       code: {
         schema: 'REAL NOT NULL',
         encoded: false,
@@ -207,11 +202,7 @@ export const TablesSQliteSchema: Record<
         schema: 'TEXT NOT NULL',
         encoded: false,
       },
-      synced: {
-        schema: 'BOOLEAN NOT NULL DEFAULT 0',
-        encoded: false,
-      },
-    },
+    }),
     requiredFields: ['code', 'openingBalance', 'name', 'company'],
     unique: ['code', 'company'],
     primary: ['code', 'company'],
@@ -219,7 +210,7 @@ export const TablesSQliteSchema: Record<
 
   daily_entries: {
     name: 'daily_entries',
-    columns: {
+    columns: localizedColumns({
       debit: {
         schema: 'REAL NOT NULL',
         encoded: false,
@@ -252,18 +243,14 @@ export const TablesSQliteSchema: Record<
         schema: 'TEXT NOT NULL',
         encoded: false,
       },
-      synced: {
-        schema: 'BOOLEAN NOT NULL DEFAULT 0',
-        encoded: false,
-      },
-    },
+    }),
     requiredFields: [],
     primary: ['date', 'company'],
   },
 
   bills: {
     name: 'bills',
-    columns: {
+    columns: localizedColumns({
       serial: {
         schema: 'TEXT NOT NULL',
         encoded: false,
@@ -309,12 +296,7 @@ export const TablesSQliteSchema: Record<
         schema: 'TEXT',
         encoded: false,
       },
-      synced: {
-        schema: 'BOOLEAN NOT NULL DEFAULT 0',
-        encoded: false,
-      },
-      // Composite primary key → emulate with UNIQUE
-    },
+    }),
     requiredFields: [
       'serial',
       'loan_no',
@@ -332,7 +314,7 @@ export const TablesSQliteSchema: Record<
 
   bill_items: {
     name: 'bill_items',
-    columns: {
+    columns: localizedColumns({
       serial: {
         schema: 'TEXT NOT NULL',
         encoded: false,
@@ -369,11 +351,7 @@ export const TablesSQliteSchema: Record<
         schema: 'REAL NOT NULL',
         encoded: false,
       },
-      synced: {
-        schema: 'BOOLEAN NOT NULL DEFAULT 0',
-        encoded: false,
-      },
-    },
+    }),
     requiredFields: [
       'serial',
       'loan_no',
@@ -388,7 +366,7 @@ export const TablesSQliteSchema: Record<
 
   releases: {
     name: 'releases',
-    columns: {
+    columns: localizedColumns({
       serial: {
         schema: 'TEXT NOT NULL',
         encoded: false,
@@ -425,11 +403,7 @@ export const TablesSQliteSchema: Record<
         schema: 'TEXT',
         encoded: false,
       },
-      synced: {
-        schema: 'BOOLEAN NOT NULL DEFAULT 0',
-        encoded: false,
-      },
-    },
+    }),
     requiredFields: [
       'serial',
       'loan_no',
@@ -444,7 +418,7 @@ export const TablesSQliteSchema: Record<
 
   interest_rates: {
     name: 'interest_rates',
-    columns: {
+    columns: localizedColumns({
       metal_type: {
         schema:
           "TEXT NOT NULL CHECK(metal_type IN ('Gold', 'Silver', 'Other'))",
@@ -471,11 +445,7 @@ export const TablesSQliteSchema: Record<
           "TEXT NOT NULL CHECK(doc_charges_type IN ('Fixed', 'Percentage'))",
         encoded: false,
       },
-      synced: {
-        schema: 'BOOLEAN NOT NULL DEFAULT 0',
-        encoded: false,
-      },
-    },
+    }),
     requiredFields: [
       'metal_type',
       'rate',
