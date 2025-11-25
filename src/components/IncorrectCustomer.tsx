@@ -1,5 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
-import { query } from '@/hooks/dbUtil.ts';
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
+import { query, read } from '@/hooks/dbUtil.ts';
 import type { LocalTables } from '../../tables';
 import { errorToast, formatCurrency, successToast } from '@/lib/myUtils.tsx';
 import {
@@ -15,6 +20,17 @@ import GoHome from '@/components/GoHome.tsx';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import ModifyLoanCustomer from '@/components/ModifyLoanCustomer.tsx';
+import { SerialNumber } from '@/components/LoanForm/SerialNumber.tsx';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
+
+const SerialSchema = z.object({
+  serial: z.string().length(1),
+  loan_no: z.number(),
+});
+type ISerial = z.infer<typeof SerialSchema>;
 
 export default function IncorrectCustomer() {
   const { company } = useCompany();
@@ -29,6 +45,20 @@ export default function IncorrectCustomer() {
   const [currentLoan, setCurrentLoan] = useState<LocalTables<'bills'> | null>(
     null
   );
+
+  const defaultValues: ISerial = {
+    serial: '',
+    loan_no: 0,
+  };
+
+  const { control, getValues } = useForm<ISerial>({
+    resolver: zodResolver(SerialSchema),
+    defaultValues,
+  });
+
+  const { setFormRef } = useEnterNavigation({
+    fields: ['serial', 'loan_no'],
+  });
 
   const fetchSerials = useCallback(async () => {
     try {
@@ -107,15 +137,41 @@ export default function IncorrectCustomer() {
     }
   };
 
+  async function onLoanNumberInput(e?: ReactKeyboardEvent<HTMLInputElement>) {
+    if (e) e.preventDefault();
+    const { serial, loan_no } = getValues();
+    if (!serial || !loan_no) return;
+    try {
+      const bill = await read('bills', {
+        serial: serial.toUpperCase(),
+        loan_no,
+      });
+      if (bill?.length) {
+        setCurrentLoan(bill[0]);
+      } else {
+        errorToast('No bills matched.');
+      }
+    } catch (error) {
+      errorToast(error);
+    }
+  }
+
   useEffect(() => {
     void fetchSerials();
   }, [fetchSerials]);
 
   return (
     <div className="p-2 w-7/10 mx-auto">
-      <div className="flex gap-4 items-center mb-2">
+      <div className="flex gap-4 items-center mb-2" ref={setFormRef}>
         <GoHome />
         <div className="text-xl">Incorrect Customers</div>
+        <SerialNumber
+          control={control}
+          serialFieldName="serial"
+          numberFieldName="loan_no"
+          onNumFieldKeyDown={(e) => void onLoanNumberInput(e)}
+          autoFocus
+        />
         <div className="flex ml-auto items-center gap-2">
           <Button
             variant="outline"
