@@ -9,6 +9,13 @@ import DailyEntries from '@/components/DailyEntries.tsx';
 import CurrentDateCrud from '@/components/CurrentDateCrud.tsx';
 import ProfitAndLoss from '@/components/ProfitAndLoss.tsx';
 import BalanceSheet from '@/components/BalanceSheet.tsx';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown } from 'lucide-react';
 
 const shortCutMapping: {
   shortcutKey: string;
@@ -97,20 +104,6 @@ export function Home() {
           <Kbd className="justify-self-start col-start-1">F4</Kbd>
           <div className="justify-self-center col-start-2">Cash Book</div>
         </Button>
-        <Button
-          variant="outline"
-          className="w-full px-3 border-input font-normal"
-          onClick={() => openTab('Profit & Loss', <ProfitAndLoss />)}
-        >
-          <div className="justify-self-center col-start-2">P&L</div>
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full px-3 border-input font-normal"
-          onClick={() => openTab('Balance Sheet', <BalanceSheet />)}
-        >
-          <div className="justify-self-center col-start-2">Balance Sheet</div>
-        </Button>
         <CurrentDateCrud />
         <Button
           variant="outline"
@@ -120,22 +113,35 @@ export function Home() {
           <Kbd className="justify-self-start col-start-1">F8</Kbd>
           <div className="justify-self-center col-start-2">Day Book</div>
         </Button>
-        <Button
-          variant="outline"
-          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
-          onClick={() => void navigate('/settings')}
-        >
-          <div className="justify-self-center col-start-2">Settings</div>
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
-          onClick={() => void navigate('/incorrect-customers')}
-        >
-          <div className="justify-self-center col-start-2">
-            Incorrect Customers
-          </div>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
+            >
+              <div className="justify-self-center col-start-2">More</div>
+              <ChevronDown />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-[250px]">
+            <DropdownMenuItem
+              onClick={() => openTab('Profit & Loss', <ProfitAndLoss />)}
+            >
+              Profit & Loss
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => openTab('Balance Sheet', <BalanceSheet />)}
+            >
+              Balance Sheet
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void navigate('/settings')}>
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void navigate('/other-customers')}>
+              Other Customers
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

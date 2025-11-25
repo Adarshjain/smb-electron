@@ -39,7 +39,7 @@ const SerialSchema = z.object({
 });
 type ISerial = z.infer<typeof SerialSchema>;
 
-export default function IncorrectCustomer() {
+export default function OtherCustomer() {
   const { company } = useCompany();
   const [bills, setBills] = useState<LocalTables<'bills'>[]>([]);
   const [customers, setCustomers] = useState<
@@ -174,7 +174,7 @@ export default function IncorrectCustomer() {
     <div className="p-2 w-7/10 mx-auto">
       <div className="flex gap-4 items-center mb-2" ref={setFormRef}>
         <GoHome />
-        <div className="text-xl">Incorrect Customers</div>
+        <div className="text-xl">Other Customers</div>
         <SerialNumber
           control={control}
           serialFieldName="serial"
