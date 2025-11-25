@@ -25,6 +25,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 const SerialSchema = z.object({
   serial: z.string().length(1),
@@ -41,10 +43,10 @@ export default function IncorrectCustomer() {
   const perPage = 25;
   const [loansCount, setLoansCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
-
   const [currentLoan, setCurrentLoan] = useState<LocalTables<'bills'> | null>(
     null
   );
+  const [activeOnly, setActiveOnly] = useState(true);
 
   const defaultValues: ISerial = {
     serial: '',
@@ -68,28 +70,31 @@ export default function IncorrectCustomer() {
                 JOIN (SELECT DISTINCT serial, loan_no
                       FROM bill_items
                       WHERE deleted IS NULL
-                        AND (quality LIKE '%@%' OR
-                             quality LIKE '%#%')) bi
-                     ON b.serial = bi.serial
-                       AND b.loan_no = bi.loan_no
-         WHERE b.deleted IS NULL
-           AND b.company = ?
-         ORDER BY b.serial, b.loan_no
-         LIMIT ? OFFSET ?`,
-        [company?.name, perPage, currentPage * perPage]
-      );
-      const loansCountQuery = query<[{ total: number }]>(
-        `SELECT COUNT(*) AS total
-         FROM bills b
-                JOIN (SELECT DISTINCT serial, loan_no
-                      FROM bill_items
-                      WHERE deleted IS NULL
                         AND (quality LIKE '%@%' OR quality LIKE '%#%')) bi
                      ON b.serial = bi.serial
                        AND b.loan_no = bi.loan_no
          WHERE b.deleted IS NULL
-           AND b.company = ?`,
-        [company?.name]
+           AND b.company = ?
+           AND (b.released = 0 OR b.released = ?)
+         ORDER BY b.serial, b.loan_no
+         LIMIT ? OFFSET ?`,
+        [company?.name, activeOnly ? 0 : 1, perPage, currentPage * perPage]
+      );
+      const loansCountQuery = query<[{ total: number }]>(
+        `SELECT COUNT(*) AS total
+         FROM bills b
+                JOIN (
+           SELECT DISTINCT serial, loan_no
+           FROM bill_items
+           WHERE deleted IS NULL
+             AND (quality LIKE '%@%' OR quality LIKE '%#%')
+         ) bi
+                     ON b.serial = bi.serial
+                       AND b.loan_no = bi.loan_no
+         WHERE b.deleted IS NULL
+           AND b.company = ?
+           AND (b.released = 0 OR b.released = ?)`,
+        [company?.name, activeOnly ? 0 : 1]
       );
       const [loans, loansCountResp] = await Promise.all([
         loansQuery,
@@ -107,7 +112,7 @@ export default function IncorrectCustomer() {
     } catch (error) {
       errorToast(error);
     }
-  }, [company?.name, currentPage]);
+  }, [activeOnly, company?.name, currentPage]);
 
   const updateCustomerForBill = async (customerId: string) => {
     try {
@@ -172,6 +177,14 @@ export default function IncorrectCustomer() {
           onNumFieldKeyDown={(e) => void onLoanNumberInput(e)}
           autoFocus
         />
+        <div className="flex gap-1 items-center">
+          <Checkbox
+            id="use_date_picker"
+            checked={activeOnly}
+            onCheckedChange={(e) => setActiveOnly(!!e)}
+          />
+          <Label htmlFor="use_date_picker">Active Only</Label>
+        </div>
         <div className="flex ml-auto items-center gap-2">
           <Button
             variant="outline"
