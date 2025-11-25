@@ -97,7 +97,7 @@ export default function AutocompleteSelect<T = string>({
 
   // Sync search state with external value prop
   useEffect(() => {
-    if (value !== undefined) {
+    if (value) {
       const displayValue = displayValueGetter(value);
       setSearch(displayValue);
     }
