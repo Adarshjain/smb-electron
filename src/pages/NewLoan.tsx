@@ -34,9 +34,7 @@ import {
   BILLING_ITEM_FIELDS,
   DECIMAL_PRECISION,
   DEFAULT_BILLING_ITEM,
-  toastStyles,
 } from '@/constants/loanForm';
-import { toast } from 'sonner';
 
 import '@/styles/NewLoan.css';
 import { MetalTypeSelector } from '@/components/LoanForm/MetalTypeSelector.tsx';
@@ -46,6 +44,7 @@ import { create, deleteRecord, update } from '@/hooks/dbUtil.ts';
 import BottomBar from '@/components/LoanForm/BottomBar.tsx';
 import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
 import {
+  errorToast,
   getNextSerial,
   getPrevSerial,
   loadBillWithDeps,
@@ -153,7 +152,6 @@ export default function NewLoan() {
   const { calculateLoanAmounts, recalculateTotalFromDocCharges } =
     useLoanCalculations();
 
-  // TODO: Do we really need this?
   useEffect(() => {
     if (company && !loadedLoan) {
       reset(defaultValues);
@@ -233,7 +231,7 @@ export default function NewLoan() {
 
   const deleteLoan = async () => {
     if (isIncorrect) {
-      toast.error('Loaded incorrect loan', { className: toastStyles.error });
+      errorToast('Loaded incorrect loan');
       return;
     }
     await deleteRecord('bill_items', {
@@ -250,13 +248,11 @@ export default function NewLoan() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const onSubmit: (data: Loan) => Promise<void> = async (data: Loan) => {
     if (!isLoanReadyForSubmit(data)) {
-      toast.error('Please fill in all required fields', {
-        className: toastStyles.error,
-      });
+      errorToast('Please fill in all required fields');
       return;
     }
     if (isIncorrect) {
-      toast.error('Loaded incorrect loan', { className: toastStyles.error });
+      errorToast('Loaded incorrect loan');
       return;
     }
     if (isEditMode) {
@@ -342,21 +338,17 @@ export default function NewLoan() {
         if (reloadedLoan) {
           handleOnOldLoanLoaded(reloadedLoan);
         }
-        toast.success('Loan Updated!', { className: toastStyles.success });
       } else {
         await create('bills', formattedLoan);
         for (const item of formatterProduct) {
           await create('bill_items', item);
         }
         await setNextSerial();
-        next('customer_picker' as FormFieldName);
-        toast.success('Loan saved', { className: toastStyles.success });
+        setTimeout(() => next('customer_picker' as FormFieldName), 100);
       }
     } catch (error) {
-      console.error('Error submitting loan:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to save loan',
-        { className: toastStyles.error }
+      errorToast(
+        error instanceof Error ? error.message : 'Failed to save loan'
       );
     }
   };
