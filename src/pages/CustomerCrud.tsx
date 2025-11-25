@@ -195,7 +195,7 @@ export default function CustomerCrud({
   return (
     <form ref={setFormRef} className="flex gap-3 flex-col p-2 w-[465px]">
       <div className="flex gap-6">
-        <GoHome />
+        {!cantEdit && <GoHome />}
         <div className="text-xl text-center">
           {id ? 'Editing Customer' : 'New Customer'}
         </div>
