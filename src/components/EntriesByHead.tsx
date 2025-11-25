@@ -90,7 +90,6 @@ export default function EntriesByHead({
         sorted.find((head) => head.code === accountHeadCode) ?? null;
       setCurrentAccountHead(matchedAccount);
     } catch (error) {
-      console.error(error);
       errorToast(error);
     }
   }, [company?.name, accountHeadCode]);
@@ -137,7 +136,6 @@ export default function EntriesByHead({
           (closingBalanceResponse?.[0].balance ?? 0)
       );
     } catch (error) {
-      console.error(error);
       errorToast(error);
     }
   }, [company, currentAccountHead, endDate, startDate]);
