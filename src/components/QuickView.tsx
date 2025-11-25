@@ -26,7 +26,7 @@ export default function QuickView() {
     loan_no: 0,
   };
 
-  const { control, setValue, watch } = useForm<IQuickView>({
+  const { control, setValue, getValues } = useForm<IQuickView>({
     resolver: zodResolver(QuickViewSchema),
     defaultValues,
   });
@@ -34,8 +34,6 @@ export default function QuickView() {
   const { setFormRef, next } = useEnterNavigation({
     fields: ['serial', 'loan_no'],
   });
-
-  const [serial, loanNo] = watch(['serial', 'loan_no']);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -68,6 +66,7 @@ export default function QuickView() {
 
   async function onLoanNumberInput(e?: ReactKeyboardEvent<HTMLInputElement>) {
     if (e) e.preventDefault();
+    const { serial, loan_no: loanNo } = getValues();
     if (!serial || !loanNo) {
       return;
     }
