@@ -8,6 +8,7 @@ import DayBook from '@/pages/DayBook.tsx';
 import CustomerCrud from '@/pages/CustomerCrud.tsx';
 import { ErrorBoundary } from '@/components/ErrorBoundary.tsx';
 import OtherCustomer from '@/components/OtherCustomer.tsx';
+import CustomersByArea from '@/components/CustomersByArea.tsx';
 
 export function App() {
   return (
@@ -22,6 +23,7 @@ export function App() {
           <Route path="/release-loan" element={<ReleaseLoan />} />
           <Route path="/day-book" element={<DayBook />} />
           <Route path="/customer-crud" element={<CustomerCrud />} />
+          <Route path="/customer-by-area" element={<CustomersByArea />} />
         </Routes>
       </HashRouter>
     </ErrorBoundary>

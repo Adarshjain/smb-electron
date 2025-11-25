@@ -82,11 +82,13 @@ export default function DataView<K extends TableName>(props: {
           placeholder="Search..."
         />
       ) : null}
-      <Table>
+      <Table className="border-r-0">
         <TableHeader>
           <TableRow>
             {Object.keys(columns).map((col) => (
-              <TableHead key={col}>{col}</TableHead>
+              <TableHead className="border-r" key={col}>
+                {col}
+              </TableHead>
             ))}
           </TableRow>
         </TableHeader>
@@ -98,7 +100,11 @@ export default function DataView<K extends TableName>(props: {
             >
               {Object.entries(record).map(([key, val]) => {
                 if (!(key in columns)) return null;
-                return <TableCell key={key}>{String(val ?? '')}</TableCell>;
+                return (
+                  <TableCell className="border-r" key={key}>
+                    {String(val ?? '')}
+                  </TableCell>
+                );
               })}
             </TableRow>
           ))}

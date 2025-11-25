@@ -140,6 +140,11 @@ export function Home() {
             <DropdownMenuItem onClick={() => void navigate('/other-customers')}>
               Other Customers
             </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => void navigate('/customer-by-area')}
+            >
+              Customer By Area
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
