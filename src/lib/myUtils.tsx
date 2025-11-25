@@ -1,9 +1,14 @@
 import { toast } from 'sonner';
 import { format, isBefore, startOfDay, subDays } from 'date-fns';
 import type { ElectronToReactResponse } from '../../shared-types';
-import type { FullCustomer, MetalType, Tables } from '../../tables';
+import type {
+  FullCustomer,
+  LocalTables,
+  MetalType,
+  Tables,
+} from '../../tables';
 import MyCache from '../../MyCache.ts';
-import { read } from '@/hooks/dbUtil.ts';
+import { query, read } from '@/hooks/dbUtil.ts';
 import { toastStyles } from '@/constants/loanForm.ts';
 import { cn } from '@/lib/utils.ts';
 
@@ -267,17 +272,12 @@ export async function fetchBillsByCustomer(
   skipReleased = true
 ): Promise<Tables['full_bill'][] | undefined> {
   try {
+    const fetchBillsQueryReleased = `SELECT * FROM bills WHERE customer_id = ? AND deleted IS NULL AND released = 0 order by date`;
+    const fetchBillsQueryAll = `SELECT * FROM bills WHERE customer_id = ? AND deleted IS NULL order by date`;
     const [billsResponse, fullCustomer] = await Promise.all([
-      read(
-        'bills',
-        skipReleased
-          ? {
-              customer_id: customerId,
-              released: 0,
-            }
-          : {
-              customer_id: customerId,
-            }
+      query<LocalTables<'bills'>[] | null>(
+        skipReleased ? fetchBillsQueryReleased : fetchBillsQueryAll,
+        [customerId]
       ),
       fetchFullCustomer(customerId),
     ]);

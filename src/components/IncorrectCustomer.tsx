@@ -1,0 +1,199 @@
+import { useCallback, useEffect, useState } from 'react';
+import { query } from '@/hooks/dbUtil.ts';
+import type { LocalTables } from '../../tables';
+import { errorToast, formatCurrency, successToast } from '@/lib/myUtils.tsx';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table.tsx';
+import { useCompany } from '@/context/CompanyProvider.tsx';
+import GoHome from '@/components/GoHome.tsx';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import ModifyLoanCustomer from '@/components/ModifyLoanCustomer.tsx';
+
+export default function IncorrectCustomer() {
+  const { company } = useCompany();
+  const [bills, setBills] = useState<LocalTables<'bills'>[]>([]);
+  const [customers, setCustomers] = useState<
+    Record<string, LocalTables<'customers'>>
+  >({});
+  const perPage = 25;
+  const [loansCount, setLoansCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  const [currentLoan, setCurrentLoan] = useState<LocalTables<'bills'> | null>(
+    null
+  );
+
+  const fetchSerials = useCallback(async () => {
+    try {
+      const loansQuery = query<LocalTables<'bills'>[]>(
+        `SELECT b.*
+         FROM bills b
+                JOIN (SELECT DISTINCT serial, loan_no
+                      FROM bill_items
+                      WHERE deleted IS NULL
+                        AND (quality LIKE '%@%' OR
+                             quality LIKE '%#%')) bi
+                     ON b.serial = bi.serial
+                       AND b.loan_no = bi.loan_no
+         WHERE b.deleted IS NULL
+           AND b.company = ?
+         ORDER BY b.serial, b.loan_no
+         LIMIT ? OFFSET ?`,
+        [company?.name, perPage, currentPage * perPage]
+      );
+      const loansCountQuery = query<[{ total: number }]>(
+        `SELECT COUNT(*) AS total
+         FROM bills b
+                JOIN (SELECT DISTINCT serial, loan_no
+                      FROM bill_items
+                      WHERE deleted IS NULL
+                        AND (quality LIKE '%@%' OR quality LIKE '%#%')) bi
+                     ON b.serial = bi.serial
+                       AND b.loan_no = bi.loan_no
+         WHERE b.deleted IS NULL
+           AND b.company = ?`,
+        [company?.name]
+      );
+      const [loans, loansCountResp] = await Promise.all([
+        loansQuery,
+        loansCountQuery,
+      ]);
+      const customerIds = [...new Set(loans?.map((l) => l.customer_id))];
+      const customers = await query<LocalTables<'customers'>[]>(
+        `SELECT * from customers where id IN ('${customerIds.join("','")}')`
+      );
+      const map: Record<string, LocalTables<'customers'>> = {};
+      customers?.forEach((customer) => (map[customer.id] = customer));
+      setLoansCount(loansCountResp?.[0].total ?? 0);
+      setBills(loans ?? []);
+      setCustomers(map);
+    } catch (error) {
+      errorToast(error);
+    }
+  }, [company?.name, currentPage]);
+
+  const updateCustomerForBill = async (customerId: string) => {
+    try {
+      await query<null>(
+        `UPDATE bills
+                       SET customer_id = ?,
+                           synced      = 0
+                       WHERE serial = ?
+                         AND loan_no = ?`,
+        [customerId, currentLoan?.serial, currentLoan?.loan_no],
+        true
+      );
+      await query<null>(
+        `UPDATE bill_items
+         SET quality = TRIM(REPLACE(REPLACE(quality, '@', ''), '#', '')),
+             synced  = 0
+         WHERE serial = ?
+           AND loan_no = ?
+           AND (quality LIKE '%@%' OR quality LIKE '%#%')`,
+        [currentLoan?.serial, currentLoan?.loan_no],
+        true
+      );
+      setCurrentLoan(null);
+      successToast('Updated!');
+    } catch (e) {
+      errorToast(e);
+    }
+  };
+
+  useEffect(() => {
+    void fetchSerials();
+  }, [fetchSerials]);
+
+  return (
+    <div className="p-2 w-7/10 mx-auto">
+      <div className="flex gap-4 items-center mb-2">
+        <GoHome />
+        <div className="text-xl">Incorrect Customers</div>
+        <div className="flex ml-auto items-center gap-2">
+          <Button
+            variant="outline"
+            className="border-input h-7"
+            disabled={currentPage === 0}
+            onClick={() => setCurrentPage((oldCount) => oldCount - 1)}
+          >
+            <ArrowLeft />
+            Prev
+          </Button>
+          <div className="text-sm text-gray-600">
+            {currentPage * perPage + 1} - {(currentPage + 1) * perPage} of{' '}
+            {loansCount} customers
+          </div>
+          <Button
+            variant="outline"
+            className="border-input h-7"
+            disabled={currentPage === Math.ceil(loansCount / perPage) - 1}
+            onClick={() => setCurrentPage((oldCount) => oldCount + 1)}
+          >
+            Next
+            <ArrowRight />
+          </Button>
+        </div>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="border-r">Serial</TableHead>
+            <TableHead className="border-r">Name</TableHead>
+            <TableHead className="border-r">FHName</TableHead>
+            <TableHead className="text-right border-r">Amount</TableHead>
+            <TableHead className="text-right"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {bills.map((bill) => {
+            const customer = customers[bill.customer_id];
+            return (
+              <TableRow key={`${bill.serial}-${bill.loan_no}`}>
+                <TableCell className="border-r py-1">{`${bill.serial} ${bill.loan_no}`}</TableCell>
+                <TableCell className="border-r py-0">{customer.name}</TableCell>
+                <TableCell className="border-r py-0">
+                  <span className="w-8 border-r inline-block">
+                    {customer.fhtitle}
+                  </span>{' '}
+                  {customer.fhname}
+                </TableCell>
+                <TableCell className="text-right border-r py-0">
+                  {formatCurrency(bill.loan_amount)}
+                </TableCell>
+                <TableCell className="py-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6"
+                    onClick={() => {
+                      setCurrentLoan(bill);
+                    }}
+                  >
+                    Modify
+                  </Button>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+      <ModifyLoanCustomer
+        bill={currentLoan}
+        existingCustomer={customers[currentLoan?.customer_id ?? ''] ?? null}
+        onClose={() => {
+          setCurrentLoan(null);
+        }}
+        onSave={(customerId: string) => {
+          void updateCustomerForBill(customerId);
+        }}
+      />
+    </div>
+  );
+}
