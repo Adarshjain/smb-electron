@@ -235,8 +235,8 @@ export default function DailyEntries() {
         const newLoanAmount = loanAmountTotal?.[0].total ?? 0;
         await upsertDailyEntry(
           LOAN_AMOUNT,
-          newLoanAmount,
           0,
+          newLoanAmount,
           loanAmountEntry,
           sortOrder
         );
@@ -249,8 +249,8 @@ export default function DailyEntries() {
         const newReleaseAmount = releaseTotalResponse?.[0].principal ?? 0;
         await upsertDailyEntry(
           REDEMPTION_AMOUNT,
-          0,
           newReleaseAmount,
+          0,
           redemptionAmountEntry,
           sortOrder
         );
@@ -263,8 +263,8 @@ export default function DailyEntries() {
         const newReleaseInterest = releaseTotalResponse?.[0].interest ?? 0;
         await upsertDailyEntry(
           BEING_REDEEMED_LOAN_INTEREST,
-          0,
           newReleaseInterest,
+          0,
           redemptionInterestEntry,
           sortOrder
         );
