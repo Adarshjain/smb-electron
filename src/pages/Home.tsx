@@ -36,11 +36,7 @@ export function Home() {
     const listener = (e: KeyboardEvent) => {
       switch (e.key) {
         case 'F1': {
-          const companySwitcher =
-            document.getElementsByName('company-switcher');
-          if (companySwitcher.length) {
-            companySwitcher[0].click();
-          }
+          document.getElementById('company-switcher')?.click();
           break;
         }
         case 'F6': {

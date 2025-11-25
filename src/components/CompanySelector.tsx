@@ -26,14 +26,13 @@ export default function CompanySelector(props: {
       value={company?.name ?? ''}
       disabled={props.disabled}
     >
-      <SelectTrigger
-        className={cn('w-full cursor-pointer', props.className)}
-        name="company-switcher"
-      >
-        <Kbd className="">F1</Kbd>
+      <SelectTrigger className={cn('w-full cursor-pointer', props.className)}>
+        <Kbd id="company-switcher" className="">
+          F1
+        </Kbd>
         <SelectValue placeholder="Select Company" />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="bg-gray-600 text-white">
         {allCompanies.map((comp) => (
           <SelectItem key={comp.name} value={comp.name}>
             {comp.name}
