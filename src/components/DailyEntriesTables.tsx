@@ -327,7 +327,7 @@ export function DailyEntriesTables({
     <>
       <form ref={setFormRef} className="de-input-matrix mx-24">
         <div className="flex">
-          <div className="px-3 py-1 min-w-[480px]">Title</div>
+          <div className="px-3 py-1 min-w-[400px]">Title</div>
           <div className="px-3 py-1 flex-1">Description</div>
           <div className="px-3 py-1 min-w-48 text-right">Credit</div>
           <div className="px-3 py-1 min-w-48 text-right">Debit</div>
@@ -336,7 +336,7 @@ export function DailyEntriesTables({
           <Input
             defaultValue="Opening Balance"
             disabled
-            className="w-[480px] !opacity-100"
+            className="w-[400px] !opacity-100"
           />
           <div className="flex-1"></div>
           <Input
@@ -367,7 +367,7 @@ export function DailyEntriesTables({
                   options={accountHeads.map((account) => account.name)}
                   inputName={`entries.${index}.title`}
                   placeholder=""
-                  triggerWidth="min-w-[480px]"
+                  triggerWidth="min-w-[400px]"
                   autoConvert={false}
                   inputClassName="!border-0"
                 />
@@ -446,7 +446,7 @@ export function DailyEntriesTables({
           <Input
             defaultValue="Closing Balance"
             disabled
-            className="w-[480px] !opacity-100"
+            className="w-[400px] !opacity-100"
           />
           <div className="flex-1"></div>
           <Input

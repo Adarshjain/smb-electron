@@ -1,14 +1,20 @@
 import FYPicker from '@/components/FYPicker.tsx';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { query, read } from '@/hooks/dbUtil.ts';
 import { useCompany } from '@/context/CompanyProvider.tsx';
-import { errorToast, formatCurrency, jsNumberFix } from '@/lib/myUtils.tsx';
+import {
+  errorToast,
+  formatCurrency,
+  jsNumberFix,
+  viewableDate,
+} from '@/lib/myUtils.tsx';
 import type { LocalTables } from '../../tables';
 import { cn } from '@/lib/utils.ts';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { SearchIcon } from 'lucide-react';
+import { PrinterIcon, SearchIcon } from 'lucide-react';
 import EntriesByHead from '@/components/EntriesByHead.tsx';
 import { useTabs } from '@/TabManager.tsx';
+import { usePrintSection } from '@/hooks/usePrintSection.ts';
 
 const TypeVsHisaabGroup = {
   liabilities: ['Bank OD A/c', 'Sundry Creditors'],
@@ -41,6 +47,12 @@ export default function BalanceSheet() {
   const [displayAssetRows, setDisplayAssetRows] = useState<
     [string, string, string, number | undefined][]
   >([]);
+
+  const printRef = useRef<HTMLDivElement>(null);
+  const handlePrint = usePrintSection(
+    printRef,
+    `${company?.name} Balance Sheet.pdf`
+  );
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
@@ -327,51 +339,61 @@ export default function BalanceSheet() {
           }}
         />
         <div className="text-xl">Assets</div>
+        <PrinterIcon onClick={handlePrint} className="cursor-pointer" />
       </div>
-      <div className="flex gap-2 mt-2">
-        {[displayLiabilitiesRows, displayAssetRows].map((type, typeIndex) => (
-          <Table key={typeIndex}>
-            <TableBody>
-              {type.map((row, outerIndex) => (
-                <TableRow
-                  key={JSON.stringify(row) + outerIndex}
-                  className="group"
-                >
-                  {row.map((cell, index) =>
-                    index < 3 ? (
-                      <TableCell
-                        key={JSON.stringify(cell) + index}
-                        className={cn(
-                          'py-1.5 h-[33px]',
-                          index !== 0 ? 'text-right border-l' : ''
-                        )}
-                      >
-                        <div className="flex justify-between">
-                          {index === 1 && row[3] !== undefined && (
-                            <SearchIcon
-                              size={18}
-                              className="opacity-0 group-hover:opacity-100 cursor-pointer"
-                              onClick={() => {
-                                openTab(
-                                  'Entry Details',
-                                  <EntriesByHead
-                                    accountHeadCode={row[3]!}
-                                    range={[startDate ?? '', endDate ?? '']}
-                                  />
-                                );
-                              }}
-                            />
+      <div className="flex mt-2 pdf flex-col" ref={printRef}>
+        <div className="hidden pdf-header text-center pt-4">
+          <div className="text-sm">{company?.name}</div>
+          <div className="text-xs">Balance Sheet</div>
+          <div className="text-xs">
+            {viewableDate(startDate ?? '')} - {viewableDate(endDate ?? '')}
+          </div>
+        </div>
+        <div className="flex gap-2">
+          {[displayLiabilitiesRows, displayAssetRows].map((type, typeIndex) => (
+            <Table key={typeIndex}>
+              <TableBody>
+                {type.map((row, outerIndex) => (
+                  <TableRow
+                    key={JSON.stringify(row) + outerIndex}
+                    className="group"
+                  >
+                    {row.map((cell, index) =>
+                      index < 3 ? (
+                        <TableCell
+                          key={JSON.stringify(cell) + index}
+                          className={cn(
+                            'py-1.5 h-[33px]',
+                            index !== 0 ? 'text-right border-l' : ''
                           )}
-                          <div className="flex-1">{cell}</div>
-                        </div>
-                      </TableCell>
-                    ) : null
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ))}
+                        >
+                          <div className="flex justify-between">
+                            {index === 1 && row[3] !== undefined && (
+                              <SearchIcon
+                                size={18}
+                                className="opacity-0 group-hover:opacity-100 cursor-pointer"
+                                onClick={() => {
+                                  openTab(
+                                    'Entry Details',
+                                    <EntriesByHead
+                                      accountHeadCode={row[3]!}
+                                      range={[startDate ?? '', endDate ?? '']}
+                                    />
+                                  );
+                                }}
+                              />
+                            )}
+                            <div className="flex-1">{cell}</div>
+                          </div>
+                        </TableCell>
+                      ) : null
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ))}
+        </div>
       </div>
     </div>
   );

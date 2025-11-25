@@ -137,7 +137,7 @@ export default function DayBook() {
   }, [date]);
 
   return (
-    <div className="p-3">
+    <div className="p-3 w-7/10 mx-auto">
       <div className="flex justify-between mb-4">
         <GoHome />
         <div className="text-xl">Loans</div>
