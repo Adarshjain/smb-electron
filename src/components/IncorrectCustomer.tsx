@@ -6,7 +6,12 @@ import {
 } from 'react';
 import { query, read } from '@/hooks/dbUtil.ts';
 import type { LocalTables } from '../../tables';
-import { errorToast, formatCurrency, successToast } from '@/lib/myUtils.tsx';
+import {
+  errorToast,
+  formatCurrency,
+  successToast,
+  viewableDate,
+} from '@/lib/myUtils.tsx';
 import {
   Table,
   TableBody,
@@ -214,6 +219,7 @@ export default function IncorrectCustomer() {
         <TableHeader>
           <TableRow>
             <TableHead className="border-r">Serial</TableHead>
+            <TableHead className="border-r">Date</TableHead>
             <TableHead className="border-r">Name</TableHead>
             <TableHead className="border-r">FHName</TableHead>
             <TableHead className="text-right border-r">Amount</TableHead>
@@ -226,6 +232,9 @@ export default function IncorrectCustomer() {
             return (
               <TableRow key={`${bill.serial}-${bill.loan_no}`}>
                 <TableCell className="border-r py-1">{`${bill.serial} ${bill.loan_no}`}</TableCell>
+                <TableCell className="border-r py-0">
+                  {viewableDate(bill.date)}
+                </TableCell>
                 <TableCell className="border-r py-0">{customer.name}</TableCell>
                 <TableCell className="border-r py-0">
                   <span className="w-8 border-r inline-block">
