@@ -15,9 +15,7 @@ export const create = async <K extends TableName>(
   if (createResponse.success) {
     return null;
   }
-  throw new Error(createResponse.error, {
-    cause: createResponse.stack,
-  });
+  throw new Error(createResponse.error);
 };
 
 export const read = async <K extends TableName>(
@@ -35,9 +33,7 @@ export const read = async <K extends TableName>(
   if (readResponse.success) {
     return readResponse.data ?? null;
   }
-  throw new Error(readResponse.error, {
-    cause: readResponse.stack,
-  });
+  throw new Error(readResponse.error);
 };
 
 export const update = async <K extends TableName>(
@@ -48,9 +44,7 @@ export const update = async <K extends TableName>(
   if (updateResponse.success) {
     return null;
   }
-  throw new Error(updateResponse.error, {
-    cause: updateResponse.stack,
-  });
+  throw new Error(updateResponse.error);
 };
 
 export const deleteRecord = async <K extends TableName>(
@@ -61,9 +55,7 @@ export const deleteRecord = async <K extends TableName>(
   if (response.success) {
     return null;
   }
-  throw new Error(response.error, {
-    cause: response.stack,
-  });
+  throw new Error(response.error);
 };
 
 export const query = async <T>(
@@ -75,7 +67,5 @@ export const query = async <T>(
   if (response.success) {
     return (response.data as T) ?? null;
   }
-  throw new Error(response.error, {
-    cause: response.stack,
-  });
+  throw new Error(response.error);
 };

@@ -20,15 +20,11 @@ export function mapToRegex(map: Record<string, string>) {
   );
 }
 
-export function rpcError(response: {
-  success: false;
-  error: string;
-  stack: string | undefined;
-}) {
+export function rpcError(response: { success: false; error: string }) {
   toast.error(`Error: ${response.error}`, {
     description: (
-      <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4">
-        <code>{response.stack}</code>
+      <pre className="bg-code text-code-foreground mt-2 w-full overflow-x-auto rounded-md p-4">
+        {/*<code>{response.stack}</code>*/}
       </pre>
     ),
     classNames: { content: cn('flex flex-col gap-2', toastStyles.error) },
@@ -92,7 +88,6 @@ export function errorToast(msg: string | Error | unknown) {
     rpcError({
       success: false,
       error: msg.message,
-      stack: msg.cause as string,
     });
   } else {
     toast.error(msg as string, { className: toastStyles.error });
