@@ -69,7 +69,6 @@ export default function DailyEntries() {
         sorted.find((head) => head.name === CASH_ACCOUNT_NAME) ?? null;
       setCurrentAccountHead(cashAccount);
     } catch (error) {
-      console.error(error);
       errorToast(error);
     }
   }, [company]);
@@ -97,7 +96,6 @@ export default function DailyEntries() {
         currentAccountHead.openingBalance + (dailyEntries?.[0].balance ?? 0)
       );
     } catch (error) {
-      console.error(error);
       errorToast(error);
     }
   }, [company, currentAccountHead, date]);
@@ -269,7 +267,6 @@ export default function DailyEntries() {
           sortOrder
         );
       } catch (error) {
-        console.error(error);
         errorToast(error);
       }
     },
@@ -303,7 +300,6 @@ export default function DailyEntries() {
         })) ?? []
       );
     } catch (error) {
-      console.error(error);
       errorToast(error);
     }
   }, [company?.name, currentAccountHead?.code, date]);

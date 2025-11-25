@@ -310,7 +310,6 @@ export default function BalanceSheet() {
         setDisplayLiabilitiesRows(liabilitiesRows);
         setDisplayAssetRows(assetRows);
       } catch (error) {
-        console.error(error);
         errorToast(error);
       }
     };

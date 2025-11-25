@@ -68,9 +68,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
           setCompany(companyMatch);
         }
       })
-      .catch((e: unknown) => {
-        errorToast(e);
-      });
+      .catch(errorToast);
   }, []);
 
   useEffect(() => {
