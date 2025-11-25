@@ -1,8 +1,8 @@
-import type { Tables } from '@/../tables';
+import type { LocalTables, Tables } from '@/../tables';
 
 export default function CustomerInfo(props: {
-  customer: Tables['customers'];
-  area: Tables['areas'];
+  customer: LocalTables<'customers'>;
+  area?: Tables['areas'];
   className?: string;
 }) {
   return (

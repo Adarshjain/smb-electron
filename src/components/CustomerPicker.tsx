@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import AutocompleteSelect from './AutocompleteSelect';
 import { query } from '@/hooks/dbUtil';
-import type { Tables } from '@/../tables';
+import type { LocalTables } from '@/../tables';
 
 interface CustomerPickerProps {
-  onSelect?: (value: Tables['customers']) => void;
+  onSelect?: (value: LocalTables<'customers'>) => void;
   placeholder?: string;
   inputClassName?: string;
   autofocus?: boolean;
@@ -23,13 +23,13 @@ export default function CustomerPicker({
   showShortcut,
 }: CustomerPickerProps) {
   const [search, setSearch] = useState('');
-  const [customers, setCustomers] = useState<Tables['customers'][]>([]);
+  const [customers, setCustomers] = useState<LocalTables<'customers'>[]>([]);
 
   useEffect(() => {
     let active = true;
 
     const run = async () => {
-      const results = await query<Tables['customers'][]>(
+      const results = await query<LocalTables<'customers'>[]>(
         `select * from customers where name LIKE '${search}%' and deleted IS NULL order by name, area`
       );
       if (active) setCustomers(results ?? []);
@@ -48,7 +48,7 @@ export default function CustomerPicker({
   }, [search]);
 
   return (
-    <AutocompleteSelect<Tables['customers']>
+    <AutocompleteSelect<LocalTables<'customers'>>
       options={customers}
       onSelect={onSelect}
       onSearchChange={setSearch}

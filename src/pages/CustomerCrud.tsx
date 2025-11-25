@@ -14,7 +14,7 @@ import { create, read, update } from '@/hooks/dbUtil.ts';
 import { errorToast } from '@/lib/myUtils.tsx';
 import ProductSelector from '@/components/ProductSelector.tsx';
 import { Input } from '@/components/ui/input';
-import type { Tables } from '../../tables';
+import type { LocalTables, Tables } from '../../tables';
 import AreaSelector from '@/components/AreaSelector.tsx';
 import { toast } from 'sonner';
 import { toastStyles } from '@/constants/loanForm.ts';
@@ -49,7 +49,7 @@ export default function CustomerCrud({
   onCreate,
 }: {
   cantEdit?: boolean;
-  onCreate?: (customer: Tables['customers']) => void;
+  onCreate?: (customer: LocalTables<'customers'>) => void;
 }) {
   const [areasList, setAreasList] = useState<Tables['areas'][]>([]);
   const [addressList, setAddressList] = useState<string[]>([]);
@@ -163,7 +163,7 @@ export default function CustomerCrud({
       } catch (error) {
         errorToast(error);
       }
-      onCreate?.(customer);
+      onCreate?.(customer as LocalTables<'customers'>);
     }
     reset(defaultValues);
   }

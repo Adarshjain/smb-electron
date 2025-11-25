@@ -131,6 +131,15 @@ export function Home() {
         >
           <div className="justify-self-center col-start-2">Settings</div>
         </Button>
+        <Button
+          variant="outline"
+          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
+          onClick={() => void navigate('/incorrect-customers')}
+        >
+          <div className="justify-self-center col-start-2">
+            Incorrect Customers
+          </div>
+        </Button>
       </div>
     </div>
   );

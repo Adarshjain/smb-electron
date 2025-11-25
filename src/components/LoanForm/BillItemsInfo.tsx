@@ -17,7 +17,7 @@ export default function BillItemsInfo(props: {
         <TableRow>
           <TableHead className="border-r">Items</TableHead>
           <TableHead className="border-r">Qty</TableHead>
-          <TableHead className="text-right border-r">Weight</TableHead>
+          <TableHead className="text-right">Weight</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -27,7 +27,7 @@ export default function BillItemsInfo(props: {
           >
             <TableCell className="border-r">{`${bill.quality} ${bill.product} ${bill.extra}`}</TableCell>
             <TableCell className="border-r">{bill.quantity}</TableCell>
-            <TableCell className="text-right border-r">
+            <TableCell className="text-right">
               {bill.gross_weight.toFixed(2)} gms
             </TableCell>
           </TableRow>
