@@ -406,3 +406,21 @@ export function getFinancialYearRange(year: number): [string, string] {
 export function jsNumberFix(num: number): number {
   return Number(num.toFixed(2));
 }
+
+export function datesToRange(
+  startDate: string,
+  endDate: string
+): { year?: number; range?: [string, string] } {
+  const from = new Date(startDate);
+  const to = new Date(endDate);
+  if (
+    from.getDate() === 1 &&
+    from.getMonth() + 1 === 4 &&
+    to.getDate() === 31 &&
+    to.getMonth() + 1 === 3 &&
+    to.getFullYear() - from.getFullYear() === 1
+  ) {
+    return { year: from.getFullYear() };
+  }
+  return { range: [startDate, endDate] };
+}
