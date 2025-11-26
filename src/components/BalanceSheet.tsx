@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { query, read } from '@/hooks/dbUtil.ts';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import {
+  datesToRange,
   errorToast,
   formatCurrency,
   jsNumberFix,
@@ -15,6 +16,7 @@ import { PrinterIcon, SearchIcon } from 'lucide-react';
 import EntriesByHead from '@/components/EntriesByHead.tsx';
 import { useTabs } from '@/TabManager.tsx';
 import { usePrintSection } from '@/hooks/usePrintSection.ts';
+import ProfitAndLoss from '@/components/ProfitAndLoss.tsx';
 
 const TypeVsHisaabGroup = {
   liabilities: ['Bank OD A/c', 'Sundry Creditors'],
@@ -296,7 +298,7 @@ export default function BalanceSheet() {
           'Net Profit',
           '',
           formatCurrency(netProfit, true),
-          undefined,
+          -1,
         ]);
         liabilitiesRows.push([
           'Total',
@@ -368,21 +370,53 @@ export default function BalanceSheet() {
                           )}
                         >
                           <div className="flex justify-between">
-                            {index === 1 && row[3] !== undefined && (
-                              <SearchIcon
-                                size={18}
-                                className="opacity-0 group-hover:opacity-100 cursor-pointer"
-                                onClick={() => {
-                                  openTab(
-                                    'Entry Details',
-                                    <EntriesByHead
-                                      accountHeadCode={row[3]!}
-                                      range={[startDate ?? '', endDate ?? '']}
-                                    />
-                                  );
-                                }}
-                              />
-                            )}
+                            {row[3] !== undefined &&
+                              (row[3] === -1 ? index === 2 : index === 1) && (
+                                <SearchIcon
+                                  size={18}
+                                  className="opacity-0 group-hover:opacity-100 cursor-pointer"
+                                  onClick={() => {
+                                    if (row[3] === -1) {
+                                      openTab(
+                                        'Profit & Loss',
+                                        <ProfitAndLoss
+                                          year={
+                                            datesToRange(
+                                              startDate ?? '',
+                                              endDate ?? ''
+                                            ).year
+                                          }
+                                          range={
+                                            datesToRange(
+                                              startDate ?? '',
+                                              endDate ?? ''
+                                            ).range
+                                          }
+                                        />
+                                      );
+                                    } else {
+                                      openTab(
+                                        'Entry Details',
+                                        <EntriesByHead
+                                          accountHeadCode={row[3]!}
+                                          year={
+                                            datesToRange(
+                                              startDate ?? '',
+                                              endDate ?? ''
+                                            ).year
+                                          }
+                                          range={
+                                            datesToRange(
+                                              startDate ?? '',
+                                              endDate ?? ''
+                                            ).range
+                                          }
+                                        />
+                                      );
+                                    }
+                                  }}
+                                />
+                              )}
                             <div className="flex-1">{cell}</div>
                           </div>
                         </TableCell>

@@ -3,14 +3,25 @@ import { useEffect, useRef, useState } from 'react';
 import { query } from '@/hooks/dbUtil.ts';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { errorToast, formatCurrency, viewableDate } from '@/lib/myUtils.tsx';
+import {
+  datesToRange,
+  errorToast,
+  formatCurrency,
+  viewableDate,
+} from '@/lib/myUtils.tsx';
 import { cn } from '@/lib/utils.ts';
 import { PrinterIcon, SearchIcon } from 'lucide-react';
 import { useTabs } from '@/TabManager.tsx';
 import EntriesByHead from '@/components/EntriesByHead.tsx';
 import { usePrintSection } from '@/hooks/usePrintSection.ts';
 
-export default function ProfitAndLoss() {
+export default function ProfitAndLoss({
+  year,
+  range,
+}: {
+  year?: number;
+  range?: [string, string];
+}) {
   const { company } = useCompany();
   const { openTab, closeTab } = useTabs();
   const [startDate, setStartDate] = useState<string | null>(null);
@@ -150,8 +161,10 @@ export default function ProfitAndLoss() {
 
   return (
     <div className="p-4">
-      <div className="place-items-center">
+      <div className="flex justify-center gap-4 items-center">
         <FYPicker
+          year={year}
+          range={range}
           onChange={([start, end]) => {
             setStartDate(start);
             setEndDate(end);
@@ -195,7 +208,18 @@ export default function ProfitAndLoss() {
                                     'Entry Details',
                                     <EntriesByHead
                                       accountHeadCode={row[3]!}
-                                      range={[startDate ?? '', endDate ?? '']}
+                                      year={
+                                        datesToRange(
+                                          startDate ?? '',
+                                          endDate ?? ''
+                                        ).year
+                                      }
+                                      range={
+                                        datesToRange(
+                                          startDate ?? '',
+                                          endDate ?? ''
+                                        ).range
+                                      }
                                     />
                                   );
                                 }}
