@@ -95,13 +95,15 @@ export default function AutocompleteSelect<T = string>({
     overscan: 5,
   });
 
-  // Sync search state with external value prop
+  // Sync search state with external value prop only when value actually changes
+  const prevValueRef = useRef<T | undefined>(value);
   useEffect(() => {
-    if (value) {
+    if (value && value !== prevValueRef.current) {
       const displayValue = displayValueGetter(value);
       setSearch(displayValue);
+      prevValueRef.current = value;
     }
-  }, [value, displayValueGetter]);
+  }, [value]);
 
   useEffect(() => {
     if (options.length > 0 && document.activeElement === inputRef.current) {
@@ -176,7 +178,12 @@ export default function AutocompleteSelect<T = string>({
 
       if (cursorAtEnd) {
         e.preventDefault();
-        setSearch((prev) => deleteLastGrapheme(prev));
+        setSearch((prev) => {
+          const newValue = deleteLastGrapheme(prev);
+          onSearchChange?.(newValue);
+          return newValue;
+        });
+        setOpen(true);
         return;
       }
     }
