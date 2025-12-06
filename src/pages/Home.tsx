@@ -53,7 +53,7 @@ export function Home() {
           }
           break;
         }
-        case 'F4':
+        case 'F5':
           openTab('Cash Book', <DailyEntries />);
           break;
         case 'F7':
@@ -101,7 +101,7 @@ export function Home() {
           className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
           onClick={() => openTab('Cash Book', <DailyEntries />)}
         >
-          <Kbd className="justify-self-start col-start-1">F4</Kbd>
+          <Kbd className="justify-self-start col-start-1">F5</Kbd>
           <div className="justify-self-center col-start-2">Cash Book</div>
         </Button>
         <CurrentDateCrud />

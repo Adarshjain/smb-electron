@@ -327,28 +327,28 @@ export function DailyEntriesTables({
     <>
       <form ref={setFormRef} className="de-input-matrix mx-24">
         <div className="flex">
-          <div className="px-3 py-1 min-w-[400px]">Title</div>
+          <div className="px-3 py-1 min-w-[300px]">Title</div>
           <div className="px-3 py-1 flex-1">Description</div>
-          <div className="px-3 py-1 min-w-48 text-right">Credit</div>
-          <div className="px-3 py-1 min-w-48 text-right">Debit</div>
+          <div className="px-3 py-1 min-w-39 text-right">Credit</div>
+          <div className="px-3 py-1 min-w-39 text-right">Debit</div>
         </div>
         <div className="flex">
           <Input
             defaultValue="Opening Balance"
             disabled
-            className="w-[400px] !opacity-100"
+            className="w-[300px] !opacity-100"
           />
           <div className="flex-1"></div>
           <Input
             disabled
             placeholder=""
-            className="text-right w-48 !opacity-100"
+            className="text-right w-39 !opacity-100"
             value={openingBalance >= 0 ? openingBalance.toFixed(2) : ''}
           />
           <Input
             disabled
             placeholder=""
-            className="text-right w-48 !opacity-100"
+            className="text-right w-39 !opacity-100"
             value={openingBalance < 0 ? (-openingBalance).toFixed(2) : ''}
           />
         </div>
@@ -367,7 +367,7 @@ export function DailyEntriesTables({
                   options={accountHeads.map((account) => account.name)}
                   inputName={`entries.${index}.title`}
                   placeholder=""
-                  triggerWidth="min-w-[400px]"
+                  triggerWidth="min-w-[300px]"
                   autoConvert={false}
                   inputClassName="!border-0"
                 />
@@ -411,7 +411,7 @@ export function DailyEntriesTables({
                   name={`entries.${index}.credit`}
                   type="number"
                   placeholder=""
-                  className="min-w-48 w-48 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="min-w-39 w-39 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               )}
             />
@@ -436,7 +436,7 @@ export function DailyEntriesTables({
                   name={`entries.${index}.debit`}
                   type="number"
                   placeholder=""
-                  className="min-w-48 w-48 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="min-w-39 w-39 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               )}
             />
@@ -446,19 +446,19 @@ export function DailyEntriesTables({
           <Input
             defaultValue="Closing Balance"
             disabled
-            className="w-[400px] !opacity-100"
+            className="w-[300px] !opacity-100"
           />
           <div className="flex-1"></div>
           <Input
             disabled
             placeholder=""
-            className="text-right w-48 !opacity-100"
+            className="text-right w-39 !opacity-100"
             value={closingBalance >= 0 ? closingBalance.toFixed(2) : ''}
           />
           <Input
             disabled
             placeholder=""
-            className="text-right w-48 !opacity-100"
+            className="text-right w-39 !opacity-100"
             value={closingBalance < 0 ? (-closingBalance).toFixed(2) : ''}
           />
         </div>
