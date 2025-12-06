@@ -96,12 +96,17 @@ export default function AutocompleteSelect<T = string>({
   });
 
   // Sync search state with external value prop only when value actually changes
-  const prevValueRef = useRef<T | undefined>(value);
+  const prevValueRef = useRef<T | undefined>(undefined);
   useEffect(() => {
-    if (value && value !== prevValueRef.current) {
+    // Handle initial value or when value changes
+    if (value !== undefined && value !== prevValueRef.current) {
       const displayValue = displayValueGetter(value);
       setSearch(displayValue);
       prevValueRef.current = value;
+    } else if (value === undefined && prevValueRef.current !== undefined) {
+      // Handle when value is cleared
+      setSearch('');
+      prevValueRef.current = undefined;
     }
   }, [value]);
 
