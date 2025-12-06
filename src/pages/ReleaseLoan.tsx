@@ -13,7 +13,7 @@ import { type ReleaseLoan, releaseLoanSchema } from '@/types/loanForm.ts';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import DatePicker from '@/components/DatePicker.tsx';
 import { LoanNumber } from '@/components/LoanForm/LoanNumber.tsx';
-import type { Tables } from '@/../tables';
+import type { LocalTables, Tables } from '@/../tables';
 import { create, deleteRecord, read, update } from '@/hooks/dbUtil.ts';
 import {
   errorToast,
@@ -61,64 +61,68 @@ export default function ReleaseLoan() {
 
   const onSubmit = useCallback(
     async (data: ReleaseLoan) => {
-      if (loadedLoan?.released === 0) {
-        const loan_amount = parseFloat(data.loan_amount ?? 0);
-        const interest_rate = 1;
-        const releaseDate = reDate ?? company?.current_date ?? viewableDate();
-        const monthsDiff = getTaxedMonthDiff(loadedLoan.date, releaseDate);
-        const tax_interest_amount =
-          (loan_amount * interest_rate * monthsDiff) / 100;
+      try {
+        if (loadedLoan?.released === 0) {
+          const loan_amount = parseFloat(data.loan_amount ?? 0);
+          const interest_rate = 1;
+          const releaseDate = reDate ?? company?.current_date ?? viewableDate();
+          const monthsDiff = getTaxedMonthDiff(loadedLoan.date, releaseDate);
+          const tax_interest_amount =
+            (loan_amount * interest_rate * monthsDiff) / 100;
 
-        await create('releases', {
-          serial: data.serial,
-          loan_no: data.loan_no,
-          date: releaseDate,
-          loan_amount,
-          interest_amount: parseFloat(data.interest_amount ?? 0),
-          total_amount: parseFloat(data.total_amount ?? 0),
-          company: data.company,
-          tax_interest_amount,
-          loan_date: loadedLoan.date,
-        });
-        await update('bills', {
-          serial: data.serial,
-          loan_no: data.loan_no,
-          released: 1,
-        });
-        reset({
-          date: data.date,
-          loan_no: data.loan_no,
-          serial: data.serial,
-          released: 1,
-          loan_amount: data.loan_amount,
-          interest_amount: data.interest_amount,
-          interest_rate: data.interest_rate,
-          total_amount: data.total_amount,
-          total_months: data.total_months,
-          company: data.company,
-        });
-      } else {
-        await deleteRecord('releases', {
-          serial: data.serial,
-          loan_no: data.loan_no,
-        });
-        await update('bills', {
-          serial: data.serial,
-          loan_no: data.loan_no,
-          released: 0,
-        });
-        reset({
-          date: data.date,
-          loan_no: data.loan_no,
-          serial: data.serial,
-          released: 0,
-          loan_amount: data.loan_amount,
-          interest_amount: data.interest_amount,
-          interest_rate: data.interest_rate,
-          total_amount: data.total_amount,
-          total_months: data.total_months,
-          company: data.company,
-        });
+          await create('releases', {
+            serial: data.serial,
+            loan_no: data.loan_no,
+            date: releaseDate,
+            loan_amount,
+            interest_amount: parseFloat(data.interest_amount ?? 0),
+            total_amount: parseFloat(data.total_amount ?? 0),
+            company: data.company,
+            tax_interest_amount,
+            loan_date: loadedLoan.date,
+          });
+          await update('bills', {
+            serial: data.serial,
+            loan_no: data.loan_no,
+            released: 1,
+          });
+          reset({
+            date: data.date,
+            loan_no: data.loan_no,
+            serial: data.serial,
+            released: 1,
+            loan_amount: data.loan_amount,
+            interest_amount: data.interest_amount,
+            interest_rate: data.interest_rate,
+            total_amount: data.total_amount,
+            total_months: data.total_months,
+            company: data.company,
+          });
+        } else {
+          await deleteRecord('releases', {
+            serial: data.serial,
+            loan_no: data.loan_no,
+          });
+          await update('bills', {
+            serial: data.serial,
+            loan_no: data.loan_no,
+            released: 0,
+          });
+          reset({
+            date: data.date,
+            loan_no: data.loan_no,
+            serial: data.serial,
+            released: 0,
+            loan_amount: data.loan_amount,
+            interest_amount: data.interest_amount,
+            interest_rate: data.interest_rate,
+            total_amount: data.total_amount,
+            total_months: data.total_months,
+            company: data.company,
+          });
+        }
+      } catch (e) {
+        errorToast(e);
       }
       nextRef.current?.('loan_no');
     },
@@ -264,7 +268,9 @@ export default function ReleaseLoan() {
             <div>
               <CustomerInfo
                 className="pl-3 pt-3 pb-7 min-h-[150px]"
-                customer={loadedLoan.full_customer.customer}
+                customer={
+                  loadedLoan.full_customer.customer as LocalTables<'customers'>
+                }
                 area={loadedLoan.full_customer.area}
               />
               <BillItemsInfo items={loadedLoan.bill_items} />
