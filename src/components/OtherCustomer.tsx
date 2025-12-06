@@ -157,6 +157,7 @@ export default function OtherCustomer() {
         loan_no,
       });
       if (bill?.length) {
+        await loadCustomer(bill[0].customer_id);
         setCurrentLoan(bill[0]);
       } else {
         errorToast('No bills matched.');
@@ -165,6 +166,19 @@ export default function OtherCustomer() {
       errorToast(error);
     }
   }
+
+  const loadCustomer = async (customerId: string) => {
+    if (customers[customerId]) {
+      return;
+    }
+    const fetchedCustomers = await read('customers', { id: customerId });
+    if (fetchedCustomers?.length) {
+      setCustomers((oldCustomers) => ({
+        ...oldCustomers,
+        [customerId]: fetchedCustomers[0],
+      }));
+    }
+  };
 
   useEffect(() => {
     void fetchSerials();
