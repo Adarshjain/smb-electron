@@ -13,6 +13,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
@@ -134,9 +135,7 @@ export function Home() {
             >
               Balance Sheet
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => void navigate('/settings')}>
-              Settings
-            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => void navigate('/other-customers')}>
               Other Customers
             </DropdownMenuItem>
@@ -144,6 +143,13 @@ export function Home() {
               onClick={() => void navigate('/customer-by-area')}
             >
               Customer By Area
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => void navigate('/account-head')}>
+              Account Head
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void navigate('/settings')}>
+              Settings
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

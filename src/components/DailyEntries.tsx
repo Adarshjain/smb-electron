@@ -117,14 +117,6 @@ export default function DailyEntries() {
               company: company?.name,
               sortOrder: existingEntry.sortOrder,
             });
-            // await query<null>(
-            //   `DELETE
-            //          FROM daily_entries
-            //          WHERE company = ?
-            //            AND sortOrder = ?`,
-            //   [company?.name, existingEntry.sortOrder],
-            //   true
-            // );
             return;
           }
           const updateQuery = `UPDATE daily_entries

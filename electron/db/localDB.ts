@@ -68,17 +68,17 @@ export function migrateSchema() {
     const exists = db
       .prepare(
         `SELECT name
-             FROM sqlite_master
-             WHERE type = 'table'
-               AND name = ?`
+         FROM sqlite_master
+         WHERE type = 'table'
+           AND name = ?`
       )
       .get(name);
 
     if (exists === undefined) {
       const createSQL = `CREATE TABLE ${name}
-                               (
-                                   ${columnDefs}${unique ? `, UNIQUE(${unique.join(', ')})` : ''}
-                               );`;
+                         (
+                           ${columnDefs}${unique ? `, UNIQUE(${unique.join(', ')})` : ''}
+                         );`;
       db.exec(createSQL);
       continue;
     }
@@ -96,7 +96,7 @@ export function migrateSchema() {
     for (const [colName, colDef] of Object.entries(columns)) {
       if (!existingCols.includes(colName)) {
         db.exec(`ALTER TABLE ${name}
-                    ADD COLUMN ${colName} ${colDef.schema}`);
+          ADD COLUMN ${colName} ${colDef.schema}`);
         console.log(`➕ Added column '${colName}' to '${name}'`);
       }
     }
@@ -106,9 +106,9 @@ export function migrateSchema() {
       const indexExists = db
         .prepare(
           `SELECT name
-                 FROM sqlite_master
-                 WHERE type = 'index'
-                   AND name = ?`
+           FROM sqlite_master
+           WHERE type = 'index'
+             AND name = ?`
         )
         .get(indexName);
       if (indexExists === undefined) {
@@ -145,7 +145,7 @@ export function create<K extends TableName>(table: K, record: Tables[K]): null {
 
     const stmt = db.prepare(
       `INSERT INTO ${table} (${keys.join(', ')}, synced, deleted)
-         VALUES (${placeholders}, 0, NULL)`
+       VALUES (${placeholders}, 0, NULL)`
     );
 
     stmt.run(...values);
@@ -220,8 +220,8 @@ export function markAsSynced<K extends TableName>(
 
   db.prepare(
     `UPDATE ${table}
-         SET synced = 1
-         WHERE ${whereClauses}`
+     SET synced = 1
+     WHERE ${whereClauses}`
   ).run(...whereValues);
 
   db.prepare(
@@ -263,8 +263,7 @@ export function read<K extends TableName>(
 
   const stmt = db.prepare(
     `SELECT ${String(fields)}
-         FROM ${table}
-         ${whereClauses.length ? `WHERE ${whereClause}` : ''}`
+     FROM ${table} ${whereClauses.length ? `WHERE ${whereClause}` : ''}`
   );
 
   return stmt.all(...whereValues) as LocalTables<K>[];
@@ -290,7 +289,7 @@ export function deleteRecord<K extends TableName>(
 
   const stmt = db.prepare(
     `UPDATE ${table}
-     SET synced = 0,
+     SET synced  = 0,
          deleted = 1
      WHERE ${whereClauses}`
   );
@@ -329,9 +328,9 @@ export function update<K extends TableName>(
 
   const stmt = db.prepare(
     `UPDATE ${table}
-         SET ${updateFields},
-             synced = 0
-         WHERE ${whereClauses}`
+     SET ${updateFields},
+         synced = 0
+     WHERE ${whereClauses}`
   );
 
   stmt.run(...updateValues, ...whereValues);
