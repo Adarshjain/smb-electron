@@ -419,9 +419,9 @@ export default function NewLoan() {
         quantity: item.quantity,
         quality: item.quality,
         extra: item.extra,
-        gross_weight: item.gross_weight.toFixed(2),
-        ignore_weight: item.ignore_weight.toFixed(2),
-        net_weight: item.net_weight.toFixed(2),
+        gross_weight: item.gross_weight.toFixed(3),
+        ignore_weight: item.ignore_weight.toFixed(3),
+        net_weight: item.net_weight.toFixed(3),
       }))
     );
     setValue('loan_amount', loan.loan_amount.toFixed(2));
@@ -441,9 +441,9 @@ export default function NewLoan() {
         quantity: item.quantity,
         quality: item.quality,
         extra: item.extra,
-        gross_weight: item.gross_weight.toFixed(2),
-        ignore_weight: item.ignore_weight.toFixed(2),
-        net_weight: item.net_weight.toFixed(2),
+        gross_weight: item.gross_weight.toFixed(3),
+        ignore_weight: item.ignore_weight.toFixed(3),
+        net_weight: item.net_weight.toFixed(3),
       })),
       company: loan.company ?? '',
       doc_charges: loan.doc_charges.toFixed(2),

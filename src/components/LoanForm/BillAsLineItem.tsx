@@ -168,7 +168,7 @@ export default function BillAsLineItem({
 
                   <TableCell className="border-r">{bill.description}</TableCell>
                   <TableCell className="text-right border-r">
-                    {bill.weight.toFixed(2)} gms
+                    {bill.weight.toFixed(3)} gms
                   </TableCell>
                   <TableCell className="text-right border-r">
                     {formatCurrency(bill.loan_amount)}
@@ -248,7 +248,7 @@ export default function BillAsLineItem({
                       {bill.description}
                     </TableCell>
                     <TableCell className="text-right border-r">
-                      {bill.weight.toFixed(2)} gms
+                      {bill.weight.toFixed(3)} gms
                     </TableCell>
                     <TableCell className="text-right border-r">
                       {formatCurrency(bill.loan_amount)}
