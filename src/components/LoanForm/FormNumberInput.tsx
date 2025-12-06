@@ -23,6 +23,7 @@ interface FormNumberInputProps<T extends FieldValues> {
   onCustomBlur?: (e: FocusEvent<HTMLInputElement>) => void;
   decimalPlaces?: number;
   className?: string;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 export function FormNumberInput<T extends FieldValues>({
@@ -37,6 +38,7 @@ export function FormNumberInput<T extends FieldValues>({
   onCustomBlur,
   decimalPlaces = 2,
   className = '',
+  onKeyDown,
 }: FormNumberInputProps<T>) {
   return (
     <Controller
@@ -69,6 +71,7 @@ export function FormNumberInput<T extends FieldValues>({
             name={name}
             type="number"
             placeholder={placeholder}
+            onKeyDown={onKeyDown}
             className={`${rightAlign ? 'text-right' : ''} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${className}`}
           />
           <InputGroupAddon className="text-gray-600">{label}</InputGroupAddon>

@@ -1,4 +1,4 @@
-import { memo, type ChangeEvent } from 'react';
+import { type ChangeEvent, memo } from 'react';
 import { type Control } from 'react-hook-form';
 import { FormNumberInput } from './FormNumberInput';
 import type { Loan } from '@/types/loanForm';
@@ -34,6 +34,12 @@ export const LoanAmountSection = memo(function LoanAmountSection({
         label="Percent"
         suffix="%"
         placeholder=""
+        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('doc_charges')?.focus();
+          }
+        }}
         onCustomChange={onInterestChange}
       />
 
