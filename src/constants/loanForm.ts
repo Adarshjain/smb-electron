@@ -65,9 +65,9 @@ export const DEFAULT_BILLING_ITEM = {
   quality: '',
   extra: '',
   quantity: 0,
-  gross_weight: '0.00',
-  net_weight: '0.00',
-  ignore_weight: '0.00',
+  gross_weight: '0.000',
+  net_weight: '0.000',
+  ignore_weight: '0.000',
 } as const;
 
 export const toastStyles = {

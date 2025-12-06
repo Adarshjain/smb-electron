@@ -90,6 +90,7 @@ export const BillingItemRow = memo(function BillingItemRow({
 
   const handleAddItemKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === KEYBOARD_SHORTCUTS.ADD_BILLING_ITEM) {
+      e.preventDefault();
       onAddItem();
       queueMicrotask(() =>
         onNavigateToNext(`billing_items.${index + 1}.product`)
@@ -102,6 +103,7 @@ export const BillingItemRow = memo(function BillingItemRow({
   ) => {
     if (e.key === KEYBOARD_SHORTCUTS.REMOVE_BILLING_ITEM) {
       if (fieldsLength > 1) {
+        e.preventDefault();
         onRemoveItem();
       }
     }
@@ -211,7 +213,7 @@ export const BillingItemRow = memo(function BillingItemRow({
               e.currentTarget.select();
             }}
             onBlur={() => {
-              field.onChange(parseFloat(field.value || '0').toFixed(2));
+              field.onChange(parseFloat(field.value || '0').toFixed(3));
             }}
             id={`billing_items.${index}.ignore_weight`}
             name={`billing_items.${index}.ignore_weight`}
@@ -237,7 +239,7 @@ export const BillingItemRow = memo(function BillingItemRow({
                 e.currentTarget.select();
               }}
               onBlur={() => {
-                field.onChange(parseFloat(field.value || '0').toFixed(2));
+                field.onChange(parseFloat(field.value || '0').toFixed(3));
               }}
               id={`billing_items.${index}.net_weight`}
               name={`billing_items.${index}.net_weight`}

@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input.tsx';
 import { Button } from '@/components/ui/button';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import { create, query } from '@/hooks/dbUtil.ts';
-import { errorToast } from '@/lib/myUtils.tsx';
+import { errorToast, jsNumberFix } from '@/lib/myUtils.tsx';
 
 const dailyEntrySchema = z.object({
   entries: z.array(
@@ -101,9 +101,7 @@ export function DailyEntriesTables({
       entries
         ?.sort((a, b) => a.sortOrder - b.sortOrder)
         .map((entry) => {
-          runningTotal = Number(
-            (runningTotal + entry.credit - entry.debit).toFixed(2)
-          );
+          runningTotal = jsNumberFix(runningTotal + entry.credit - entry.debit);
 
           const title = getAccountById(entry.sub_code)?.name ?? '';
 
@@ -139,12 +137,10 @@ export function DailyEntriesTables({
           (parseFloat(entry.debit ?? '0') || parseFloat(entry.credit ?? '0'))
       )
       .forEach((entry) => {
-        runningTotal = Number(
-          (
-            runningTotal +
+        runningTotal = jsNumberFix(
+          runningTotal +
             parseFloat(!entry.credit ? '0' : '' + entry.credit) -
             parseFloat(!entry.debit ? '0' : '' + entry.debit)
-          ).toFixed(2)
         );
       });
     setClosingBalance(runningTotal + openingBalance);
