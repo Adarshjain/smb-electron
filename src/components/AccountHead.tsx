@@ -56,7 +56,7 @@ export default function AccountHead() {
   }, [loadAccountHeads]);
 
   return (
-    <div className="w-5/10 mx-auto pb-10">
+    <div className="w-6/10 mx-auto pb-10">
       <div className="flex gap-4 items-center">
         <GoHome />
         <div className="text-xl">Account Head</div>
