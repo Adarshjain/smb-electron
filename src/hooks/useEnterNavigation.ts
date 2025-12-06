@@ -57,7 +57,7 @@ export function useEnterNavigation<T = string>({
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key !== 'Enter') return;
+      if (e.key !== 'Enter' && e.key !== 'Tab') return;
 
       // Prevent default Enter submit
       e.preventDefault();
