@@ -17,7 +17,8 @@ const REDEMPTION_AMOUNT = 'REDEMPTION AMOUNT';
 const BEING_REDEEMED_LOAN_INTEREST = 'BEING REDEEMED LOAN INTEREST';
 const CASH_ACCOUNT_NAME = 'CASH';
 const CASH_ACCOUNT_CODE = 14;
-const CAPITAL_ACCOUNT_CODE = 1;
+const LOAN_ACCOUNT_CODE = 1;
+const INTEREST_ACCOUNT_CODE = 9;
 
 export default function DailyEntries() {
   const { company } = useCompany();
@@ -106,12 +107,22 @@ export default function DailyEntries() {
       credit: number,
       debit: number,
       existingEntry: LocalTables<'daily_entries'> | undefined,
-      sortOrder: number
+      sortOrder: number,
+      isInterest = false
     ) => {
       if (!company?.name || !date) return;
 
       if (existingEntry) {
+        const isCrissCross =
+          credit === existingEntry.debit &&
+          debit === existingEntry.credit &&
+          existingEntry.main_code ===
+            (isInterest ? INTEREST_ACCOUNT_CODE : LOAN_ACCOUNT_CODE) &&
+          existingEntry.sub_code === CASH_ACCOUNT_CODE;
         if (credit !== existingEntry.credit || debit !== existingEntry.debit) {
+          if (isCrissCross) {
+            return;
+          }
           if (credit === 0 && debit === 0) {
             await deleteRecord('daily_entries', {
               company: company?.name,
@@ -167,7 +178,7 @@ export default function DailyEntries() {
         company: company.name,
         date,
         main_code: CASH_ACCOUNT_CODE,
-        sub_code: CAPITAL_ACCOUNT_CODE,
+        sub_code: isInterest ? INTEREST_ACCOUNT_CODE : LOAN_ACCOUNT_CODE,
         description,
         credit,
         debit,
@@ -176,7 +187,7 @@ export default function DailyEntries() {
       await create('daily_entries', {
         company: company.name,
         date,
-        main_code: CAPITAL_ACCOUNT_CODE,
+        main_code: isInterest ? INTEREST_ACCOUNT_CODE : LOAN_ACCOUNT_CODE,
         sub_code: CASH_ACCOUNT_CODE,
         description,
         debit: credit,
@@ -219,8 +230,8 @@ export default function DailyEntries() {
           ]);
         let sortOrder = (sortOrderResponse?.[0].sortOrder ?? 0) + 1;
         // Process loan amount
-        const loanAmountEntry = dailyEntry?.find(
-          (entry) => entry.description === LOAN_AMOUNT
+        const loanAmountEntry = dailyEntry?.find((entry) =>
+          entry.description?.includes(LOAN_AMOUNT)
         );
         const newLoanAmount = loanAmountTotal?.[0].total ?? 0;
         await upsertDailyEntry(
@@ -233,8 +244,8 @@ export default function DailyEntries() {
         if (newLoanAmount > 0 && !loanAmountEntry) sortOrder += 1;
 
         // Process redemption amount
-        const redemptionAmountEntry = dailyEntry?.find(
-          (entry) => entry.description?.trim() === REDEMPTION_AMOUNT
+        const redemptionAmountEntry = dailyEntry?.find((entry) =>
+          entry.description?.trim().includes(REDEMPTION_AMOUNT)
         );
         const newReleaseAmount = releaseTotalResponse?.[0].principal ?? 0;
         await upsertDailyEntry(
@@ -247,8 +258,8 @@ export default function DailyEntries() {
         if (newReleaseAmount > 0 && !redemptionAmountEntry) sortOrder += 1;
 
         // Process redemption interest
-        const redemptionInterestEntry = dailyEntry?.find(
-          (entry) => entry.description === BEING_REDEEMED_LOAN_INTEREST
+        const redemptionInterestEntry = dailyEntry?.find((entry) =>
+          entry.description?.includes(BEING_REDEEMED_LOAN_INTEREST)
         );
         const newReleaseInterest = releaseTotalResponse?.[0].interest ?? 0;
         await upsertDailyEntry(
@@ -256,7 +267,8 @@ export default function DailyEntries() {
           newReleaseInterest,
           0,
           redemptionInterestEntry,
-          sortOrder
+          sortOrder,
+          true
         );
       } catch (error) {
         errorToast(error);
