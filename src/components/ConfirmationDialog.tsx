@@ -22,6 +22,7 @@ export interface ConfirmationDialogProps {
   isOpen?: boolean;
   onChange?: (value: boolean) => void;
   children?: React.ReactNode;
+  autoFocus?: boolean;
 }
 export default function ConfirmationDialog(props: ConfirmationDialogProps) {
   return (
@@ -44,6 +45,7 @@ export default function ConfirmationDialog(props: ConfirmationDialogProps) {
                 : ''
             }
             onClick={() => void props.onConfirm()}
+            autoFocus={props.autoFocus}
           >
             {props.confirmText ?? 'Confirm'}
           </AlertDialogAction>

@@ -9,8 +9,9 @@ import CustomerCrud from '@/pages/CustomerCrud.tsx';
 import { ErrorBoundary } from '@/components/ErrorBoundary.tsx';
 import OtherCustomer from '@/components/OtherCustomer.tsx';
 import CustomersByArea from '@/components/CustomersByArea.tsx';
+import AccountHead from '@/components/AccountHead.tsx';
 
-export function App() {
+export function Router() {
   return (
     <ErrorBoundary>
       <HashRouter>
@@ -24,6 +25,7 @@ export function App() {
           <Route path="/day-book" element={<DayBook />} />
           <Route path="/customer-crud" element={<CustomerCrud />} />
           <Route path="/customer-by-area" element={<CustomersByArea />} />
+          <Route path="/account-head" element={<AccountHead />} />
         </Routes>
       </HashRouter>
     </ErrorBoundary>

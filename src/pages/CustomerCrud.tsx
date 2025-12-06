@@ -16,8 +16,6 @@ import ProductSelector from '@/components/ProductSelector.tsx';
 import { Input } from '@/components/ui/input';
 import type { LocalTables, Tables } from '../../tables';
 import AreaSelector from '@/components/AreaSelector.tsx';
-import { toast } from 'sonner';
-import { toastStyles } from '@/constants/loanForm.ts';
 import { Button } from '@/components/ui/button';
 import CustomerPicker from '@/components/CustomerPicker.tsx';
 import { Label } from '@/components/ui/label';
@@ -82,9 +80,7 @@ export default function CustomerCrud({
     try {
       const areasResponse = await read('areas', { name: customer.area });
       if (!areasResponse?.length) {
-        toast.error('Area does not exist', {
-          className: toastStyles.error,
-        });
+        errorToast('Area does not exist');
         return;
       }
       reset({
@@ -170,9 +166,7 @@ export default function CustomerCrud({
 
   const handleFormSubmit = useCallback(() => {
     void handleSubmit(onSubmit, (obj) => {
-      toast.error('Some Fields are missing:' + Object.keys(obj).join(', '), {
-        className: toastStyles.error,
-      });
+      errorToast('Some Fields are missing:' + Object.keys(obj).join(', '));
     })();
   }, [handleSubmit, onSubmit]);
 

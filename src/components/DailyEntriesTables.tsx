@@ -386,7 +386,6 @@ export function DailyEntriesTables({
                   id={`entries.${index}.description`}
                   name={`entries.${index}.description`}
                   placeholder=""
-                  className=""
                 />
               )}
             />

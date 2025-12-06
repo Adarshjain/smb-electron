@@ -1,12 +1,6 @@
 // Shared types between electron backend and React frontend
 
-import type {
-  LocalTables,
-  TableName,
-  Tables,
-  TablesDelete,
-  TablesUpdate,
-} from './tables';
+import type { LocalTables, TableName, Tables, TablesUpdate } from './tables';
 
 export type ElectronToReactResponse<T> =
   | {

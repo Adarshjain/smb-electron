@@ -1,8 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { MetalType } from '../../tables';
-import { getDocCharges, getInterest, getRate } from '@/lib/myUtils';
-import { DECIMAL_PRECISION, toastStyles } from '@/constants/loanForm';
-import { toast } from 'sonner';
+import { errorToast, getDocCharges, getInterest, getRate } from '@/lib/myUtils';
+import { DECIMAL_PRECISION } from '@/constants/loanForm';
 
 export interface LoanCalculationOptions {
   loanAmount?: number;
@@ -51,9 +50,8 @@ export function useLoanCalculations() {
 
         const rateConfig = await getRate(loanAmount, metalType);
         if (!rateConfig) {
-          toast.error(
-            'No interest rate configuration found for this amount and metal type',
-            { className: toastStyles.error }
+          errorToast(
+            'No interest rate configuration found for this amount and metal type'
           );
           return null;
         }
@@ -80,10 +78,7 @@ export function useLoanCalculations() {
           total: total,
         };
       } catch (error) {
-        console.error('Error calculating loan amounts:', error);
-        toast.error('Failed to calculate loan amounts', {
-          className: toastStyles.error,
-        });
+        errorToast(error);
         return null;
       } finally {
         setIsCalculating(false);

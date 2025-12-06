@@ -7,7 +7,7 @@ import React, {
   useState,
 } from 'react';
 import { Toaster } from '@/components/ui/sonner';
-import { App } from './App.tsx';
+import { Router } from './Router.tsx';
 import { XIcon } from 'lucide-react';
 import { cn } from '@/lib/utils.ts';
 import { useCompany } from '@/context/CompanyProvider.tsx';
@@ -44,7 +44,7 @@ export const TabManager: React.FC = () => {
     {
       id: 'main',
       title: 'Main',
-      content: <App />,
+      content: <Router />,
       isMain: true,
     },
   ]);

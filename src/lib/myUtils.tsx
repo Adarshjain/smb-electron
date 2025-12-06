@@ -205,16 +205,14 @@ export async function loadBillWithDeps(
       loan_no: loanNo,
     });
     if (!loan?.length) {
-      toast.error('No loan found with given Serial and Loan Number', {
-        className: toastStyles.error,
-      });
+      errorToast('No loan found with given Serial and Loan Number');
       return null;
     }
     const currentLoan = loan[0];
 
     const fullCustomer = await fetchFullCustomer(currentLoan.customer_id);
     if (!fullCustomer) {
-      toast.error('No fullCustomer match', { className: toastStyles.error });
+      errorToast('No fullCustomer match');
       return null;
     }
 
@@ -223,7 +221,7 @@ export async function loadBillWithDeps(
       loan_no: loanNo,
     });
     if (!billItems?.length) {
-      toast.error('No items match', { className: toastStyles.error });
+      errorToast('No items match');
       return null;
     }
 
@@ -246,7 +244,7 @@ export async function fetchFullCustomer(
       id: customerId,
     });
     if (!customers?.length) {
-      toast.error('No customerPromise match', { className: toastStyles.error });
+      errorToast('No customerPromise match');
       return null;
     }
     const customer = customers[0];
@@ -254,7 +252,7 @@ export async function fetchFullCustomer(
       name: customer.area,
     });
     if (!areas?.length) {
-      toast.error('No area match', { className: toastStyles.error });
+      errorToast('No area match');
       return null;
     }
     return {

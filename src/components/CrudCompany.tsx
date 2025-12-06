@@ -32,9 +32,8 @@ import { format } from 'date-fns';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
 import { create, query, update } from '@/hooks/dbUtil.ts';
 import { errorToast, successToast } from '@/lib/myUtils.tsx';
-import { toastStyles } from '@/constants/loanForm.ts';
 
-const formSchema = z.object({
+const CompanySchema = z.object({
   name: z.string().min(1, 'Name is required'),
   current_date: z.string(),
   next_serial_letter: z
@@ -44,7 +43,7 @@ const formSchema = z.object({
   is_default: z.boolean(),
 });
 
-type FormData = z.infer<typeof formSchema>;
+type CompanyForm = z.infer<typeof CompanySchema>;
 
 export interface CrudCompanyProps {
   company?: LocalTables<'companies'>;
@@ -67,8 +66,8 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
     []
   );
 
-  const { control, handleSubmit, reset } = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+  const { control, handleSubmit, reset } = useForm<CompanyForm>({
+    resolver: zodResolver(CompanySchema),
     defaultValues,
   });
 
@@ -86,7 +85,7 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
   }, [company, reset]);
 
   const onSubmit = useCallback(
-    async (data: FormData) => {
+    async (data: CompanyForm) => {
       const toastId = toast.loading(
         isCreate ? 'Creating company...' : 'Saving changes...'
       );
@@ -110,18 +109,15 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
           await (isCreate
             ? create('companies', payload)
             : update('companies', payload));
+          onSave?.();
           successToast('Success');
         } catch (e) {
           errorToast(e);
         }
       } catch (e) {
-        toast.error(
-          e instanceof Error ? e.message : 'An unknown error occurred',
-          { className: toastStyles.error }
-        );
+        errorToast(e);
       } finally {
         toast.dismiss(toastId);
-        onSave?.();
         setIsModalOpen(false);
       }
     },
@@ -143,11 +139,11 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
   });
 
   const renderField = useCallback(
-    <K extends keyof FormData>(
+    <K extends keyof CompanyForm>(
       name: K,
       label: string,
       render: (
-        field: ControllerRenderProps<FormData, K>,
+        field: ControllerRenderProps<CompanyForm, K>,
         invalid: boolean
       ) => JSX.Element
     ) => (
