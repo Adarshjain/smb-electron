@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  NativeSelect,
-  NativeSelectOption,
-} from '@/components/ui/native-select';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import DatePicker from '@/components/DatePicker.tsx';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import { create, deleteRecord, query, read } from '@/hooks/dbUtil.ts';
@@ -69,6 +72,9 @@ export default function DailyEntries() {
       const cashAccount =
         sorted.find((head) => head.name === CASH_ACCOUNT_NAME) ?? null;
       setCurrentAccountHead(cashAccount);
+      setTimeout(() => {
+        document.getElementById('account_head')?.focus();
+      }, 10);
     } catch (error) {
       errorToast(error);
     }
@@ -325,18 +331,23 @@ export default function DailyEntries() {
       <div className="flex gap-3 mb-4 mx-24">
         <div className="text-xl mr-auto">Cash Book</div>
         {currentAccountHead && (
-          <NativeSelect
+          <Select
             value={currentAccountHead.name}
-            onChange={(e) =>
-              setCurrentAccountHead(getAccountByName(e.target.value) ?? null)
+            onValueChange={(value) =>
+              setCurrentAccountHead(getAccountByName(value) ?? null)
             }
           >
-            {accountHeads.map((head) => (
-              <NativeSelectOption key={head.name + head.code} value={head.name}>
-                {head.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+            <SelectTrigger className="min-w-[300px]" id="account_head">
+              <SelectValue placeholder="Account Head" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-600 text-white">
+              {accountHeads.map((head) => (
+                <SelectItem key={head.name + head.code} value={head.name}>
+                  {head.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
         <DatePicker
           className="w-27.5"
