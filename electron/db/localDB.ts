@@ -43,6 +43,9 @@ export function validate<K extends TableName>(
     TablesSQliteSchema[table][byPrimaryKey ? 'primary' : 'requiredFields'];
   if (!required) return;
   for (const field of required) {
+    if (field === 'deleted') {
+      continue;
+    }
     if (
       record[field as keyof RowOrDeleteOrUpdate<K>] === undefined ||
       record[field as keyof RowOrDeleteOrUpdate<K>] === null
@@ -125,17 +128,28 @@ export function create<K extends TableName>(table: K, record: Tables[K]): null {
 
   validate(table, record);
 
-  const keys = Object.keys(record);
-  const values = Object.values(record);
-  const placeholders = keys.map(() => '?').join(', ');
-
-  const stmt = db.prepare(
-    `INSERT INTO ${table} (${keys.join(', ')}, synced, deleted)
-         VALUES (${placeholders}, 0, NULL)`
+  const doesExist = read(
+    table,
+    record as unknown as Partial<LocalTables<K>>,
+    undefined,
+    undefined,
+    false
   );
 
-  stmt.run(...values);
+  if (doesExist?.length) {
+    update(table, { ...record, deleted: null, synced: 0 });
+  } else {
+    const keys = Object.keys(record);
+    const values = Object.values(record);
+    const placeholders = keys.map(() => '?').join(', ');
 
+    const stmt = db.prepare(
+      `INSERT INTO ${table} (${keys.join(', ')}, synced, deleted)
+         VALUES (${placeholders}, 0, NULL)`
+    );
+
+    stmt.run(...values);
+  }
   return null;
 }
 
@@ -192,7 +206,9 @@ export function markAsSynced<K extends TableName>(
 ): null {
   if (!db) return null;
 
-  const pkFields = TablesSQliteSchema[table].primary;
+  const pkFields = TablesSQliteSchema[table].primary.filter(
+    (key) => key !== 'deleted'
+  );
   if (!pkFields) {
     throw new Error(`Primary key fields not defined for table ${table}`);
   }
@@ -220,7 +236,8 @@ export function read<K extends TableName>(
   table: K,
   conditions: Partial<LocalTables<K>>,
   fields: keyof LocalTables<K> | '*' = '*',
-  isLikeQuery = false
+  isLikeQuery = false,
+  includeDeleted = true
 ): LocalTables<K>[] | null {
   if (!db) return null;
 
@@ -237,7 +254,10 @@ export function read<K extends TableName>(
     },
     [[], []]
   );
-  whereClauses.push('deleted IS NULL');
+
+  if (includeDeleted) {
+    whereClauses.push('deleted IS NULL');
+  }
 
   const whereClause = whereClauses.join(' AND ');
 
@@ -256,7 +276,9 @@ export function deleteRecord<K extends TableName>(
 ): null {
   if (!db) return null;
 
-  const pkFields = TablesSQliteSchema[table].primary;
+  const pkFields = TablesSQliteSchema[table].primary.filter(
+    (key) => key !== 'deleted'
+  );
   if (!pkFields) {
     throw new Error(`Primary key fields not defined for table ${table}`);
   }
@@ -285,7 +307,9 @@ export function update<K extends TableName>(
 
   validate(table, record, true);
 
-  const pkFields = TablesSQliteSchema[table].primary;
+  const pkFields = TablesSQliteSchema[table].primary.filter(
+    (key) => key !== 'deleted'
+  );
   if (!pkFields) {
     throw new Error(`Primary key fields not defined for table ${table}`);
   }

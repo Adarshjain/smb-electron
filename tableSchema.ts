@@ -53,7 +53,7 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       },
     }),
     requiredFields: ['name'],
-    primary: ['name'],
+    primary: ['name', 'deleted'],
   },
 
   companies: {
@@ -77,7 +77,7 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       },
     }),
     requiredFields: ['name', 'current_date', 'next_serial'],
-    primary: ['name'],
+    primary: ['name', 'deleted'],
   },
 
   products: {
@@ -99,7 +99,7 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       },
     }),
     requiredFields: ['name', 'metal_type', 'product_type'],
-    primary: ['name'],
+    primary: ['name', 'deleted'],
   },
 
   customers: {
@@ -151,7 +151,7 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       },
     }),
     requiredFields: ['id', 'fhtitle', 'fhname', 'name'],
-    primary: ['id'],
+    primary: ['id', 'deleted'],
   },
 
   daily_balances: {
@@ -175,8 +175,8 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       },
     }),
     requiredFields: ['date', 'opening', 'closing', 'company'],
-    unique: ['date', 'company'],
-    primary: ['date', 'company'],
+    unique: ['date', 'company', 'deleted'],
+    primary: ['date', 'company', 'deleted'],
   },
 
   account_head: {
@@ -204,8 +204,8 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       },
     }),
     requiredFields: ['code', 'openingBalance', 'name', 'company'],
-    unique: ['code', 'company'],
-    primary: ['code', 'company'],
+    unique: ['code', 'company', 'deleted'],
+    primary: ['code', 'company', 'deleted'],
   },
 
   daily_entries: {
@@ -245,7 +245,7 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       },
     }),
     requiredFields: [],
-    primary: ['date', 'company'],
+    primary: ['date', 'company', 'deleted'],
   },
 
   bills: {
@@ -308,8 +308,8 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       'metal_type',
       'company',
     ],
-    unique: ['serial', 'loan_no'],
-    primary: ['serial', 'loan_no'],
+    unique: ['serial', 'loan_no', 'deleted'],
+    primary: ['serial', 'loan_no', 'deleted'],
   },
 
   bill_items: {
@@ -361,7 +361,7 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       'net_weight',
       'ignore_weight',
     ],
-    primary: ['serial', 'loan_no'],
+    primary: ['serial', 'loan_no', 'deleted'],
   },
 
   releases: {
@@ -412,8 +412,8 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       'loan_amount',
       'total_amount',
     ],
-    unique: ['serial', 'loan_no'],
-    primary: ['serial', 'loan_no'],
+    unique: ['serial', 'loan_no', 'deleted'],
+    primary: ['serial', 'loan_no', 'deleted'],
   },
 
   interest_rates: {
@@ -454,8 +454,8 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       'doc_charges',
       'doc_charges_type',
     ],
-    unique: ['rate', 'from_', 'to_'],
-    primary: ['rate', 'from_', 'to_'],
+    unique: ['rate', 'from_', 'to_', 'deleted'],
+    primary: ['rate', 'from_', 'to_', 'deleted'],
   },
 } as const;
 
