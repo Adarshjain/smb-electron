@@ -183,20 +183,17 @@ ipcMain.handle('sync-now', async (): Promise<ElectronToReactResponse<void>> => {
   }
 });
 
-ipcMain.handle(
-  'is-syncing-now',
-  (): ElectronToReactResponse<boolean | undefined> => {
-    try {
-      return { success: true, data: syncManager?.isRunning };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      };
-    }
+ipcMain.handle('is-syncing-now', (): ElectronToReactResponse<boolean> => {
+  try {
+    return { success: true, data: syncManager?.isRunning ?? false };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    };
   }
-);
+});
 
 ipcMain.handle(
   'initial-pull',
