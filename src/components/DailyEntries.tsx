@@ -74,7 +74,7 @@ export default function DailyEntries() {
       setCurrentAccountHead(cashAccount);
       setTimeout(() => {
         document.getElementById('account_head')?.focus();
-      }, 10);
+      }, 100);
     } catch (error) {
       errorToast(error);
     }
