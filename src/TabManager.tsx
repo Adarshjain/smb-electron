@@ -3,12 +3,13 @@ import React, {
   type ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { Router } from './Router.tsx';
-import { XIcon } from 'lucide-react';
+import { RefreshCcw, XIcon } from 'lucide-react';
 import { cn } from '@/lib/utils.ts';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import { isToday, viewableDate } from '@/lib/myUtils.tsx';
@@ -50,6 +51,22 @@ export const TabManager: React.FC = () => {
   ]);
 
   const [activeTabId, setActiveTabId] = useState('main');
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  useEffect(() => {
+    const checkSyncStatus = async () => {
+      try {
+        const syncStatus = await window.api.supabase.isSyncing();
+        if (syncStatus.success) setIsSyncing(syncStatus.data ?? false);
+      } catch (error) {
+        console.error('Error checking sync status:', error);
+      }
+    };
+
+    void checkSyncStatus();
+    const interval = setInterval(checkSyncStatus, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   const openTab = (title: string, component: ReactNode) => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -174,6 +191,18 @@ export const TabManager: React.FC = () => {
           },
         }}
       />
+      {isSyncing ? (
+        <>
+          <div className="fixed left-0 w-full top-0 h-full pointer-events-auto z-[9998] bg-blue-50 opacity-80"></div>
+          <div className="fixed left-0 right-0 top-0 bottom-0 pointer-events-auto z-[9999] flex place-items-center">
+            <div className="flex flex-col items-center bg-white shadow rounded-xl px-18 py-12 m-auto gap-8 text-xl">
+              <input type="text" className="opacity-0 h-0 w-0" autoFocus />
+              <RefreshCcw size={42} />
+              Taking back up, please wait...
+            </div>
+          </div>
+        </>
+      ) : null}
     </TabContext.Provider>
   );
 };

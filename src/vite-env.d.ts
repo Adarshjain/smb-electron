@@ -36,7 +36,7 @@ declare global {
       };
       supabase: {
         sync: () => Promise<ElectronToReactResponse<void>>;
-        isSyncing: () => Promise<ElectronToReactResponse<boolean | undefined>>;
+        isSyncing: () => Promise<ElectronToReactResponse<boolean>>;
         initialPull: () => Promise<ElectronToReactResponse<void | undefined>>;
         onSyncStatus: (
           callback: (
