@@ -130,6 +130,7 @@ export const BillingItemRow = memo(function BillingItemRow({
             inputName={`billing_items.${index}.product`}
             placeholder=""
             autoConvert
+            allowTempValues
           />
         )}
       />
@@ -153,6 +154,7 @@ export const BillingItemRow = memo(function BillingItemRow({
             )}
             triggerWidth={FIELD_WIDTHS.QUALITY_FIELD}
             autoConvert
+            allowTempValues
           />
         )}
       />
@@ -177,6 +179,7 @@ export const BillingItemRow = memo(function BillingItemRow({
             )}
             triggerWidth={FIELD_WIDTHS.SEAL_FIELD}
             autoConvert
+            allowTempValues
           />
         )}
       />

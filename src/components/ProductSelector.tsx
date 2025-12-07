@@ -14,6 +14,7 @@ export default function ProductSelector(props: {
   onFocus?: (event: React.FocusEvent<HTMLInputElement>) => void;
   autoFocus?: boolean;
   autoConvert: boolean;
+  allowTempValues?: boolean;
 }) {
   const [search, setSearch] = useState('');
   const [filteredProducts, setFilteredProducts] = useState<string[]>([]);
@@ -37,7 +38,9 @@ export default function ProductSelector(props: {
   }, [props.options, search]);
 
   const onSearchChange = (value: string) => {
-    props.onChange?.(value);
+    if (props.allowTempValues) {
+      props.onChange?.(value);
+    }
     setSearch(value);
   };
 
