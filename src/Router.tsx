@@ -10,6 +10,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary.tsx';
 import OtherCustomer from '@/components/OtherCustomer.tsx';
 import CustomersByArea from '@/components/CustomersByArea.tsx';
 import AccountHead from '@/components/AccountHead.tsx';
+import ItemsMaster from '@/components/ItemsMaster.tsx';
 
 export function Router() {
   return (
@@ -26,6 +27,7 @@ export function Router() {
           <Route path="/customer-crud" element={<CustomerCrud />} />
           <Route path="/customer-by-area" element={<CustomersByArea />} />
           <Route path="/account-head" element={<AccountHead />} />
+          <Route path="/items-master" element={<ItemsMaster />} />
         </Routes>
       </HashRouter>
     </ErrorBoundary>

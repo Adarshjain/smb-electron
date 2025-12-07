@@ -148,6 +148,9 @@ export function Home() {
             <DropdownMenuItem onClick={() => void navigate('/account-head')}>
               Account Head
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void navigate('/items-master')}>
+              Items Master
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => void navigate('/settings')}>
               Settings
             </DropdownMenuItem>
