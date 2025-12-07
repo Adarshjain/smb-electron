@@ -40,7 +40,7 @@ import '@/styles/NewLoan.css';
 import { MetalTypeSelector } from '@/components/LoanForm/MetalTypeSelector.tsx';
 import { LoanNumber } from '@/components/LoanForm/LoanNumber.tsx';
 import DatePicker from '@/components/DatePicker.tsx';
-import { create, deleteRecord, update } from '@/hooks/dbUtil.ts';
+import { create, deleteRecord, read, update } from '@/hooks/dbUtil.ts';
 import BottomBar from '@/components/LoanForm/BottomBar.tsx';
 import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
 import {
@@ -291,6 +291,53 @@ export default function NewLoan() {
     setLoadedLoan(loan);
   };
 
+  const createProductsIfNotExist = async (
+    billingItems: Loan['billing_items'],
+    metalType: MetalType
+  ) => {
+    for (const item of billingItems) {
+      const productQuery = read('products', {
+        metal_type: metalType,
+        product_type: 'product',
+        name: item.product,
+      });
+      const qualityQuery = read('products', {
+        metal_type: 'Other',
+        product_type: 'quality',
+        name: item.quality ?? '',
+      });
+      const sealQuery = read('products', {
+        metal_type: 'Other',
+        product_type: 'seal',
+        name: item.extra ?? '',
+      });
+
+      const [productCountResp, qualityCountResp, sealCountResp] =
+        await Promise.all([productQuery, qualityQuery, sealQuery]);
+      if (!productCountResp?.length) {
+        await create('products', {
+          name: item.product,
+          metal_type: metalType,
+          product_type: 'product',
+        });
+      }
+      if (!qualityCountResp?.length) {
+        await create('products', {
+          name: item.quality ?? '',
+          metal_type: 'Other',
+          product_type: 'quality',
+        });
+      }
+      if (!sealCountResp?.length) {
+        await create('products', {
+          name: item.extra ?? '',
+          metal_type: 'Other',
+          product_type: 'seal',
+        });
+      }
+    }
+  };
+
   const onCommitChanges = async (data?: Loan) => {
     data ??= getValues();
     try {
@@ -331,6 +378,7 @@ export default function NewLoan() {
         for (const item of formatterProduct) {
           await create('bill_items', item);
         }
+        await createProductsIfNotExist(data.billing_items, data.metal_type);
         const reloadedLoan = await loadBillWithDeps(
           enteredSerial,
           enteredNumber
@@ -343,6 +391,7 @@ export default function NewLoan() {
         for (const item of formatterProduct) {
           await create('bill_items', item);
         }
+        await createProductsIfNotExist(data.billing_items, data.metal_type);
         await setNextSerial();
         setTimeout(() => next('customer_picker' as FormFieldName), 100);
       }
