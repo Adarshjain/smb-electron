@@ -36,11 +36,16 @@ export default function ProductSelector(props: {
     setFilteredProducts(productNames);
   }, [props.options, search]);
 
+  const onSearchChange = (value: string) => {
+    props.onChange?.(value);
+    setSearch(value);
+  };
+
   return (
     <AutocompleteSelect<string>
       options={filteredProducts}
       onSelect={props.onChange}
-      onSearchChange={setSearch}
+      onSearchChange={onSearchChange}
       placeholder={props.placeholder}
       autofocus={props.autoFocus}
       inputClassName={props.inputClassName}

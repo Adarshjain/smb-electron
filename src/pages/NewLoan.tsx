@@ -142,8 +142,8 @@ export default function NewLoan() {
       const total = (
         parseFloat(item.ignore_weight || '0') +
         parseFloat(item.net_weight || '0')
-      ).toFixed(DECIMAL_PRECISION);
-      if (total !== parseFloat(item.gross_weight).toFixed(DECIMAL_PRECISION)) {
+      ).toFixed(3);
+      if (total !== parseFloat(item.gross_weight).toFixed(3)) {
         setValue(`billing_items.${index}.gross_weight`, total);
       }
     });
