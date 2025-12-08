@@ -128,11 +128,11 @@ export default function EntriesByHead({
         ]);
 
       setOpeningBalance(
-        currentAccountHead.openingBalance +
+        currentAccountHead.opening_balance +
           (openingBalanceResponse?.[0].balance ?? 0)
       );
       setClosingBalance(
-        currentAccountHead.openingBalance +
+        currentAccountHead.opening_balance +
           (closingBalanceResponse?.[0].balance ?? 0)
       );
     } catch (error) {
@@ -229,7 +229,7 @@ export default function EntriesByHead({
             <TableCell className="py-1.5 h-[33px]"></TableCell>
           </TableRow>
           {entries.map((entry) => (
-            <TableRow key={entry.sortOrder}>
+            <TableRow key={entry.sort_order}>
               <TableCell className="border-r py-1.5 h-[33px]">
                 {viewableDate(entry.date)}
               </TableCell>

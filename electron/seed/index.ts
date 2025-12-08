@@ -204,8 +204,8 @@ export const initAccountHead = () => {
       name,
       company,
       code: parseInt('' + record.acc_code),
-      hisaabGroup: record.SEARCHBY,
-      openingBalance: openingBalanceMap[company][name] ?? 0,
+      hisaab_group: record.SEARCHBY,
+      opening_balance: openingBalanceMap[company][name] ?? 0,
     });
   }
   try {
@@ -236,7 +236,7 @@ export const initDailyEntries = () => {
       date: new Date(record.date).toISOString().split('T')[0],
       company: toSentenceCase(record.company),
       description: record.description ?? null,
-      sortOrder: parseInt('' + record.rec_id),
+      sort_order: parseInt('' + record.rec_id),
     };
     createDailyBalances.push({
       ...entry,

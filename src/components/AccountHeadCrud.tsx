@@ -40,8 +40,8 @@ import { create, query, update } from '@/hooks/dbUtil.ts';
 
 const accountHeadSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  openingBalance: z.string(),
-  hisaabGroup: z.string(),
+  opening_balance: z.string(),
+  hisaab_group: z.string(),
 });
 
 type AccountHeadForm = z.infer<typeof accountHeadSchema>;
@@ -81,8 +81,8 @@ export default function AccountHeadCrud({
   const defaultValues = useMemo(
     () => ({
       name: '',
-      openingBalance: '0.00',
-      hisaabGroup: 'Expenses',
+      opening_balance: '0.00',
+      hisaab_group: 'Expenses',
     }),
     []
   );
@@ -96,8 +96,8 @@ export default function AccountHeadCrud({
     if (accountHead) {
       reset({
         name: accountHead.name,
-        openingBalance: formatCurrency(accountHead.openingBalance, true),
-        hisaabGroup: accountHead.hisaabGroup,
+        opening_balance: formatCurrency(accountHead.opening_balance, true),
+        hisaab_group: accountHead.hisaab_group,
       });
     }
   }, [accountHead, reset]);
@@ -124,8 +124,8 @@ export default function AccountHeadCrud({
           code,
           company: company?.name ?? '',
           name: data.name,
-          openingBalance: jsNumberFix(parseFloat(data.openingBalance || '0')),
-          hisaabGroup: data.hisaabGroup,
+          opening_balance: jsNumberFix(parseFloat(data.opening_balance || '0')),
+          hisaab_group: data.hisaab_group,
         };
 
         await (isCreate
@@ -146,7 +146,7 @@ export default function AccountHeadCrud({
   }, [handleSubmit, onSubmit]);
 
   const { setFormRef } = useEnterNavigation({
-    fields: ['name', 'openingBalance', 'hisaabGroup'],
+    fields: ['name', 'opening_balance', 'hisaab_group'],
     onSubmit: handleFormSubmit,
   });
 
@@ -209,13 +209,13 @@ export default function AccountHeadCrud({
             ))}
 
             {renderField(
-              'openingBalance',
+              'opening_balance',
               'Opening Balance',
               (field, invalid) => (
                 <Input
                   {...field}
-                  id="openingBalance"
-                  name="openingBalance"
+                  id="opening_balance"
+                  name="opening_balance"
                   onFocus={(e) => {
                     e.currentTarget.select();
                   }}
@@ -224,11 +224,11 @@ export default function AccountHeadCrud({
                 />
               )
             )}
-            {renderField('hisaabGroup', 'Group', (field, invalid) => (
+            {renderField('hisaab_group', 'Group', (field, invalid) => (
               <NativeSelect
                 {...field}
-                id="hisaabGroup"
-                name="hisaabGroup"
+                id="hisaab_group"
+                name="hisaab_group"
                 aria-invalid={invalid}
                 autoComplete="off"
               >

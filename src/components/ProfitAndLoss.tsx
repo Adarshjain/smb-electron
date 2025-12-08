@@ -58,15 +58,15 @@ export default function ProfitAndLoss({
           {
             code: number;
             name: string;
-            hisaabGroup: string;
+            hisaab_group: string;
             net: number;
           }[]
         >(
           `SELECT ah.code,
                   ah.name,
-                  ah.hisaabGroup,
+                  ah.hisaab_group,
                   CASE
-                    WHEN ah.hisaabGroup = 'Income'
+                    WHEN ah.hisaab_group = 'Income'
                       THEN ABS(SUM(de.credit) - SUM(de.debit))
                     ELSE
                       (SUM(de.credit) - SUM(de.debit))
@@ -78,10 +78,10 @@ export default function ProfitAndLoss({
                               AND de.date >= ?
                               AND de.date <= ?
            WHERE ah.company = ?
-             AND ah.hisaabGroup IN ('Income', 'Expenses')
+             AND ah.hisaab_group IN ('Income', 'Expenses')
              AND ah.deleted IS NULL
              AND de.deleted IS NULL
-           GROUP BY ah.code, ah.name, ah.hisaabGroup
+           GROUP BY ah.code, ah.name, ah.hisaab_group
            HAVING SUM(de.debit) IS NOT NULL
                OR SUM(de.credit) IS NOT NULL
            ORDER BY ah.name;
@@ -93,7 +93,7 @@ export default function ProfitAndLoss({
         let incomeTotal = 0;
         let expenseTotal = 0;
         entries?.forEach((entry) => {
-          if (entry.hisaabGroup === 'Income') {
+          if (entry.hisaab_group === 'Income') {
             incomeTotal += entry.net;
             incomeRows.push([
               entry.name,

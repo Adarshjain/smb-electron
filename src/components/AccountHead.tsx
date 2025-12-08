@@ -76,9 +76,9 @@ export default function AccountHead() {
             <TableRow key={accountHead.code}>
               <TableCell className="py-1.5">{accountHead.name}</TableCell>
               <TableCell className="text-right py-0">
-                {formatCurrency(accountHead.openingBalance)}
+                {formatCurrency(accountHead.opening_balance)}
               </TableCell>
-              <TableCell className="py-0">{accountHead.hisaabGroup}</TableCell>
+              <TableCell className="py-0">{accountHead.hisaab_group}</TableCell>
               <TableCell>
                 <AccountHeadCrud
                   label={

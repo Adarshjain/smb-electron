@@ -174,10 +174,10 @@ ipcMain.handle(
 ipcMain.handle('sync-now', async (): Promise<ElectronToReactResponse<void>> => {
   try {
     return { success: true, data: await syncManager?.pushAll() };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: (error as Error).message,
       stack: error instanceof Error ? error.stack : undefined,
     };
   }
