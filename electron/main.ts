@@ -75,7 +75,7 @@ const createWindow = () => {
   });
 };
 
-const initSupabase = () => {
+const initSupabase = async () => {
   const supabase = createClient(
     process.env.SUPABASE_URL ?? '',
     process.env.SUPABASE_KEY ?? ''
@@ -95,8 +95,7 @@ const initSupabase = () => {
       });
     },
   });
-
-  // await syncManager.start();
+  await syncManager.start();
 };
 
 // Set app name before app is ready (important for macOS)
@@ -108,7 +107,7 @@ app.commandLine.appendSwitch('remote-debugging-port', '7070');
 app.commandLine.appendSwitch('allow-file-access-from-files');
 
 // Initialize database before creating window
-void app.whenReady().then(() => {
+void app.whenReady().then(async () => {
   // Set dock icon on macOS (use PNG as icns can be problematic)
   if (process.platform === 'darwin' && app.dock) {
     const dockIconPath = path.join(
@@ -126,7 +125,9 @@ void app.whenReady().then(() => {
   initDatabase();
   migrateSchema();
   createWindow();
-  initSupabase();
+  if (process.env.SYNC_TO_SUPABASE) {
+    await initSupabase();
+  }
 });
 
 app.on('window-all-closed', () => {
