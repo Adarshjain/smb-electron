@@ -154,31 +154,6 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
     primary: ['id', 'deleted'],
   },
 
-  daily_balances: {
-    name: 'daily_balances',
-    columns: localizedColumns({
-      date: {
-        schema: 'TEXT NOT NULL',
-        encoded: false,
-      },
-      opening: {
-        schema: 'REAL NOT NULL',
-        encoded: false,
-      },
-      closing: {
-        schema: 'REAL NOT NULL',
-        encoded: false,
-      },
-      company: {
-        schema: 'TEXT NOT NULL',
-        encoded: false,
-      },
-    }),
-    requiredFields: ['date', 'opening', 'closing', 'company'],
-    unique: ['date', 'company', 'deleted'],
-    primary: ['date', 'company', 'deleted'],
-  },
-
   account_head: {
     name: 'account_head',
     columns: localizedColumns({
@@ -186,7 +161,7 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
         schema: 'REAL NOT NULL',
         encoded: false,
       },
-      openingBalance: {
+      opening_balance: {
         schema: 'REAL NOT NULL',
         encoded: false,
       },
@@ -194,7 +169,7 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
         schema: 'TEXT NOT NULL',
         encoded: false,
       },
-      hisaabGroup: {
+      hisaab_group: {
         schema: 'TEXT NOT NULL',
         encoded: false,
       },
@@ -203,7 +178,7 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
         encoded: false,
       },
     }),
-    requiredFields: ['code', 'openingBalance', 'name', 'company'],
+    requiredFields: ['code', 'opening_balance', 'name', 'company'],
     unique: ['code', 'company', 'deleted'],
     primary: ['code', 'company', 'deleted'],
   },
@@ -227,7 +202,7 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
         schema: 'REAL NOT NULL',
         encoded: false,
       },
-      sortOrder: {
+      sort_order: {
         schema: 'REAL NOT NULL',
         encoded: false,
       },
@@ -245,7 +220,14 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       },
     }),
     requiredFields: [],
-    primary: ['date', 'company', 'deleted'],
+    primary: [
+      'date',
+      'company',
+      'main_code',
+      'sub_code',
+      'sort_order',
+      'deleted',
+    ],
   },
 
   bills: {

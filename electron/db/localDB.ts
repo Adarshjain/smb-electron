@@ -8,13 +8,13 @@ import type {
 } from '../../tables';
 import { db } from './database';
 import { TablesSQliteSchema } from '../../tableSchema';
-import { query } from '../../src/hooks/dbUtil';
 
 export const tables: TableName[] = [
   'areas',
   'companies',
   'customers',
-  'daily_balances',
+  'daily_entries',
+  'account_head',
   'bills',
   'bill_items',
   'releases',
@@ -24,14 +24,13 @@ export const tables: TableName[] = [
 
 export function fetchUnsynced<K extends TableName>(
   table: K
-): Promise<LocalTables<K>[] | null> {
-  return query<LocalTables<K>[] | null>(
+): LocalTables<K>[] | null {
+  return executeSql(
     `SELECT *
-     from ?
+     from ${table}
      where synced = 0
-        OR deleted IS NOT NULL`,
-    [table]
-  );
+        OR deleted IS NOT NULL`
+  ) as LocalTables<K>[] | null;
 }
 
 export function validate<K extends TableName>(
@@ -224,11 +223,32 @@ export function markAsSynced<K extends TableName>(
      WHERE ${whereClauses}`
   ).run(...whereValues);
 
+  return null;
+}
+
+export function deleteSynced<K extends TableName>(
+  table: K,
+  record: LocalTables<K>
+): null {
+  if (!db) return null;
+
+  const pkFields = TablesSQliteSchema[table].primary.filter(
+    (key) => key !== 'deleted'
+  );
+  if (!pkFields) {
+    throw new Error(`Primary key fields not defined for table ${table}`);
+  }
+
+  const whereClauses = pkFields.map((field) => `${field} = ?`).join(' AND ');
+  const whereValues = pkFields.map(
+    (field) => record[field as keyof LocalTables<K>]
+  );
+
   db.prepare(
     `DELETE
      from ${table}
-     WHERE deleted IS NOT NULL`
-  ).run();
+     WHERE ${whereClauses} AND deleted IS NOT NULL`
+  ).run(...whereValues);
   return null;
 }
 

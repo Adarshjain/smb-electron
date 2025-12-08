@@ -1,6 +1,7 @@
 import { type SupabaseClient } from '@supabase/supabase-js';
-import { create, fetchUnsynced, markAsSynced } from './localDB';
+import { create, deleteSynced, fetchUnsynced, markAsSynced } from './localDB';
 import type { LocalTables, TableName } from '../../tables';
+import { TablesSQliteSchema } from '../../tableSchema';
 
 export type BackupEndResponse =
   | {
@@ -60,8 +61,12 @@ export class SyncManager {
   }
 
   async start() {
-    await this.pushAll();
-    this.timer = setInterval(() => void this.pushAll(), this.interval);
+    try {
+      await this.pushAll();
+      this.timer = setInterval(() => void this.pushAll(), this.interval);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   stop() {
@@ -85,6 +90,7 @@ export class SyncManager {
         status: false,
         error: error instanceof Error ? [error.message] : ['Unknown error'],
       });
+      throw error;
     } finally {
       this.running = false;
     }
@@ -92,7 +98,7 @@ export class SyncManager {
 
   private async pushChanges<K extends TableName>(tableName: K): Promise<void> {
     try {
-      const unsynced: LocalTables<K>[] | null = await fetchUnsynced(tableName);
+      const unsynced: LocalTables<K>[] | null = fetchUnsynced(tableName);
 
       if (unsynced == null) {
         console.warn(`DB not initialized`);
@@ -100,19 +106,52 @@ export class SyncManager {
       }
 
       if (!unsynced.length) return;
-      const cleanRecords = unsynced.map((record) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { synced, ...rest } = record;
-        return rest;
+      const upsertRecords: LocalTables<K>[] = [];
+      const deleteRecords: LocalTables<K>[] = [];
+      unsynced.forEach((record) => {
+        const { synced: _, deleted, ...rest } = record;
+        if (deleted) {
+          // @ts-expect-error shouldn't ideally
+          deleteRecords.push(rest);
+        } else {
+          // @ts-expect-error shouldn't ideally
+          upsertRecords.push(rest);
+        }
       });
-      console.log('Records to sync', tableName, cleanRecords.length);
+      console.log(
+        'Records to sync',
+        tableName,
+        'Update:',
+        upsertRecords.length,
+        '. Delete:',
+        deleteRecords.length
+      );
 
-      const { error } = await this.supabase
-        .from(tableName)
-        .upsert(cleanRecords);
-      if (error) throw error;
+      if (upsertRecords.length) {
+        const { error: upsertError } = await this.supabase
+          .from(tableName)
+          .upsert(upsertRecords);
+        if (upsertError) throw upsertError;
 
-      unsynced.forEach((record) => markAsSynced(tableName, record));
+        upsertRecords.forEach((record) => markAsSynced(tableName, record));
+      }
+
+      if (deleteRecords.length) {
+        const pkFields = TablesSQliteSchema[tableName].primary.filter(
+          (key) => key !== 'deleted'
+        );
+
+        for (const record of deleteRecords) {
+          let deleter = this.supabase.from(tableName).delete();
+          for (const field of pkFields) {
+            deleter = deleter.eq(field, record[field as keyof LocalTables<K>]);
+          }
+          const { error: deleteError } = await deleter;
+          if (deleteError) throw deleteError;
+
+          deleteSynced(tableName, record);
+        }
+      }
     } catch (error) {
       console.error(`Error syncing ${tableName}:`, error);
       throw error;

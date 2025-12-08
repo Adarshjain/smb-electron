@@ -100,7 +100,7 @@ export default function DailyEntries() {
       ]);
 
       setOpeningBalance(
-        currentAccountHead.openingBalance + (dailyEntries?.[0].balance ?? 0)
+        currentAccountHead.opening_balance + (dailyEntries?.[0].balance ?? 0)
       );
     } catch (error) {
       errorToast(error);
@@ -113,7 +113,7 @@ export default function DailyEntries() {
       credit: number,
       debit: number,
       existingEntry: LocalTables<'daily_entries'> | undefined,
-      sortOrder: number,
+      sort_order: number,
       isInterest = false
     ) => {
       if (!company?.name || !date) return;
@@ -132,7 +132,15 @@ export default function DailyEntries() {
           if (credit === 0 && debit === 0) {
             await deleteRecord('daily_entries', {
               company: company?.name,
-              sortOrder: existingEntry.sortOrder,
+              sort_order: existingEntry.sort_order,
+              main_code: existingEntry.main_code,
+              sub_code: existingEntry.sub_code,
+            });
+            await deleteRecord('daily_entries', {
+              company: company?.name,
+              sort_order: existingEntry.sort_order,
+              sub_code: existingEntry.main_code,
+              main_code: existingEntry.sub_code,
             });
             return;
           }
@@ -145,7 +153,7 @@ export default function DailyEntries() {
                                  AND date = ?
                                  AND main_code = ?
                                  AND sub_code = ?
-                                 AND sortOrder = ?`;
+                                 AND sort_order = ?`;
           await query<null>(
             updateQuery,
             [
@@ -156,7 +164,7 @@ export default function DailyEntries() {
               date,
               existingEntry.main_code,
               existingEntry.sub_code,
-              existingEntry.sortOrder,
+              existingEntry.sort_order,
             ],
             true
           );
@@ -170,7 +178,7 @@ export default function DailyEntries() {
               date,
               existingEntry.sub_code,
               existingEntry.main_code,
-              existingEntry.sortOrder,
+              existingEntry.sort_order,
             ],
             true
           );
@@ -188,7 +196,7 @@ export default function DailyEntries() {
         description,
         credit,
         debit,
-        sortOrder,
+        sort_order,
       });
       await create('daily_entries', {
         company: company.name,
@@ -198,7 +206,7 @@ export default function DailyEntries() {
         description,
         debit: credit,
         credit: debit,
-        sortOrder,
+        sort_order,
       });
     },
     [company?.name, date]
@@ -227,14 +235,14 @@ export default function DailyEntries() {
                WHERE company = ? AND date = ?`,
               [company.name, date]
             ),
-            query<[{ sortOrder: number }]>(
-              `SELECT sortOrder
+            query<[{ sort_order: number }]>(
+              `SELECT sort_order
                FROM daily_entries
-               ORDER BY sortOrder DESC
+               ORDER BY sort_order DESC
                LIMIT 1`
             ),
           ]);
-        let sortOrder = (sortOrderResponse?.[0].sortOrder ?? 0) + 1;
+        let sortOrder = (sortOrderResponse?.[0].sort_order ?? 0) + 1;
         // Process loan amount
         const loanAmountEntry = dailyEntry?.find((entry) =>
           entry.description?.includes(LOAN_AMOUNT)

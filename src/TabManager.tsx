@@ -54,18 +54,9 @@ export const TabManager: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    const checkSyncStatus = async () => {
-      try {
-        const syncStatus = await window.api.supabase.isSyncing();
-        if (syncStatus.success) setIsSyncing(syncStatus.data ?? false);
-      } catch (error) {
-        console.error('Error checking sync status:', error);
-      }
-    };
-
-    void checkSyncStatus();
-    const interval = setInterval(checkSyncStatus, 2000);
-    return () => clearInterval(interval);
+    window.api.supabase.onSyncStatus((data) => {
+      setIsSyncing(data.state === 'started');
+    });
   }, []);
 
   const openTab = (title: string, component: ReactNode) => {

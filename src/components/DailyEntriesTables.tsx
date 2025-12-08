@@ -26,7 +26,7 @@ const dailyEntrySchema = z.object({
       description: z.string().optional(),
       credit: z.string().optional(),
       debit: z.string().optional(),
-      sortOrder: z.number(),
+      sort_order: z.number(),
     })
   ),
 });
@@ -99,7 +99,7 @@ export function DailyEntriesTables({
 
     const filteredEntries: DailyEntry['entries'] =
       entries
-        ?.sort((a, b) => a.sortOrder - b.sortOrder)
+        ?.sort((a, b) => a.sort_order - b.sort_order)
         .map((entry) => {
           runningTotal = jsNumberFix(runningTotal + entry.credit - entry.debit);
 
@@ -110,7 +110,7 @@ export function DailyEntriesTables({
             description: entry.description ?? undefined,
             credit: entry.credit === 0 ? '' : entry.credit.toFixed(2),
             debit: entry.debit === 0 ? '' : entry.debit.toFixed(2),
-            sortOrder: entry.sortOrder,
+            sort_order: entry.sort_order,
           };
         }) ?? [];
 
@@ -120,7 +120,7 @@ export function DailyEntriesTables({
         debit: '',
         credit: '',
         description: '',
-        sortOrder: 0,
+        sort_order: 0,
       });
     }
 
@@ -158,11 +158,11 @@ export function DailyEntriesTables({
     filteredEntries: DailyEntry['entries']
   ): number[] => {
     const arr2SortOrders = new Set(
-      filteredEntries.map((item) => item.sortOrder)
+      filteredEntries.map((item) => item.sort_order)
     );
     return entries
-      .filter((item) => !arr2SortOrders.has(item.sortOrder))
-      .map((item) => item.sortOrder);
+      .filter((item) => !arr2SortOrders.has(item.sort_order))
+      .map((item) => item.sort_order);
   };
 
   const doEntriesMatch = (
@@ -195,7 +195,7 @@ export function DailyEntriesTables({
         const finalEntry = {
           company: company.name ?? '',
           date: date,
-          sortOrder: entry.sortOrder,
+          sort_order: entry.sort_order,
           description: entry.description ?? null,
         };
         const debit = parseFloat('' + entry.debit || '0');
@@ -203,18 +203,18 @@ export function DailyEntriesTables({
         const main_code = currentAccountHead?.code ?? 0;
         const sub_code = account?.code ?? 0;
 
-        if (finalEntry.sortOrder === 0) {
+        if (finalEntry.sort_order === 0) {
           if (latestSortOrder === 0) {
-            const sortOrderResp = await query<[{ sortOrder: number }]>(
-              `SELECT sortOrder
+            const sortOrderResp = await query<[{ sort_order: number }]>(
+              `SELECT sort_order
                FROM daily_entries
-               ORDER BY sortOrder DESC
+               ORDER BY sort_order DESC
                LIMIT 1`
             );
-            latestSortOrder = sortOrderResp?.[0].sortOrder ?? 0;
+            latestSortOrder = sortOrderResp?.[0].sort_order ?? 0;
           }
           latestSortOrder += 1;
-          finalEntry.sortOrder = latestSortOrder;
+          finalEntry.sort_order = latestSortOrder;
           await create('daily_entries', {
             ...finalEntry,
             credit,
@@ -231,7 +231,7 @@ export function DailyEntriesTables({
           });
         } else {
           const matchedEntry = entries.find(
-            (entry) => entry.sortOrder === finalEntry.sortOrder
+            (entry) => entry.sort_order === finalEntry.sort_order
           );
           const shouldUpdate =
             !matchedEntry ||
@@ -254,7 +254,7 @@ export function DailyEntriesTables({
                                  AND date = ?
                                  AND main_code = ?
                                  AND sub_code = ?
-                                 AND sortOrder = ?
+                                 AND sort_order = ?
                                  AND deleted IS NULL`;
             await query<null>(
               updateQuery,
@@ -266,7 +266,7 @@ export function DailyEntriesTables({
                 date,
                 main_code,
                 sub_code,
-                finalEntry.sortOrder,
+                finalEntry.sort_order,
               ],
               true
             );
@@ -280,7 +280,7 @@ export function DailyEntriesTables({
                 date,
                 sub_code,
                 main_code,
-                finalEntry.sortOrder,
+                finalEntry.sort_order,
               ],
               true
             );
@@ -290,11 +290,12 @@ export function DailyEntriesTables({
       const sortOrders = fetchDeletedRecords(filteredEntries);
       for (const order of sortOrders) {
         await query<null>(
-          `DELETE
-           FROM daily_entries
+          `UPDATE daily_entries
+           SET synced  = 0,
+               deleted = 1
            WHERE company = ?
              AND date = ?
-             AND sortOrder = ?
+             AND sort_order = ?
              AND deleted IS NULL`,
           [company.name, date, order],
           true
@@ -314,7 +315,7 @@ export function DailyEntriesTables({
         debit: '',
         credit: '',
         description: '',
-        sortOrder: 0,
+        sort_order: 0,
       });
     }
   };

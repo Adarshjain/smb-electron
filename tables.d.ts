@@ -33,19 +33,12 @@ export interface Tables {
     door_no: string | null;
   };
 
-  daily_balances: {
-    date: string;
-    opening: number;
-    closing: number;
-    company: string;
-  };
-
   account_head: {
     code: number;
     name: string;
-    openingBalance: number;
+    opening_balance: number;
     company: string;
-    hisaabGroup: string;
+    hisaab_group: string;
   };
 
   daily_entries: {
@@ -56,7 +49,7 @@ export interface Tables {
     company: string;
     main_code: number;
     sub_code: number;
-    sortOrder: number;
+    sort_order: number;
   };
 
   bills: {
@@ -135,8 +128,6 @@ export interface TablesInsert {
 
   customers: Omit<Tables['customers'], 'id'> & { id?: string };
 
-  daily_balances: Tables['daily_balances'];
-
   account_head: Tables['account_head'];
 
   daily_entries: Tables['daily_entries'];
@@ -157,8 +148,6 @@ export interface TablesDelete {
   companies: { name: string };
 
   customers: { id: string };
-
-  daily_balances: { date: string; company: string };
 
   account_head: { code: number };
 
@@ -185,8 +174,6 @@ export interface TablesUpdate {
   };
 
   customers: Partial<Tables['customers']>;
-
-  daily_balances: Partial<Tables['daily_balances']>;
 
   account_head: Partial<Tables['account_head']>;
 

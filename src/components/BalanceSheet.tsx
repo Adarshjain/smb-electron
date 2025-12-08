@@ -84,7 +84,7 @@ export default function BalanceSheet() {
                  WHERE de.company = ?
                    AND ah.company = ?
                    AND de.date < ?
-                   AND ah.hisaabGroup = 'Income')
+                   AND ah.hisaab_group = 'Income')
                              -
                 (SELECT SUM(de.credit - de.debit)
                  FROM daily_entries de
@@ -93,7 +93,7 @@ export default function BalanceSheet() {
                  WHERE de.company = ?
                    AND ah.company = ?
                    AND de.date < ?
-                   AND ah.hisaabGroup = 'Expenses')
+                   AND ah.hisaab_group = 'Expenses')
                              AS netProfit`,
           [
             company.name,
@@ -109,7 +109,7 @@ export default function BalanceSheet() {
          FROM account_head ah
                 LEFT JOIN daily_entries de
                           ON de.main_code = ah.code
-         WHERE ah.hisaabGroup = 'Capital Account'
+         WHERE ah.hisaab_group = 'Capital Account'
            ANd ah.company = ?
            ANd de.company = ?
            and de.date < ?`,
@@ -119,7 +119,7 @@ export default function BalanceSheet() {
 
       const netProfit = jsNumberFix(netProfitResponse?.[0].netProfit ?? 0);
       const capSum = jsNumberFix(capSumResponse?.[0].cap_sum ?? 0);
-      const openingBalance = mainAccountHead?.openingBalance ?? 0;
+      const openingBalance = mainAccountHead?.opening_balance ?? 0;
 
       return jsNumberFix(netProfit + openingBalance - capSum);
     },
@@ -142,8 +142,8 @@ export default function BalanceSheet() {
                                 AND de.date >= ?
                                 AND de.date <= ?
              WHERE ah.company = ?
-               AND ah.hisaabGroup = 'Capital Account'
-             GROUP BY ah.code, ah.name, ah.hisaabGroup
+               AND ah.hisaab_group = 'Capital Account'
+             GROUP BY ah.code, ah.name, ah.hisaab_group
              HAVING (SUM(de.debit) IS NOT NULL
                OR SUM(de.credit) IS NOT NULL)
                 AND net != 0
@@ -151,20 +151,20 @@ export default function BalanceSheet() {
         [company.name, startDate, endDate, company.name]
       );
       const entriesByHisaabGroupQuery = query<
-        { code: number; name: string; hisaabGroup: string; net: number }[]
+        { code: number; name: string; hisaab_group: string; net: number }[]
       >(
         `SELECT ah.code,
                       ah.name,
-                      ah.hisaabGroup,
-                      ah.openingBalance + (COALESCE(SUM(de.credit), 0) - COALESCE(SUM(de.debit), 0)) AS net
+                      ah.hisaab_group,
+                      ah.opening_balance + (COALESCE(SUM(de.credit), 0) - COALESCE(SUM(de.debit), 0)) AS net
                FROM account_head AS ah
                       LEFT JOIN daily_entries AS de
                                 ON ah.code = de.main_code
                                   AND de.company = ?
                                   AND de.date <= ?
                WHERE ah.company = ?
-                 AND ah.hisaabGroup NOT IN ('Income', 'Expenses', 'Capital Account')
-               GROUP BY ah.code, ah.name, ah.hisaabGroup, ah.openingBalance
+                 AND ah.hisaab_group NOT IN ('Income', 'Expenses', 'Capital Account')
+               GROUP BY ah.code, ah.name, ah.hisaab_group, ah.opening_balance
                HAVING ABS(net) > 0.001
                ORDER BY ah.name;
               `,
@@ -226,11 +226,14 @@ export default function BalanceSheet() {
         > = {};
 
         entriesByHisaabGroup?.forEach((entry) => {
-          if (entry.name === 'CASH' || entry.hisaabGroup === 'Sundry Debtors') {
-            entry.hisaabGroup = 'Bank Account';
+          if (
+            entry.name === 'CASH' ||
+            entry.hisaab_group === 'Sundry Debtors'
+          ) {
+            entry.hisaab_group = 'Bank Account';
           }
           const netValue =
-            HisaabGroupVsType[entry.hisaabGroup] === 'liabilities'
+            HisaabGroupVsType[entry.hisaab_group] === 'liabilities'
               ? -entry.net
               : entry.net;
           const lineItem: [string, string, string, number | undefined] = [
@@ -239,16 +242,16 @@ export default function BalanceSheet() {
             '',
             entry.code,
           ];
-          if (!entries[entry.hisaabGroup]) {
-            entries[entry.hisaabGroup] = {
-              name: entry.hisaabGroup,
+          if (!entries[entry.hisaab_group]) {
+            entries[entry.hisaab_group] = {
+              name: entry.hisaab_group,
               total: netValue,
               entries: [lineItem],
             };
           } else {
-            entries[entry.hisaabGroup].entries.push(lineItem);
-            entries[entry.hisaabGroup].total = jsNumberFix(
-              entries[entry.hisaabGroup].total + netValue
+            entries[entry.hisaab_group].entries.push(lineItem);
+            entries[entry.hisaab_group].total = jsNumberFix(
+              entries[entry.hisaab_group].total + netValue
             );
           }
         });
