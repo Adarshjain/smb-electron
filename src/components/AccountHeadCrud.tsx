@@ -109,10 +109,11 @@ export default function AccountHeadCrud({
         if (isCreate) {
           const latestCodeResponse = await query<[{ code: number }]>(
             `SELECT code
-               FROM account_head
-               WHERE company = ?
-               ORDER BY code DESC
-               LIMIT 1`,
+             FROM account_head
+             WHERE company = ?
+               AND deleted IS NULL
+             ORDER BY code DESC
+             LIMIT 1`,
             [company?.name]
           );
           code = (latestCodeResponse?.[0].code ?? 0) + 1;
