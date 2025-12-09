@@ -47,7 +47,7 @@ export function Home() {
           document.getElementById('company-switcher')?.click();
           break;
         }
-        case 'F6': {
+        case 'F9': {
           const customerPicker = document.getElementsByName('customer_picker');
           if (customerPicker.length) {
             customerPicker[0].focus();

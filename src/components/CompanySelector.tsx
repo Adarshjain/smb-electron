@@ -26,7 +26,9 @@ export default function CompanySelector(props: {
       value={company?.name ?? ''}
       disabled={props.disabled}
     >
-      <SelectTrigger className={cn('w-full cursor-pointer', props.className)}>
+      <SelectTrigger
+        className={cn('w-full cursor-pointer bg-white', props.className)}
+      >
         <Kbd id="company-switcher">F1</Kbd>
         <SelectValue placeholder="Select Company" />
       </SelectTrigger>
