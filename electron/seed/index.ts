@@ -1,6 +1,6 @@
 import MDBReader from 'mdb-reader';
 import fs from 'fs';
-import { createBatched, executeSql } from '../db/localDB';
+import { createBatched, executeSql, update } from '../db/localDB';
 import {
   type MetalType,
   type TableName,
@@ -519,6 +519,47 @@ export const initIntRates = () => {
     console.log(e instanceof Error ? e.message : 'Random Error');
   }
 };
+function getNextSerial(serial: string, loanNo: string): [string, number] {
+  let number = parseInt(loanNo, 10);
+  let charCode = serial.charCodeAt(0);
+
+  number += 1;
+
+  if (number > 10000) {
+    number = 1;
+    charCode += 1;
+
+    // Wrap from Z → A if needed
+    if (charCode > 90) charCode = 65;
+  }
+
+  const newLetter = String.fromCharCode(charCode);
+  return [newLetter, number];
+}
+const fetchAndUpdateLatestSerialNumbers = () => {
+  const SMBResp = executeSql(
+    `SELECT serial, loan_no, date from bills where company = 'Sri Mahaveer Bankers' order by  serial desc, loan_no desc limit 1`
+  ) as [{ serial: string; loan_no: number; date: string }] | null;
+  const MBResp = executeSql(
+    `SELECT serial, loan_no, date from bills where company = 'Mahaveer Bankers' order by  serial desc, loan_no desc limit 1`
+  ) as [{ serial: string; loan_no: number; date: string }] | null;
+  if (MBResp?.length) {
+    const resp = MBResp[0];
+    update('companies', {
+      name: 'Mahaveer Bankers',
+      next_serial: getNextSerial(resp.serial, '' + resp.loan_no).join('-'),
+      current_date: resp.date,
+    });
+  }
+  if (SMBResp?.length) {
+    const resp = SMBResp[0];
+    update('companies', {
+      name: 'Sri Mahaveer Bankers',
+      next_serial: getNextSerial(resp.serial, '' + resp.loan_no).join('-'),
+      current_date: resp.date,
+    });
+  }
+};
 
 export const initAllSeedData = (filePath: string) => {
   initReader(filePath);
@@ -531,4 +572,5 @@ export const initAllSeedData = (filePath: string) => {
   initBills();
   initAccountHead();
   initDailyEntries();
+  fetchAndUpdateLatestSerialNumbers();
 };
