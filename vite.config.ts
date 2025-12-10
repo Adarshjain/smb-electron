@@ -8,17 +8,24 @@ export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
 
+  // Only enable Sentry plugin if all required env vars are present
+  const enableSentryPlugin =
+    mode === 'production' &&
+    env.SENTRY_AUTH_TOKEN &&
+    env.SENTRY_ORG &&
+    env.SENTRY_PROJECT;
+
   return {
     base: './',
     plugins: [
       tailwindcss(),
       react(),
-      // Only include Sentry plugin in production builds with auth token
-      ...(mode === 'production' && env.SENTRY_AUTH_TOKEN
+      // Only include Sentry plugin in production builds with proper config
+      ...(enableSentryPlugin
         ? [
             sentryVitePlugin({
-              org: 'Adarsh Jain',
-              project: 'smb-react',
+              org: env.SENTRY_ORG,
+              project: env.SENTRY_PROJECT,
               authToken: env.SENTRY_AUTH_TOKEN,
               // Upload source maps to Sentry
               sourcemaps: {
@@ -27,6 +34,7 @@ export default defineConfig(({ mode }) => {
               },
               // Clean up artifacts after upload
               telemetry: false,
+              silent: false, // Set to true to suppress logs
             }),
           ]
         : []),
