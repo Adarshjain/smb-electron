@@ -1,6 +1,17 @@
 import { type LocalTables, type TableName, type Tables } from '../tables';
 import { type ElectronToReactResponse } from '../shared-types';
 
+/// <reference types="vite/client" />
+
+interface ImportMetaEnv {
+  readonly VITE_SENTRY_DSN: string;
+  readonly VITE_SENTRY_ENVIRONMENT: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
 declare global {
   interface Window {
     api: {

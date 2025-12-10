@@ -22,6 +22,46 @@ import type {
 } from '../tables';
 import type { ElectronToReactResponse } from '../shared-types';
 import { initAllSeedData } from './seed';
+import * as Sentry from '@sentry/electron/main';
+
+// Initialize Sentry for the main process
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment:
+      process.env.SENTRY_ENVIRONMENT ??
+      (process.env.VITE_DEV_SERVER_URL ? 'development' : 'production'),
+
+    // Performance Monitoring
+    tracesSampleRate: 1,
+
+    // Additional configuration
+    beforeSend(event, hint) {
+      // Log errors in development
+      if (process.env.VITE_DEV_SERVER_URL) {
+        console.error(
+          'Sentry Error:',
+          hint.originalException ?? hint.syntheticException
+        );
+      }
+      return event;
+    },
+
+    // Enable debug mode in development
+    debug: !!process.env.VITE_DEV_SERVER_URL,
+
+    // Capture additional context
+    initialScope: {
+      tags: {
+        'electron.process': 'main',
+      },
+    },
+  });
+
+  console.log('✅ Sentry initialized for main process');
+} else {
+  console.warn('⚠️ Sentry DSN not found. Error tracking disabled.');
+}
 
 type IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
 
@@ -162,6 +202,14 @@ ipcMain.handle(
       }
       return { success: true };
     } catch (error) {
+      Sentry.captureException(error, {
+        contexts: {
+          operation: {
+            name: 'init-seed',
+            type: 'ipc-handler',
+          },
+        },
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -176,6 +224,14 @@ ipcMain.handle('sync-now', async (): Promise<ElectronToReactResponse<void>> => {
   try {
     return { success: true, data: await syncManager?.pushAll() };
   } catch (error: unknown) {
+    Sentry.captureException(error, {
+      contexts: {
+        operation: {
+          name: 'sync-now',
+          type: 'ipc-handler',
+        },
+      },
+    });
     return {
       success: false,
       error: (error as Error).message,
@@ -188,6 +244,14 @@ ipcMain.handle('is-syncing-now', (): ElectronToReactResponse<boolean> => {
   try {
     return { success: true, data: syncManager?.isRunning ?? false };
   } catch (error) {
+    Sentry.captureException(error, {
+      contexts: {
+        operation: {
+          name: 'is-syncing-now',
+          type: 'ipc-handler',
+        },
+      },
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error),
@@ -202,6 +266,14 @@ ipcMain.handle(
     try {
       return { success: true, data: await syncManager?.initialPull() };
     } catch (error) {
+      Sentry.captureException(error, {
+        contexts: {
+          operation: {
+            name: 'initial-pull',
+            type: 'ipc-handler',
+          },
+        },
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -221,6 +293,16 @@ ipcMain.handle(
     try {
       return { success: true, data: create(table, record) };
     } catch (error) {
+      Sentry.captureException(error, {
+        contexts: {
+          operation: {
+            name: 'db:create',
+            table,
+            type: 'ipc-handler',
+            arg: record,
+          },
+        },
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -245,6 +327,16 @@ ipcMain.handle(
         data: read(table, conditions, fields, isLikeQuery),
       };
     } catch (error) {
+      Sentry.captureException(error, {
+        contexts: {
+          operation: {
+            name: 'db:read',
+            table,
+            type: 'ipc-handler',
+            arg: conditions,
+          },
+        },
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -265,6 +357,16 @@ ipcMain.handle(
       const result = update(table, record);
       return { success: true, data: result };
     } catch (error) {
+      Sentry.captureException(error, {
+        contexts: {
+          operation: {
+            name: 'db:update',
+            table,
+            type: 'ipc-handler',
+            arg: record,
+          },
+        },
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -285,6 +387,16 @@ ipcMain.handle(
       deleteRecord(table, record);
       return { success: true };
     } catch (error) {
+      Sentry.captureException(error, {
+        contexts: {
+          operation: {
+            name: 'db:delete',
+            table,
+            type: 'ipc-handler',
+            arg: record,
+          },
+        },
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -308,6 +420,16 @@ ipcMain.handle(
         data: executeSql(query, params, justRun as boolean),
       };
     } catch (error) {
+      Sentry.captureException(error, {
+        contexts: {
+          operation: {
+            name: 'db:query',
+            query,
+            type: 'ipc-handler',
+            arg: { query, params },
+          },
+        },
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),

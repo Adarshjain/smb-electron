@@ -21,6 +21,7 @@ dist-electron
 .env
 .env.local
 .env.*.local
+!.env.example
 
 # Database files
 *.db

@@ -10,6 +10,7 @@ An Electron application built with React, TypeScript, and Vite, featuring integr
 - 🎯 Type-safe database API
 - 🪝 Custom React hook for database operations
 - 📦 Electron for cross-platform desktop apps
+- 🐛 **Sentry integration** - Error tracking, performance monitoring, and session replay
 
 ## Getting Started
 
@@ -58,6 +59,9 @@ npm run check-all
 
 - 📋 [Linting Guide](./LINTING_GUIDE.md) - Comprehensive linting documentation
 - 🪝 [Git Hooks Setup](./SETUP_HOOKS.md) - Optional pre-commit hooks
+- 🐛 **[Sentry Setup Complete](./SENTRY_SETUP_COMPLETE.md)** - Quick start guide
+- 🐛 [Sentry Integration Guide](./SENTRY_GUIDE.md) - Detailed error tracking setup
+- 💡 [Sentry Examples](./SENTRY_EXAMPLES.md) - Practical code examples
 
 ### IDE Setup
 
@@ -74,18 +78,38 @@ Configuration files:
 
 ### Environment Setup
 
-The app requires Supabase configuration for cloud sync functionality.
+The app requires configuration for Sentry (error tracking) and Supabase (cloud sync).
 
-1. **Create a `.env` file** in the project root (already created with empty values)
-2. **Get your Supabase credentials** from [Supabase Dashboard](https://app.supabase.com/project/_/settings/api)
-3. **Fill in the `.env` file** with your credentials:
+1. **Create a `.env` file** in the project root:
 
-```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-supabase-anon-key
+```bash
+cp .env.example .env
 ```
 
-> **Note:** A `.env.example` file is provided as a template. The `.env` file is gitignored for security.
+2. **Configure Sentry** (Required for error tracking):
+   - Create a [Sentry account](https://sentry.io/)
+   - Create a new project (choose "Electron")
+   - Copy your DSN and add it to `.env`
+
+3. **Configure Supabase** (Optional - for cloud sync):
+   - Get credentials from [Supabase Dashboard](https://app.supabase.com/project/_/settings/api)
+   - Add them to `.env`
+
+**`.env` file example:**
+
+```env
+# Sentry (Error Tracking)
+SENTRY_DSN=https://your-public-key@sentry.io/your-project-id
+SENTRY_AUTH_TOKEN=your_auth_token_here  # Optional: for source maps
+SENTRY_ENVIRONMENT=production
+
+# Supabase (Cloud Sync)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-supabase-anon-key
+SYNC_TO_SUPABASE=false
+```
+
+> **Note:** The `.env` file is gitignored for security. See [Sentry Integration Guide](./SENTRY_GUIDE.md) for detailed setup.
 
 ### Development
 
@@ -214,3 +238,4 @@ Make sure you:
 - 🎨 Tailwind CSS for styling
 - ☁️ Supabase for cloud sync
 - 🔍 ESLint 9 + Prettier for code quality
+- 🐛 Sentry for error tracking & session replay
