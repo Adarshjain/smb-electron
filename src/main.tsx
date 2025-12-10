@@ -8,7 +8,6 @@ import * as Sentry from '@sentry/react';
 
 // Initialize Sentry for the renderer process
 if (import.meta.env.VITE_SENTRY_DSN) {
-  debugger;
   Sentry.init({
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     dsn: import.meta.env.VITE_SENTRY_DSN,
