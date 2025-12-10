@@ -114,13 +114,13 @@ export function Home() {
           <Kbd className="justify-self-start col-start-1">F8</Kbd>
           <div className="justify-self-center col-start-2">Day Book</div>
         </Button>
-        <Button
-          variant="outline"
-          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
-          onClick={() => void navigate('/dashboard')}
-        >
-          <div className="justify-self-center col-start-2">Dashboard</div>
-        </Button>
+        {/*<Button*/}
+        {/*  variant="outline"*/}
+        {/*  className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"*/}
+        {/*  onClick={() => void navigate('/dashboard')}*/}
+        {/*>*/}
+        {/*  <div className="justify-self-center col-start-2">Dashboard</div>*/}
+        {/*</Button>*/}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
