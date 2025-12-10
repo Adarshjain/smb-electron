@@ -20,7 +20,7 @@ export default function BottomBar({
   canGoNext: boolean;
 }) {
   return (
-    <div className="flex justify-between w-full fixed bottom-0 py-3 border-t bg-gray-100 border-gray-200">
+    <div className="flex justify-between w-full fixed bottom-0 py-3 border-t border-gray-200">
       <div className="flex ml-6">
         <Button
           variant="outline"

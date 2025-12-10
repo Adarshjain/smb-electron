@@ -88,7 +88,7 @@ export const TabManager: React.FC = () => {
   // Memoize the tab bar so UI updates don’t reset children
   const tabBar = useMemo(
     () => (
-      <div className="flex border-gray-300 justify-between items-center px-4 h-10 sticky top-0 bg-green-100 z-10">
+      <div className="flex border-gray-300 justify-between items-center px-4 h-10 sticky top-0 bg-green-200 z-10">
         <div className="flex">
           {tabs.map((tab) => (
             <div
@@ -143,7 +143,7 @@ export const TabManager: React.FC = () => {
 
   return (
     <TabContext.Provider value={{ openTab, switchToMain, closeTab }}>
-      <div className="flex flex-col h-screen bg-green-100 overflow-auto">
+      <div className="flex flex-col h-screen bg-green-200 overflow-auto">
         {tabBar}
 
         {/* Keep all tabs mounted; just hide inactive ones */}

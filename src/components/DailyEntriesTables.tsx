@@ -459,7 +459,7 @@ export function DailyEntriesTables({
           />
         </div>
       </form>
-      <div className="flex justify-center gap-12 fixed bottom-0 left-0 right-0 py-3 border-t bg-gray-100 border-gray-200">
+      <div className="flex justify-center gap-12 fixed bottom-0 left-0 right-0 py-3 border-t border-gray-200">
         <Button
           className="border-black"
           variant="outline"
