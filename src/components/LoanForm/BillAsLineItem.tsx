@@ -163,7 +163,7 @@ export default function BillAsLineItem({
                         : ''
                     )}
                   >
-                    {bill.months}
+                    {bill.months} + 1
                   </TableCell>
 
                   <TableCell className="border-r">{bill.description}</TableCell>
@@ -209,7 +209,7 @@ export default function BillAsLineItem({
           </TableBody>
         </Table>
       ) : (
-        <div className="w-[fit-content] px-2 py-1 rounded bg-green-200">
+        <div className="w-[fit-content] px-2 py-1 rounded bg-green-100">
           No Active Loans!
         </div>
       )}
@@ -243,7 +243,9 @@ export default function BillAsLineItem({
                     <TableCell className="border-r">
                       {viewableDate(bill.releasedEntry?.date)}
                     </TableCell>
-                    <TableCell className="border-r">{bill.months}</TableCell>
+                    <TableCell className="border-r">
+                      {bill.months} + 1
+                    </TableCell>
                     <TableCell className="border-r">
                       {bill.description}
                     </TableCell>

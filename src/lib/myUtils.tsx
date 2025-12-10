@@ -11,6 +11,7 @@ import MyCache from '../../MyCache.ts';
 import { query, read } from '@/hooks/dbUtil.ts';
 import { toastStyles } from '@/constants/loanForm.ts';
 import { cn } from '@/lib/utils.ts';
+import { captureException } from '@/lib/sentry.ts';
 
 export function mapToRegex(map: Record<string, string>) {
   return new RegExp(
@@ -97,6 +98,7 @@ export function errorToast(msg: string | Error | unknown) {
   } else {
     toast.error(msg as string, { className: toastStyles.error });
   }
+  captureException(msg as string | Error);
 }
 
 export function toastElectronResponse<T>(
