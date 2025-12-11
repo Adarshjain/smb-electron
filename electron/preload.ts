@@ -48,6 +48,16 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('is-syncing-now'),
     initialPull: (): Promise<ElectronToReactResponse<void | undefined>> =>
       ipcRenderer.invoke('initial-pull'),
+    getSyncInfo: (): Promise<
+      ElectronToReactResponse<{
+        syncInfo: {
+          lastSyncTime: Date | null;
+          nextSyncTime: Date | null;
+          interval: number;
+        } | null;
+        isSyncEnabled: string;
+      }>
+    > => ipcRenderer.invoke('get-sync-info'),
     onSyncStatus: (
       callback: (data: { state: 'started' } | BackupEndResponse) => void
     ) => {

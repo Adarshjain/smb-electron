@@ -30,6 +30,8 @@ export class SyncManager {
   private running = false;
   private readonly onBackupStart?: () => void;
   private readonly onBackupEnd?: (response: BackupEndResponse) => void;
+  private lastSyncTime: Date | null = null;
+  private nextSyncTime: Date | null = null;
 
   private constructor(config: SyncConfig) {
     this.supabase = config.supabase;
@@ -60,13 +62,27 @@ export class SyncManager {
     return this.running;
   }
 
+  getSyncInfo() {
+    return {
+      lastSyncTime: this.lastSyncTime,
+      nextSyncTime: this.nextSyncTime,
+      interval: this.interval,
+    };
+  }
+
   async start() {
     try {
       await this.pushAll();
-      this.timer = setInterval(() => void this.pushAll(), this.interval);
+      this.scheduleNextSync();
     } catch (error) {
       console.error(error);
     }
+  }
+
+  private scheduleNextSync() {
+    if (this.timer) clearInterval(this.timer);
+    this.nextSyncTime = new Date(Date.now() + this.interval);
+    this.timer = setInterval(() => void this.pushAll(), this.interval);
   }
 
   stop() {
@@ -84,6 +100,8 @@ export class SyncManager {
       for (const tableName of this.tables) {
         await this.pushChanges(tableName);
       }
+      this.lastSyncTime = new Date();
+      this.scheduleNextSync();
       this.onBackupEnd?.({ status: true, summary });
     } catch (error) {
       this.onBackupEnd?.({
