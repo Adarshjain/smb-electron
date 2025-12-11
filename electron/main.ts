@@ -146,10 +146,11 @@ const initSupabase = () => {
     process.env.SUPABASE_URL ?? '',
     process.env.SUPABASE_KEY ?? ''
   );
+  const intervalMs = 30 * 60 * 1000; // 30 minutes
   syncManager = SyncManager.getInstance({
     supabase,
     tables,
-    interval: 30 * 60 * 1000, // 30 minutes
+    interval: intervalMs,
     onBackupStart: () => {
       win?.webContents.send('sync-status', { state: 'started' });
     },
@@ -161,6 +162,7 @@ const initSupabase = () => {
       });
     },
   });
+  syncManager.nextSyncTime = new Date(Date.now() + intervalMs);
   setTimeout(() => void syncManager?.start(), 30000);
 };
 
