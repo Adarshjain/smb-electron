@@ -1,6 +1,6 @@
 import { memo, useEffect, useState } from 'react';
 import CustomerPicker from '@/components/CustomerPicker';
-import type { FullCustomer, Tables } from '@/../tables';
+import type { FullCustomer, LocalTables } from '@/../tables';
 import CustomerInfo from '@/components/LoanForm/CustomerInfo.tsx';
 import { read } from '@/hooks/dbUtil.ts';
 import { Dialog, DialogContent } from '@/components/ui/dialog.tsx';
@@ -36,7 +36,7 @@ export const LoanCustomerSection = memo(function LoanCustomerSection(
     };
   }, []);
 
-  const onCustomerSelect = async (customer: Tables['customers']) => {
+  const onCustomerSelect = async (customer: LocalTables<'customers'>) => {
     try {
       const areaResponse = await read('areas', {
         name: customer.area,
@@ -59,14 +59,14 @@ export const LoanCustomerSection = memo(function LoanCustomerSection(
         town: null,
         post: null,
         pincode: null,
-      },
+      } as LocalTables<'areas'>,
     });
   };
 
   return (
     <div>
       <CustomerPicker
-        onSelect={(customer: Tables['customers']) =>
+        onSelect={(customer: LocalTables<'customers'>) =>
           void onCustomerSelect(customer)
         }
         autofocus
@@ -84,7 +84,7 @@ export const LoanCustomerSection = memo(function LoanCustomerSection(
           <DialogTitle className="sr-only">Add Customer</DialogTitle>
           <CustomerCrud
             cantEdit
-            onCreate={(customer: Tables['customers']) => {
+            onCreate={(customer: LocalTables<'customers'>) => {
               setIsModalOpen(false);
               setTimeout(() => {
                 void onCustomerSelect(customer);
