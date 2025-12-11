@@ -40,7 +40,7 @@ import '@/styles/NewLoan.css';
 import { MetalTypeSelector } from '@/components/LoanForm/MetalTypeSelector.tsx';
 import { LoanNumber } from '@/components/LoanForm/LoanNumber.tsx';
 import DatePicker from '@/components/DatePicker.tsx';
-import { create, deleteRecord, read, update } from '@/hooks/dbUtil.ts';
+import { create, deleteRecord, query, read, update } from '@/hooks/dbUtil.ts';
 import BottomBar from '@/components/LoanForm/BottomBar.tsx';
 import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
 import {
@@ -354,6 +354,16 @@ export default function NewLoan() {
         released: 0,
         company: data.company,
       };
+      const sortOrderResp = await query<
+        [{ sort_order: number }]
+      >(`SELECT sort_order
+         FROM bill_items
+         ORDER BY sort_order DESC
+         LIMIT 1`);
+      let sortOrder = sortOrderResp?.[0].sort_order ?? 0;
+      if (sortOrder === 0) {
+        throw Error('Sort Order for bill items is undefined');
+      }
       const formatterProduct: TablesInsert['bill_items'][] =
         data.billing_items.map((item): TablesInsert['bill_items'] => ({
           serial: data.serial,
@@ -367,6 +377,7 @@ export default function NewLoan() {
           quantity: item.quantity,
           quality: item.quality,
           extra: item.extra,
+          sort_order: ++sortOrder,
         }));
 
       if (isEditMode) {

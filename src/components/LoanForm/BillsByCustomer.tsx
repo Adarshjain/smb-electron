@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchBillsByCustomer } from '@/lib/myUtils.tsx';
-import type { LocalTables, Tables } from '@/../tables';
+import type { Tables } from '@/../tables';
 import BillAsLineItem from '@/components/LoanForm/BillAsLineItem.tsx';
 import CustomerInfo from '@/components/LoanForm/CustomerInfo.tsx';
 
@@ -26,7 +26,7 @@ export default function BillsByCustomer(props: {
     <div className="flex gap-3 flex-col">
       {bills.length ? (
         <CustomerInfo
-          customer={bills[0].full_customer.customer as LocalTables<'customers'>}
+          customer={bills[0].full_customer.customer}
           area={bills[0].full_customer.area}
         />
       ) : null}
