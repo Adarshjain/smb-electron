@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
 import { useCallback, useEffect, useState } from 'react';
 import { create, read, update } from '@/hooks/dbUtil.ts';
-import { errorToast, successToast } from '@/lib/myUtils.tsx';
+import { errorToast, successToast, uniqueV6 } from '@/lib/myUtils.tsx';
 import ProductSelector from '@/components/ProductSelector.tsx';
 import { Input } from '@/components/ui/input';
 import type { LocalTables, Tables } from '../../tables';
@@ -131,7 +131,7 @@ export default function CustomerCrud({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   async function onSubmit(data: Customer) {
     const customer: Tables['customers'] = {
-      id: `${data.name.substring(0, 3)}${data.fhname.substring(0, 3)}${data.area.name.substring(0, 3)}`,
+      id: uniqueV6(),
       name: data.name,
       fhtitle: data.fhtitle,
       fhname: data.fhname,

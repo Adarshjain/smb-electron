@@ -246,7 +246,7 @@ export async function fetchFullCustomer(
       id: customerId,
     });
     if (!customers?.length) {
-      errorToast('No customerPromise match');
+      errorToast('No customer matched');
       return null;
     }
     const customer = customers[0];
@@ -423,4 +423,7 @@ export function datesToRange(
     return { year: from.getFullYear() };
   }
   return { range: [startDate, endDate] };
+}
+export function uniqueV6() {
+  return Date.now().toString(36) + Math.random().toString(36);
 }
