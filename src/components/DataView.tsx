@@ -25,10 +25,10 @@ export default function DataView<K extends TableName>(props: {
   const [search, setSearch] = useState<string>('');
   const { convert } = useThanglish();
 
-  const columns = useMemo(() => {
-    const { synced: _, ...cols } = TablesSQliteSchema[props.table].columns;
-    return cols;
-  }, [props.table]);
+  const columns = useMemo(
+    () => TablesSQliteSchema[props.table].columns,
+    [props.table]
+  );
 
   const primaryKeys = useMemo(
     () => TablesSQliteSchema[props.table].primary,

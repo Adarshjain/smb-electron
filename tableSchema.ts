@@ -305,6 +305,10 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
         schema: 'INTEGER NOT NULL',
         encoded: false,
       },
+      sort_order: {
+        schema: 'REAL NOT NULL',
+        encoded: false,
+      },
       product: {
         schema: 'TEXT NOT NULL',
         encoded: true,
@@ -343,7 +347,7 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       'net_weight',
       'ignore_weight',
     ],
-    primary: ['serial', 'loan_no', 'deleted'],
+    primary: ['serial', 'loan_no', 'deleted', 'sort_order'],
   },
 
   releases: {

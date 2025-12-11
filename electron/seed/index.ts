@@ -356,6 +356,7 @@ export const initBills = () => {
   const createBillItems: Tables['bill_items'][] = [];
   const createBills: Tables['bills'][] = [];
   const createReleases: Tables['releases'][] = [];
+  let billItemsSortorder = 1000;
 
   for (const record of billingData) {
     itemDesData
@@ -379,6 +380,7 @@ export const initBills = () => {
           quality: item.quality,
           extra: item.ituch,
           quantity: item.qty ? parseInt(item.qty) : 0,
+          sort_order: billItemsSortorder++,
         };
         createBillItems.push(decodeRecord('bill_items', billItemRecord, true));
       });

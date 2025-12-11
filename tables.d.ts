@@ -72,6 +72,7 @@ export interface Tables {
     product: string;
     quality: string | null;
     extra: string | null;
+    sort_order: number;
     quantity: number;
     gross_weight: number;
     net_weight: number;

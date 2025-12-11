@@ -13,7 +13,7 @@ import { type ReleaseLoan, releaseLoanSchema } from '@/types/loanForm.ts';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import DatePicker from '@/components/DatePicker.tsx';
 import { LoanNumber } from '@/components/LoanForm/LoanNumber.tsx';
-import type { LocalTables, Tables } from '@/../tables';
+import type { Tables } from '@/../tables';
 import { create, deleteRecord, read, update } from '@/hooks/dbUtil.ts';
 import {
   errorToast,
@@ -268,9 +268,7 @@ export default function ReleaseLoan() {
             <div>
               <CustomerInfo
                 className="pl-3 pt-3 pb-7 min-h-[150px]"
-                customer={
-                  loadedLoan.full_customer.customer as LocalTables<'customers'>
-                }
+                customer={loadedLoan.full_customer.customer}
                 area={loadedLoan.full_customer.area}
               />
               <BillItemsInfo items={loadedLoan.bill_items} />
