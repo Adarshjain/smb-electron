@@ -166,7 +166,9 @@ export default function BillAsLineItem({
                     {bill.months} + 1
                   </TableCell>
 
-                  <TableCell className="border-r">{bill.description}</TableCell>
+                  <TableCell className="border-r whitespace-break-spaces">
+                    {bill.description}
+                  </TableCell>
                   <TableCell className="text-right border-r">
                     {bill.weight.toFixed(3)} gms
                   </TableCell>
@@ -246,7 +248,7 @@ export default function BillAsLineItem({
                     <TableCell className="border-r">
                       {bill.months} + 1
                     </TableCell>
-                    <TableCell className="border-r">
+                    <TableCell className="border-r px-1 whitespace-break-spaces">
                       {bill.description}
                     </TableCell>
                     <TableCell className="text-right border-r">
