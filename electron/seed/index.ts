@@ -111,6 +111,9 @@ const openingBalanceMap: Record<string, Record<string, number>> = {
   },
 };
 
+const uniqueV6 = () => Date.now().toString(36) + Math.random().toString(36);
+const oldVsNewCustomerId: Record<string, string> = {};
+
 let reader: MDBReader | null = null;
 
 const initReader = (filePath: string) => {
@@ -176,7 +179,7 @@ export const initAreas = () => {
   try {
     createBatched('areas', createAreas);
   } catch (e) {
-    console.log(e instanceof Error ? e.message : 'Random Error');
+    throw Error('Areas: ' + (e as Error).message);
   }
 };
 
@@ -211,7 +214,7 @@ export const initAccountHead = () => {
   try {
     createBatched('account_head', createAccountHead);
   } catch (e) {
-    console.log(e instanceof Error ? e.message : 'Random Error');
+    throw Error('Account head: ' + (e as Error).message);
   }
 };
 
@@ -256,7 +259,7 @@ export const initDailyEntries = () => {
   try {
     createBatched('daily_entries', createDailyBalances);
   } catch (e) {
-    console.log(e instanceof Error ? e.message : 'Random Error');
+    throw Error('Daily Entries: ' + (e as Error).message);
   }
 };
 
@@ -285,7 +288,7 @@ export const initCompanies = () => {
   try {
     createBatched('companies', createCompanies);
   } catch (e) {
-    console.log(e instanceof Error ? e.message : 'Random Error');
+    throw Error('Companies: ' + (e as Error).message);
   }
 };
 
@@ -333,7 +336,7 @@ export const initProducts = () => {
   try {
     createBatched('products', createProducts);
   } catch (e) {
-    console.log(e instanceof Error ? e.message : 'Random Error');
+    throw Error('Products: ' + (e as Error).message);
   }
 };
 
@@ -393,7 +396,7 @@ export const initBills = () => {
       date: new Date(record.date).toISOString().split('T')[0],
       company: toSentenceCase(record.company),
       metal_type: toSentenceCase(record.items) as MetalType,
-      customer_id: record.code,
+      customer_id: oldVsNewCustomerId[record.code],
       doc_charges: parseFloat(record.otchgrs || '0'),
       first_month_interest: parseFloat(record.intamt || '0'),
       interest_rate: parseFloat(record.intrate || '0'),
@@ -426,10 +429,18 @@ export const initBills = () => {
 
   try {
     createBatched('bill_items', createBillItems);
+  } catch (e) {
+    throw Error('Bill Items: ' + (e as Error).message);
+  }
+  try {
     createBatched('bills', createBills);
+  } catch (e) {
+    throw Error('Bills: ' + (e as Error).message);
+  }
+  try {
     createBatched('releases', createReleases);
   } catch (e) {
-    console.log(e instanceof Error ? e.message : 'Random Error');
+    throw Error('Releases: ' + (e as Error).message);
   }
 };
 
@@ -449,8 +460,10 @@ export const initCustomers = () => {
     if (record.address2.trim()) {
       addresses.add(record.address2);
     }
+    const newId = uniqueV6();
+    oldVsNewCustomerId[record.code] = newId;
     const customerRecord = {
-      id: record.code,
+      id: newId,
       name: record.name,
       fhname: record.fhname,
       fhtitle: record.fhtitle,
@@ -467,7 +480,7 @@ export const initCustomers = () => {
   try {
     createBatched('customers', createCustomers);
   } catch (e) {
-    console.log(e instanceof Error ? e.message : 'Random Error');
+    throw Error('Customers: ' + (e as Error).message);
   }
 };
 
@@ -518,7 +531,7 @@ export const initIntRates = () => {
   try {
     createBatched('interest_rates', rates);
   } catch (e) {
-    console.log(e instanceof Error ? e.message : 'Random Error');
+    throw Error('Interest Rates: ' + (e as Error).message);
   }
 };
 function getNextSerial(serial: string, loanNo: string): [string, number] {
