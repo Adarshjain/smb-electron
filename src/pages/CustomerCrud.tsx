@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
 import { useCallback, useEffect, useState } from 'react';
 import { create, read, update } from '@/hooks/dbUtil.ts';
-import { errorToast } from '@/lib/myUtils.tsx';
+import { errorToast, successToast } from '@/lib/myUtils.tsx';
 import ProductSelector from '@/components/ProductSelector.tsx';
 import { Input } from '@/components/ui/input';
 import type { LocalTables, Tables } from '../../tables';
@@ -26,15 +26,15 @@ const CustomerSchema = z.object({
   address1: z.string().optional(),
   address2: z.string().optional(),
   area: z.object({
-    name: z.string().min(1, 'Missing'),
+    name: z.string().min(1, 'Missing area name'),
     town: z.string().nullable().optional(),
     post: z.string().nullable().optional(),
     pincode: z.string().nullable().optional(),
   }),
   phone_no: z.string().optional(),
-  fhtitle: z.string().min(1, 'Missing'),
-  name: z.string().min(1, 'Missing'),
-  fhname: z.string().min(1, 'Missing'),
+  fhtitle: z.string().min(1, 'Missing fhtitle'),
+  name: z.string().min(1, 'Missing name'),
+  fhname: z.string().min(1, 'Missing fhname'),
   id_proof: z.string().optional(),
   id_proof_value: z.string().optional(),
   door_no: z.string().optional(),
@@ -144,24 +144,22 @@ export default function CustomerCrud({
         data.id_proof_value === '' ? null : (data.id_proof_value ?? null),
       address2: data.address2 === '' ? null : (data.address2 ?? null),
     };
-    if (id) {
-      try {
+    try {
+      if (id) {
         await update('customers', {
           ...customer,
           id,
         });
-      } catch (error) {
-        errorToast(error);
-      }
-    } else {
-      try {
+        successToast('Customer Updated!');
+      } else {
         await create('customers', customer);
-      } catch (error) {
-        errorToast(error);
+        onCreate?.(customer as LocalTables<'customers'>);
+        successToast('Customer Created!');
       }
-      onCreate?.(customer as LocalTables<'customers'>);
+      reset(defaultValues);
+    } catch (error) {
+      errorToast(error);
     }
-    reset(defaultValues);
   }
 
   const handleFormSubmit = useCallback(() => {
@@ -221,6 +219,7 @@ export default function CustomerCrud({
               popoverWidth="w-[370px]"
               autoFocus
               autoConvert
+              allowTempValues
             />
           )}
         />
@@ -265,6 +264,7 @@ export default function CustomerCrud({
               triggerWidth="w-[280px]"
               popoverWidth="w-[280px]"
               autoConvert
+              allowTempValues
             />
           )}
         />
@@ -349,7 +349,7 @@ export default function CustomerCrud({
       </div>
       {area.name && (
         <div>
-          <Label className="w-[70px]">Area Details: </Label>
+          <Label className="w-[70px] whitespace-nowrap">Area Details: </Label>
           {area.post ? `Post: ${area.post}` : ''} {area.town} {area.pincode}
         </div>
       )}

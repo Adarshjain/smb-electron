@@ -191,8 +191,8 @@ export interface TablesUpdate {
 }
 
 export interface FullCustomer {
-  customer: Tables['customers'];
-  area: Tables['areas'];
+  customer: LocalTables<'customers'>;
+  area: LocalTables<'areas'>;
 }
 
 export type LocalTables<K extends TableName> = Tables[K] & {
