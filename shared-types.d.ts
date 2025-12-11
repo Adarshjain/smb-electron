@@ -50,6 +50,16 @@ declare global {
         sync: () => Promise<ElectronToReactResponse<void>>;
         isSyncing: () => Promise<ElectronToReactResponse<boolean>>;
         initialPull: () => Promise<ElectronToReactResponse<void | undefined>>;
+        getSyncInfo: () => Promise<
+          ElectronToReactResponse<{
+            syncInfo: {
+              lastSyncTime: Date | null;
+              nextSyncTime: Date | null;
+              interval: number;
+            } | null;
+            isSyncEnabled: string;
+          }>
+        >;
         onSyncStatus: (
           callback: (
             data:

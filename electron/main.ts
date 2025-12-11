@@ -219,6 +219,35 @@ ipcMain.handle(
   }
 );
 
+ipcMain.handle(
+  'get-sync-info',
+  (): ElectronToReactResponse<{
+    syncInfo: {
+      lastSyncTime: Date | null;
+      nextSyncTime: Date | null;
+      interval: number;
+    } | null;
+    isSyncEnabled: string;
+  }> => {
+    try {
+      const syncInfo = syncManager?.getSyncInfo() ?? null;
+      return {
+        success: true,
+        data: {
+          isSyncEnabled: process.env.SYNC_TO_SUPABASE ?? 'false',
+          syncInfo: syncInfo,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+    }
+  }
+);
+
 // Sync
 ipcMain.handle('sync-now', async (): Promise<ElectronToReactResponse<void>> => {
   try {
