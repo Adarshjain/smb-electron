@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table.tsx';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Tables } from '@/../tables';
 import { useLoanCalculations } from '@/hooks/useLoanCalculations.ts';
 
@@ -34,8 +34,10 @@ type EnrichedBill = Tables['full_bill'] & {
 
 export default function BillAsLineItem({
   bills,
+  currentBillNumber,
 }: {
   bills: Tables['full_bill'][];
+  currentBillNumber?: [string, number];
 }) {
   const [enrichedBills, setEnrichedBills] = useState<EnrichedBill[]>([]);
   const [enrichedBillsReleased, setEnrichedBillsReleased] = useState<
@@ -53,6 +55,24 @@ export default function BillAsLineItem({
   });
   const { calculateLoanAmounts } = useLoanCalculations();
 
+  const pullCurrentBillToTop = useCallback(
+    (bills: EnrichedBill[], [serial, loanNo]: [string, number]) => {
+      const moveToFront = (arr: EnrichedBill[], i: number) => [
+        arr[i],
+        ...arr.slice(0, i),
+        ...arr.slice(i + 1),
+      ];
+      const matchedIndex = bills.findIndex(
+        (bill) => bill.serial === serial && bill.loan_no === loanNo
+      );
+      if (matchedIndex !== -1) {
+        bills = moveToFront(bills, matchedIndex);
+      }
+      return bills;
+    },
+    []
+  );
+
   useEffect(() => {
     setTotals({
       principle: 0,
@@ -69,7 +89,7 @@ export default function BillAsLineItem({
   useEffect(() => {
     const run = async () => {
       // Precompute all async values before rendering
-      const processed = await Promise.all(
+      let processed = await Promise.all(
         bills.map(async (bill) => {
           const months = getMonthDiff(bill.date, bill.releasedEntry?.date);
           const interest = getInterest(
@@ -111,6 +131,10 @@ export default function BillAsLineItem({
 
       const unReleased: EnrichedBill[] = [];
       const released: EnrichedBill[] = [];
+      if (currentBillNumber) {
+        processed = pullCurrentBillToTop(processed, currentBillNumber);
+      }
+
       processed.forEach((bill) => {
         if (bill.releasedEntry?.date !== undefined) {
           released.push(bill);
@@ -124,7 +148,7 @@ export default function BillAsLineItem({
     };
 
     void run();
-  }, [bills, calculateLoanAmounts]);
+  }, [bills, calculateLoanAmounts, currentBillNumber, pullCurrentBillToTop]);
 
   if (!enrichedBills.length && !enrichedBillsReleased.length)
     return <div>No Loans</div>;

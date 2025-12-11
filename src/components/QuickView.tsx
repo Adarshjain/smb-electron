@@ -26,10 +26,12 @@ export default function QuickView() {
     loan_no: 0,
   };
 
-  const { control, setValue, getValues } = useForm<IQuickView>({
+  const { control, setValue, getValues, watch } = useForm<IQuickView>({
     resolver: zodResolver(QuickViewSchema),
     defaultValues,
   });
+
+  const serialNumber = watch(['serial', 'loan_no']);
 
   const { setFormRef, next } = useEnterNavigation({
     fields: ['serial', 'loan_no'],
@@ -108,6 +110,7 @@ export default function QuickView() {
           showCustomerInfo
           customerId={customerId}
           skipReleased={false}
+          currentBillNumber={serialNumber}
         />
       )}
     </div>

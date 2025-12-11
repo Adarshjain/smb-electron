@@ -8,6 +8,7 @@ export default function BillsByCustomer(props: {
   customerId: string;
   showCustomerInfo?: boolean;
   skipReleased?: boolean;
+  currentBillNumber?: [string, number];
 }) {
   const [bills, setBills] = useState<Tables['full_bill'][]>([]);
   useEffect(() => {
@@ -25,12 +26,17 @@ export default function BillsByCustomer(props: {
   return (
     <div className="flex gap-3 flex-col">
       {bills.length ? (
-        <CustomerInfo
-          customer={bills[0].full_customer.customer}
-          area={bills[0].full_customer.area}
-        />
+        <>
+          <CustomerInfo
+            customer={bills[0].full_customer.customer}
+            area={bills[0].full_customer.area}
+          />
+          <BillAsLineItem
+            bills={bills}
+            currentBillNumber={props.currentBillNumber}
+          />
+        </>
       ) : null}
-      <BillAsLineItem bills={bills} />
     </div>
   );
 }
