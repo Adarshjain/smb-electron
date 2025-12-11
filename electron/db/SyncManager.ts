@@ -31,7 +31,7 @@ export class SyncManager {
   private readonly onBackupStart?: () => void;
   private readonly onBackupEnd?: (response: BackupEndResponse) => void;
   private lastSyncTime: Date | null = null;
-  private nextSyncTime: Date | null = null;
+  nextSyncTime: Date | null = null;
 
   private constructor(config: SyncConfig) {
     this.supabase = config.supabase;
