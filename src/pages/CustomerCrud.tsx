@@ -302,6 +302,7 @@ export default function CustomerCrud({
               triggerWidth="w-[280px]"
               popoverWidth="w-[280px]"
               autoConvert
+              allowTempValues
             />
           )}
         />
@@ -323,6 +324,7 @@ export default function CustomerCrud({
               triggerWidth="w-[370px]"
               popoverWidth="w-[370px]"
               autoConvert
+              allowTempValues
             />
           )}
         />
