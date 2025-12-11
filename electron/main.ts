@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import path from 'path';
 import { closeDatabase, initDatabase } from './db/database';
@@ -23,6 +23,32 @@ import type {
 import type { ElectronToReactResponse } from '../shared-types';
 import { initAllSeedData } from './seed';
 import * as Sentry from '@sentry/electron/main';
+import fs from 'fs';
+
+// Load environment variables from the correct location
+const loadEnvFile = () => {
+  let envPath: string;
+
+  if (process.env.VITE_DEV_SERVER_URL) {
+    // Development mode: .env is in the project root
+    envPath = path.join(process.cwd(), '.env');
+  } else {
+    // Production mode: .env is in resources folder
+    envPath = path.join(process.resourcesPath, '.env');
+  }
+
+  // Check if .env file exists before loading
+  if (fs.existsSync(envPath)) {
+    console.log(`✅ Loading .env from: ${envPath}`);
+    dotenv.config({ path: envPath });
+    console.log('✅ Environment variables loaded successfully');
+  } else {
+    console.warn(`⚠️ .env file not found at: ${envPath}`);
+  }
+};
+
+// Load environment variables immediately
+loadEnvFile();
 
 // Initialize Sentry for the main process
 if (process.env.SENTRY_DSN) {
