@@ -13,6 +13,7 @@ import type { LocalTables, Tables } from '@/../tables';
 import { errorToast } from '@/lib/myUtils.tsx';
 import BillAsLineItem from '@/components/LoanForm/BillAsLineItem.tsx';
 import { useDebounce } from '@/hooks/useDebounce.ts';
+import { Loader } from 'lucide-react';
 
 export default function OldLoans() {
   const [months, setMonths] = useState<string>('18');
@@ -21,6 +22,8 @@ export default function OldLoans() {
   const [minAmount, setMinAmount] = useState(0);
   const [maxAmount, setMaxAmount] = useState(500000);
   const [renderItems, setRenderItems] = useState<Tables['full_bill'][]>([]);
+  const [sort, setSort] = useState('date asc');
+  const [loading, setLoading] = useState(true);
 
   const debouncedSetMinAmount = useDebounce((value: number) => {
     setMinAmount(value);
@@ -72,7 +75,7 @@ export default function OldLoans() {
          and released = 0
          and date < date('now', '-${parseInt(months) - 1} months')
          and deleted is null
-         order by date;`,
+         order by ${sort};`,
         [minAmount, maxAmount]
       );
       const customerListQuery = query<LocalTables<'customers'>[]>(
@@ -98,7 +101,7 @@ export default function OldLoans() {
            AND b.loan_amount < ?
            AND b.released = 0
            AND b.deleted IS NULL
-         ORDER BY b.date`,
+         ORDER BY b.${sort}`,
         [minAmount, maxAmount]
       );
 
@@ -115,7 +118,7 @@ export default function OldLoans() {
          group by customer_id`,
         [minAmount, maxAmount]
       );
-
+      setLoading(true);
       const [oldBills, customerList, billItems, customerBillCount] =
         await Promise.all([
           oldBillsQuery,
@@ -163,19 +166,22 @@ export default function OldLoans() {
       );
     } catch (e) {
       errorToast(e);
+    } finally {
+      setLoading(false);
     }
-  }, [maxAmount, minAmount, months]);
+  }, [maxAmount, minAmount, months, sort]);
 
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
+
+  if (loading) return <Loader />;
 
   return (
     <div className="p-4">
       <div className="flex items-center gap-4 mb-2">
         <GoHome />
         <div className="text-xl">Old Loans</div>
-
         <div className="flex w-50">
           <Input
             className="rounded-r-none border-r-0 text-right"
@@ -215,7 +221,17 @@ export default function OldLoans() {
           </SelectContent>
         </Select>
       </div>
-      <BillAsLineItem showCustomerInfo bills={renderItems} />
+      {loading ? (
+        <Loader />
+      ) : (
+        <BillAsLineItem
+          showCustomerInfo
+          bills={renderItems}
+          sort={sort}
+          onSortChange={setSort}
+          enabledSort
+        />
+      )}
     </div>
   );
 }

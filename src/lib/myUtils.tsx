@@ -133,6 +133,7 @@ export async function getRate(
   const cache = new MyCache<Tables['interest_rates'][]>('IntRates');
   let intRates = cache.get('intRates');
   if (!intRates) {
+    console.log('cache miss');
     try {
       const interestRates = await read('interest_rates', {});
       cache.set('intRates', interestRates ?? []);
