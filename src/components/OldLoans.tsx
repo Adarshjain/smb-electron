@@ -17,7 +17,7 @@ import { Loader } from 'lucide-react';
 
 export default function OldLoans() {
   const [months, setMonths] = useState<string>('18');
-  const [minAmountInput, setMinAmountInput] = useState(0);
+  const [minAmountInput, setMinAmountInput] = useState(5000);
   const [maxAmountInput, setMaxAmountInput] = useState(500000);
   const [minAmount, setMinAmount] = useState(0);
   const [maxAmount, setMaxAmount] = useState(500000);
@@ -141,10 +141,6 @@ export default function OldLoans() {
         }
       > = {};
       oldBills?.forEach((bill) => {
-        if (!customerIdVsCustomer[bill.customer_id]) {
-          // TODO: Remove this once bug is fixed
-          return;
-        }
         if (!customerVsBills[bill.customer_id]) {
           customerVsBills[bill.customer_id] = {
             customer: customerIdVsCustomer[bill.customer_id],
@@ -220,6 +216,7 @@ export default function OldLoans() {
             ))}
           </SelectContent>
         </Select>
+        Total: {renderItems.length}
       </div>
       {loading ? (
         <Loader />

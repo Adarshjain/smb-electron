@@ -390,6 +390,9 @@ export const initBills = () => {
     const loanAmount = parseFloat(record.loan || '0');
     const interestPaid = parseFloat(record.totint || '0');
     const interestDiscount = parseFloat(record.dis || '0');
+    // Weird bug - has to override
+    if (record.code === `¸¨Á½â¾`) record.code = `¸¨Á½Àû`;
+    if (record.code === `6ÄðÃ§§Á1`) record.code = `ÄðÃ§§Á1`;
     const billRecord: Tables['bills'] = {
       serial: record.serial,
       loan_no: parseInt(record.nos),
