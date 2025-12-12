@@ -108,7 +108,7 @@ export default function AutocompleteSelect<T = string>({
       setSearch('');
       prevValueRef.current = undefined;
     }
-  }, [value]);
+  }, [value]); //  Do not add displayValueGetter it fucks the flow
 
   useEffect(() => {
     if (options.length > 0 && document.activeElement === inputRef.current) {

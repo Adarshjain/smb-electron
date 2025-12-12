@@ -336,20 +336,25 @@ export async function fetchBillsByCustomer(
   }
 }
 
-export function mergeBillItems(billItems: Tables['bill_items'][]): {
+export function mergeBillItems(
+  billItems: Tables['bill_items'][],
+  metalType: MetalType
+): {
   description: string;
   weight: number;
 } {
   const description: string[] = [];
   let weight = 0;
-  for (const bill of billItems) {
+  for (const billItem of billItems) {
     description.push(
-      `${bill.quality} ${bill.product} ${bill.extra} - ${bill.quantity}`
+      metalType === 'Gold'
+        ? `${billItem.quality} ${billItem.extra} ${billItem.product} - ${billItem.quantity}`
+        : `${billItem.extra} ${billItem.quality} ${billItem.product} - ${billItem.quantity}`
     );
-    weight += bill.gross_weight;
+    weight += billItem.gross_weight;
   }
   return {
-    description: description.join(', '),
+    description: description.join(','),
     weight,
   };
 }

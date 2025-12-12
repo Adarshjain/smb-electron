@@ -97,7 +97,10 @@ export default function BillAsLineItem({
             bill.interest_rate,
             months
           );
-          const { description, weight } = mergeBillItems(bill.bill_items);
+          const { description, weight } = mergeBillItems(
+            bill.bill_items,
+            bill.metal_type
+          );
           const { firstMonthInterest, docCharges } =
             (await calculateLoanAmounts(bill.loan_amount, bill.metal_type, {
               customInterestRate: bill.interest_rate,
@@ -150,6 +153,25 @@ export default function BillAsLineItem({
     void run();
   }, [bills, calculateLoanAmounts, currentBillNumber, pullCurrentBillToTop]);
 
+  const renderBillDescription = (bill: EnrichedBill) => {
+    return (
+      <div className="flex items-baseline">
+        <div
+          className={cn(
+            'p-0.5 py-0 text-xs rounded mr-1 text-white',
+            bill.metal_type === 'Gold' ? 'bg-yellow-500' : 'bg-gray-400'
+          )}
+        >
+          {bill.metal_type === 'Gold' ? 'G' : 'S'}
+        </div>
+        {bill.description
+          .split(',')
+          .map((t) => t.trim())
+          .join('\n')}
+      </div>
+    );
+  };
+
   if (!enrichedBills.length && !enrichedBillsReleased.length)
     return <div>No Loans</div>;
 
@@ -191,7 +213,7 @@ export default function BillAsLineItem({
                   </TableCell>
 
                   <TableCell className="border-r whitespace-break-spaces">
-                    {bill.description}
+                    {renderBillDescription(bill)}
                   </TableCell>
                   <TableCell className="text-right border-r">
                     {bill.weight.toFixed(3)} gms
@@ -273,7 +295,7 @@ export default function BillAsLineItem({
                       {bill.months} + 1
                     </TableCell>
                     <TableCell className="border-r px-1 whitespace-break-spaces">
-                      {bill.description}
+                      {renderBillDescription(bill)}
                     </TableCell>
                     <TableCell className="text-right border-r">
                       {bill.weight.toFixed(3)} gms
