@@ -19,10 +19,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table.tsx';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Tables } from '@/../tables';
 import { useLoanCalculations } from '@/hooks/useLoanCalculations.ts';
 import CustomerInfo from '@/components/LoanForm/CustomerInfo.tsx';
+import { ArrowDownNarrowWide, ArrowDownWideNarrow } from 'lucide-react';
 
 type EnrichedBill = Tables['full_bill'] & {
   months: number;
@@ -38,10 +39,16 @@ export default function BillAsLineItem({
   bills,
   currentBillNumber,
   showCustomerInfo = false,
+  sort,
+  onSortChange,
+  enabledSort = false,
 }: {
   bills: Tables['full_bill'][];
   currentBillNumber?: [string, number];
   showCustomerInfo?: boolean;
+  sort?: string;
+  onSortChange?: (sort: string) => void;
+  enabledSort?: boolean;
 }) {
   const [enrichedBills, setEnrichedBills] = useState<EnrichedBill[]>([]);
   const [enrichedBillsReleased, setEnrichedBillsReleased] = useState<
@@ -58,6 +65,7 @@ export default function BillAsLineItem({
     interest: 0,
   });
   const { calculateLoanAmounts } = useLoanCalculations();
+  const [sortColumn, ascDesc] = useMemo(() => (sort ?? '').split(' '), [sort]);
 
   const pullCurrentBillToTop = useCallback(
     (bills: EnrichedBill[], [serial, loanNo]: [string, number]) => {
@@ -92,51 +100,52 @@ export default function BillAsLineItem({
 
   useEffect(() => {
     const run = async () => {
+      let processed: EnrichedBill[] = [];
       // Precompute all async values before rendering
-      let processed = await Promise.all(
-        bills.map(async (bill): Promise<EnrichedBill> => {
-          const months = getMonthDiff(bill.date, bill.releasedEntry?.date);
-          const interest = getInterest(
-            bill.loan_amount,
-            bill.interest_rate,
-            months
-          );
-          const { description, weight } = mergeBillItems(
-            bill.bill_items,
-            bill.metal_type
-          );
-          const { firstMonthInterest, docCharges } =
-            (await calculateLoanAmounts(bill.loan_amount, bill.metal_type, {
-              customInterestRate: bill.interest_rate,
-            })) ?? { firstMonthInterest: 0, docCharges: 0 };
-
-          if (bill.releasedEntry?.date !== undefined) {
-            setTotalsReleased((tempTotal) => ({
-              principle: tempTotal.principle + bill.loan_amount,
-              interest: tempTotal.interest + interest,
-              total: tempTotal.total + interest + bill.loan_amount,
-            }));
-          } else {
-            setTotals((tempTotal) => ({
-              principle: tempTotal.principle + bill.loan_amount,
-              interest: tempTotal.interest + interest,
-              total: tempTotal.total + interest + bill.loan_amount,
-            }));
+      for (const bill of bills) {
+        const months = getMonthDiff(bill.date, bill.releasedEntry?.date);
+        const interest = getInterest(
+          bill.loan_amount,
+          bill.interest_rate,
+          months
+        );
+        const { description, weight } = mergeBillItems(
+          bill.bill_items,
+          bill.metal_type
+        );
+        const { firstMonthInterest, docCharges } = (await calculateLoanAmounts(
+          bill.loan_amount,
+          bill.metal_type,
+          {
+            customInterestRate: bill.interest_rate,
           }
+        )) ?? { firstMonthInterest: 0, docCharges: 0 };
 
-          return {
-            ...bill,
-            months,
-            interest,
-            firstMonthInterest,
-            docCharges,
-            description,
-            weight,
-            rowSpan: bill.billCount,
-          };
-        })
-      );
+        if (bill.releasedEntry?.date !== undefined) {
+          setTotalsReleased((tempTotal) => ({
+            principle: tempTotal.principle + bill.loan_amount,
+            interest: tempTotal.interest + interest,
+            total: tempTotal.total + interest + bill.loan_amount,
+          }));
+        } else {
+          setTotals((tempTotal) => ({
+            principle: tempTotal.principle + bill.loan_amount,
+            interest: tempTotal.interest + interest,
+            total: tempTotal.total + interest + bill.loan_amount,
+          }));
+        }
 
+        processed.push({
+          ...bill,
+          months,
+          interest,
+          firstMonthInterest,
+          docCharges,
+          description,
+          weight,
+          rowSpan: bill.billCount,
+        });
+      }
       const unReleased: EnrichedBill[] = [];
       const released: EnrichedBill[] = [];
       if (currentBillNumber) {
@@ -177,6 +186,31 @@ export default function BillAsLineItem({
     );
   };
 
+  const sorter = (column: string) => {
+    if (!enabledSort) return null;
+    return sortColumn === column ? (
+      ascDesc !== 'desc' ? (
+        <ArrowDownNarrowWide
+          size={18}
+          className="cursor-pointer"
+          onClick={() => onSortChange?.(`${column} desc`)}
+        />
+      ) : (
+        <ArrowDownWideNarrow
+          size={18}
+          className="cursor-pointer"
+          onClick={() => onSortChange?.(`${column} asc`)}
+        />
+      )
+    ) : (
+      <ArrowDownWideNarrow
+        size={18}
+        className="text-muted-foreground hover:opacity-100 opacity-50 cursor-pointer"
+        onClick={() => onSortChange?.(`${column} desc`)}
+      />
+    );
+  };
+
   if (!enrichedBills.length && !enrichedBillsReleased.length)
     return <div>No Loans</div>;
 
@@ -190,11 +224,17 @@ export default function BillAsLineItem({
                 <TableHead className="border-r">Customer</TableHead>
               ) : null}
               <TableHead className="border-r">Loan No</TableHead>
-              <TableHead className="border-r">Date</TableHead>
+              <TableHead className="border-r">
+                <div className="flex justify-between">Date{sorter('date')}</div>
+              </TableHead>
               <TableHead className="border-r">Months</TableHead>
               <TableHead className="border-r">Items</TableHead>
               <TableHead className="text-right border-r">Weight</TableHead>
-              <TableHead className="text-right border-r">Amount</TableHead>
+              <TableHead className="text-right border-r">
+                <div className="flex justify-between">
+                  Amount{sorter('loan_amount')}
+                </div>
+              </TableHead>
               <TableHead className="text-right border-r">Interest</TableHead>
               <TableHead className="text-right">Total</TableHead>
             </TableRow>
@@ -264,7 +304,7 @@ export default function BillAsLineItem({
               );
             })}
             <TableRow>
-              <TableCell colSpan={5} />
+              <TableCell colSpan={showCustomerInfo ? 6 : 5} />
               <TableCell className="text-right border-l">
                 {formatCurrency(totals.principle)}
               </TableCell>
