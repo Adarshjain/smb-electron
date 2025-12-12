@@ -110,6 +110,7 @@ export interface Tables {
     full_customer: FullCustomer;
     bill_items: Tables['bill_items'][];
     releasedEntry?: Tables['releases'];
+    billCount?: number;
   };
 }
 
@@ -193,7 +194,7 @@ export interface TablesUpdate {
 
 export interface FullCustomer {
   customer: LocalTables<'customers'>;
-  area: LocalTables<'areas'>;
+  area?: LocalTables<'areas'>;
 }
 
 export type LocalTables<K extends TableName> = Tables[K] & {

@@ -22,6 +22,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import type { Tables } from '@/../tables';
 import { useLoanCalculations } from '@/hooks/useLoanCalculations.ts';
+import CustomerInfo from '@/components/LoanForm/CustomerInfo.tsx';
 
 type EnrichedBill = Tables['full_bill'] & {
   months: number;
@@ -30,14 +31,17 @@ type EnrichedBill = Tables['full_bill'] & {
   docCharges: number;
   description: string;
   weight: number;
+  rowSpan?: number;
 };
 
 export default function BillAsLineItem({
   bills,
   currentBillNumber,
+  showCustomerInfo = false,
 }: {
   bills: Tables['full_bill'][];
   currentBillNumber?: [string, number];
+  showCustomerInfo?: boolean;
 }) {
   const [enrichedBills, setEnrichedBills] = useState<EnrichedBill[]>([]);
   const [enrichedBillsReleased, setEnrichedBillsReleased] = useState<
@@ -90,7 +94,7 @@ export default function BillAsLineItem({
     const run = async () => {
       // Precompute all async values before rendering
       let processed = await Promise.all(
-        bills.map(async (bill) => {
+        bills.map(async (bill): Promise<EnrichedBill> => {
           const months = getMonthDiff(bill.date, bill.releasedEntry?.date);
           const interest = getInterest(
             bill.loan_amount,
@@ -128,6 +132,7 @@ export default function BillAsLineItem({
             docCharges,
             description,
             weight,
+            rowSpan: bill.billCount,
           };
         })
       );
@@ -181,6 +186,9 @@ export default function BillAsLineItem({
         <Table>
           <TableHeader>
             <TableRow>
+              {showCustomerInfo ? (
+                <TableHead className="border-r">Customer</TableHead>
+              ) : null}
               <TableHead className="border-r">Loan No</TableHead>
               <TableHead className="border-r">Date</TableHead>
               <TableHead className="border-r">Months</TableHead>
@@ -192,11 +200,22 @@ export default function BillAsLineItem({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {enrichedBills.map((bill) => {
+            {enrichedBills.map((bill, index) => {
               const total =
                 bill.interest + bill.firstMonthInterest + bill.docCharges;
+              const showCustomer =
+                index === 0
+                  ? true
+                  : enrichedBills[index - 1].full_customer.customer.id !==
+                    bill.full_customer.customer.id;
               return (
                 <TableRow key={`${bill.serial}-${bill.loan_no}`}>
+                  {showCustomerInfo && showCustomer ? (
+                    <TableCell className="border-r" rowSpan={bill.rowSpan}>
+                      {bill.full_customer.customer.id} - {bill.rowSpan}
+                      <CustomerInfo customer={bill.full_customer.customer} />
+                    </TableCell>
+                  ) : null}
                   <TableCell className="border-r">{`${bill.serial} ${bill.loan_no}`}</TableCell>
                   <TableCell className="border-r">
                     {viewableDate(bill.date)}
@@ -204,7 +223,7 @@ export default function BillAsLineItem({
                   <TableCell
                     className={cn(
                       'border-r',
-                      bill.months > 18
+                      !showCustomerInfo && bill.months > 18
                         ? 'bg-destructive text-white border-destructive'
                         : ''
                     )}

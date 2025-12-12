@@ -12,6 +12,7 @@ import CustomersByArea from '@/components/CustomersByArea.tsx';
 import AccountHead from '@/components/AccountHead.tsx';
 import ItemsMaster from '@/components/ItemsMaster.tsx';
 import Dashboard from '@/components/Dashboard.tsx';
+import OldLoans from '@/components/OldLoans.tsx';
 
 export function Router() {
   return (
@@ -30,6 +31,7 @@ export function Router() {
           <Route path="/account-head" element={<AccountHead />} />
           <Route path="/items-master" element={<ItemsMaster />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/old-loans" element={<OldLoans />} />
         </Routes>
       </HashRouter>
     </ErrorBoundary>

@@ -146,6 +146,9 @@ export function Home() {
             <DropdownMenuItem onClick={() => void navigate('/other-customers')}>
               Other Customers
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void navigate('/old-loans')}>
+              Old Loans
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => void navigate('/customer-by-area')}
             >

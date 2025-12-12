@@ -46,7 +46,7 @@ export function viewableDate(
 ): string {
   return format(
     dateStr ? new Date(dateStr) : new Date(),
-    includeTime ? 'dd/MM/yyyy hh:mm:ss a' : 'dd/MM/yyyy'
+    includeTime ? 'dd.MM.yyyy hh:mm:ss a' : 'dd.MM.yyyy'
   );
 }
 
