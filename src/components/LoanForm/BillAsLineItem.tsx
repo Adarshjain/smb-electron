@@ -212,8 +212,10 @@ export default function BillAsLineItem({
                 <TableRow key={`${bill.serial}-${bill.loan_no}`}>
                   {showCustomerInfo && showCustomer ? (
                     <TableCell className="border-r" rowSpan={bill.rowSpan}>
-                      {bill.full_customer.customer.id} - {bill.rowSpan}
-                      <CustomerInfo customer={bill.full_customer.customer} />
+                      <CustomerInfo
+                        customer={bill.full_customer.customer}
+                        skipAddress
+                      />
                     </TableCell>
                   ) : null}
                   <TableCell className="border-r">{`${bill.serial} ${bill.loan_no}`}</TableCell>
