@@ -12,12 +12,23 @@ import { query } from '@/hooks/dbUtil.ts';
 import type { LocalTables, Tables } from '@/../tables';
 import { errorToast } from '@/lib/myUtils.tsx';
 import BillAsLineItem from '@/components/LoanForm/BillAsLineItem.tsx';
+import { useDebounce } from '@/hooks/useDebounce.ts';
 
 export default function OldLoans() {
   const [months, setMonths] = useState<string>('18');
-  const [minAmount, setMinAmount] = useState(5000);
-  const [maxAmount, setMaxAmount] = useState(7000);
+  const [minAmountInput, setMinAmountInput] = useState(0);
+  const [maxAmountInput, setMaxAmountInput] = useState(500000);
+  const [minAmount, setMinAmount] = useState(0);
+  const [maxAmount, setMaxAmount] = useState(500000);
   const [renderItems, setRenderItems] = useState<Tables['full_bill'][]>([]);
+
+  const debouncedSetMinAmount = useDebounce((value: number) => {
+    setMinAmount(value);
+  }, 500);
+
+  const debouncedSetMaxAmount = useDebounce((value: number) => {
+    setMaxAmount(value);
+  }, 500);
 
   const indexCustomerListById = (customers: LocalTables<'customers'>[]) => {
     const map: Record<string, LocalTables<'customers'>> = {};
@@ -100,6 +111,7 @@ export default function OldLoans() {
            and loan_amount < ?
            and released = 0
            and deleted is null
+           and date < date('now', '-${parseInt(months) - 1} months')
          group by customer_id`,
         [minAmount, maxAmount]
       );
@@ -156,7 +168,7 @@ export default function OldLoans() {
 
   useEffect(() => {
     void fetchData();
-  }, []);
+  }, [fetchData]);
 
   return (
     <div className="p-4">
@@ -167,19 +179,27 @@ export default function OldLoans() {
         <div className="flex w-50">
           <Input
             className="rounded-r-none border-r-0 text-right"
-            value={minAmount}
+            value={minAmountInput}
             onFocus={(e) => {
               e.currentTarget.select();
             }}
-            onInput={(e) => setMinAmount(parseInt(e.currentTarget.value) || 0)}
+            onInput={(e) => {
+              const value = parseInt(e.currentTarget.value) || 0;
+              setMinAmountInput(value);
+              debouncedSetMinAmount(value);
+            }}
           />
           <Input
             className="rounded-l-none text-right"
-            value={maxAmount}
+            value={maxAmountInput}
             onFocus={(e) => {
               e.currentTarget.select();
             }}
-            onInput={(e) => setMaxAmount(parseInt(e.currentTarget.value) || 0)}
+            onInput={(e) => {
+              const value = parseInt(e.currentTarget.value) || 0;
+              setMaxAmountInput(value);
+              debouncedSetMaxAmount(value);
+            }}
           />
         </div>
         <Select onValueChange={setMonths} value={months}>
