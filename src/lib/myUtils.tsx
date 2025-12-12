@@ -40,8 +40,14 @@ export function rpcError(response: { success: false; error: string }) {
   });
 }
 
-export function viewableDate(dateStr?: string | Date): string {
-  return format(dateStr ? new Date(dateStr) : new Date(), 'dd/MM/yyyy');
+export function viewableDate(
+  dateStr?: string | Date,
+  includeTime = false
+): string {
+  return format(
+    dateStr ? new Date(dateStr) : new Date(),
+    includeTime ? 'dd/MM/yyyy hh:mm:ss a' : 'dd/MM/yyyy'
+  );
 }
 
 export function isToday(dateStr: string): boolean {
