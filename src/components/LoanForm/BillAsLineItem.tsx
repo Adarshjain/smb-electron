@@ -251,7 +251,13 @@ export default function BillAsLineItem({
               return (
                 <TableRow key={`${bill.serial}-${bill.loan_no}`}>
                   {showCustomerInfo && showCustomer ? (
-                    <TableCell className="border-r" rowSpan={bill.rowSpan}>
+                    <TableCell
+                      className={cn(
+                        'border-r',
+                        showCustomerInfo ? 'p-0 pl-1' : ''
+                      )}
+                      rowSpan={bill.rowSpan}
+                    >
                       <CustomerInfo
                         customer={bill.full_customer.customer}
                         skipAddress
