@@ -26,6 +26,7 @@ interface AutocompleteSelectProps<T> {
   dropdownWidth?: string;
   triggerWidth?: string;
   autoConvert: boolean;
+  allowTempValues?: boolean;
 }
 
 export default function AutocompleteSelect<T = string>({
@@ -45,6 +46,7 @@ export default function AutocompleteSelect<T = string>({
   dropdownWidth = 'w-[610px]',
   triggerWidth = 'w-[500px]',
   autoConvert,
+  allowTempValues = false,
 }: AutocompleteSelectProps<T>) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -109,6 +111,24 @@ export default function AutocompleteSelect<T = string>({
       prevValueRef.current = undefined;
     }
   }, [value]); //  Do not add displayValueGetter it fucks the flow
+
+  useEffect(() => {
+    if (!allowTempValues) {
+      if (options.length > 0 && document.activeElement === inputRef.current) {
+        setHighlightedIndex(0);
+        setIsKeyboardNavigating(true);
+        setOpen(true);
+
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            virtualizer.scrollToIndex(0, { align: 'start', behavior: 'auto' });
+          }, 0);
+        });
+      } else {
+        setHighlightedIndex(-1);
+      }
+    }
+  }, [allowTempValues, options.length, virtualizer]);
 
   useEffect(() => {
     if (
