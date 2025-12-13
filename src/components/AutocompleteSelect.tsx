@@ -109,6 +109,7 @@ export default function AutocompleteSelect<T = string>({
       // Handle when value is cleared
       setSearch('');
       prevValueRef.current = undefined;
+      // sfg
     }
   }, [value]); //  Do not add displayValueGetter it fucks the flow
 
