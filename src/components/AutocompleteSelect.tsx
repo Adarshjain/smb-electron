@@ -111,22 +111,6 @@ export default function AutocompleteSelect<T = string>({
   }, [value]); //  Do not add displayValueGetter it fucks the flow
 
   useEffect(() => {
-    if (options.length > 0 && document.activeElement === inputRef.current) {
-      setHighlightedIndex(0);
-      setIsKeyboardNavigating(true);
-      setOpen(true);
-
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          virtualizer.scrollToIndex(0, { align: 'start', behavior: 'auto' });
-        }, 0);
-      });
-    } else {
-      setHighlightedIndex(-1);
-    }
-  }, [options.length, virtualizer]);
-
-  useEffect(() => {
     if (
       highlightedIndex >= 0 &&
       highlightedIndex < options.length &&
@@ -301,6 +285,12 @@ export default function AutocompleteSelect<T = string>({
             }}
             onFocus={(e) => {
               e.currentTarget.select();
+            }}
+            onBlur={() => {
+              setTimeout(() => {
+                setOpen(false);
+                setHighlightedIndex(-1);
+              }, 100);
             }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
