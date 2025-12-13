@@ -4,7 +4,7 @@ import {
   nextIsoDate,
   previousIsoDate,
 } from '@/lib/myUtils.tsx';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Kbd } from '@/components/ui/kbd';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import {
@@ -25,6 +25,10 @@ export default function CurrentDateCrud() {
   const [internalDate, setInternalDate] = useState<string>(
     nextIsoDate(company?.current_date ?? currentIsoDate())
   );
+
+  useEffect(() => {
+    setInternalDate(nextIsoDate(company?.current_date ?? currentIsoDate()));
+  }, [company]);
 
   const onSet = (e?: React.MouseEvent) => {
     if (!isValidIsoDate(internalDate)) {

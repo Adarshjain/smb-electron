@@ -16,6 +16,7 @@ interface CompanyContextType {
   setCompany: (company: LocalTables<'companies'>) => void;
   setCurrentDate: (date: string) => Promise<void>;
   setNextSerial: (date?: string) => Promise<void>;
+  cycleCompany: () => void;
   refetch: () => void;
 }
 
@@ -34,7 +35,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
           current_date,
           name: company.name,
         });
-        setCompany({ ...company, current_date });
+        fetchCompanies();
       } catch (error) {
         errorToast(error);
       }
@@ -51,10 +52,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         next_serial,
         name: company.name,
       });
-      setCompany({ ...company, next_serial });
-      allCompanies[
-        allCompanies.findIndex((c) => company.name === c.name)
-      ].next_serial = next_serial;
+      fetchCompanies();
     }
   };
 
@@ -71,6 +69,15 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       .catch(errorToast);
   }, []);
 
+  const cycleCompany = () => {
+    const matchedIndex = allCompanies.findIndex(
+      (c) => c.name === company?.name
+    );
+    if (matchedIndex !== -1) {
+      setCompany(allCompanies[(matchedIndex + 1) % allCompanies.length]);
+    }
+  };
+
   useEffect(() => {
     fetchCompanies();
   }, [fetchCompanies]);
@@ -84,6 +91,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         setCurrentDate,
         setNextSerial,
         refetch: fetchCompanies,
+        cycleCompany,
       }}
     >
       {children}
