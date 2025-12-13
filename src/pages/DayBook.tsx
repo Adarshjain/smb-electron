@@ -165,8 +165,7 @@ export default function DayBook() {
           <TableBody>
             {Object.entries(bills)
               .sort((c1) => {
-                if (c1[0] === 'Sri Mahaveer Bankers') return -1;
-                if (c1[0] === 'Mahaveer Bankers') return -1;
+                if (c1[0] === 'Sri Mahaveer Bankers') return 1;
                 return 0;
               })
               .map(([name, value]) => {
@@ -209,8 +208,7 @@ export default function DayBook() {
           <TableBody>
             {Object.entries(bills)
               .sort((c1) => {
-                if (c1[0] === 'Sri Mahaveer Bankers') return -1;
-                if (c1[0] === 'Mahaveer Bankers') return -1;
+                if (c1[0] === 'Sri Mahaveer Bankers') return 1;
                 return 0;
               })
               .map(([name, value]) => {
@@ -243,8 +241,7 @@ export default function DayBook() {
       </div>
       {Object.entries(bills)
         .sort((c1) => {
-          if (c1[0] === 'Sri Mahaveer Bankers') return -1;
-          if (c1[0] === 'Mahaveer Bankers') return -1;
+          if (c1[0] === 'Sri Mahaveer Bankers') return 1;
           return 0;
         })
         .map(([name, value]) => {
