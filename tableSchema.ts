@@ -36,7 +36,7 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
     name: 'areas',
     columns: localizedColumns({
       name: {
-        schema: 'TEXT PRIMARY KEY UNIQUE',
+        schema: 'TEXT',
         encoded: true,
       },
       post: {
@@ -60,7 +60,7 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
     name: 'companies',
     columns: localizedColumns({
       name: {
-        schema: 'TEXT PRIMARY KEY UNIQUE',
+        schema: 'TEXT',
         encoded: false,
       },
       current_date: {
@@ -84,7 +84,7 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
     name: 'products',
     columns: localizedColumns({
       name: {
-        schema: 'TEXT PRIMARY KEY',
+        schema: 'TEXT NOT NULL',
         encoded: true,
       },
       metal_type: {
@@ -99,14 +99,14 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       },
     }),
     requiredFields: ['name', 'metal_type', 'product_type'],
-    primary: ['name', 'deleted'],
+    primary: ['name', 'metal_type', 'deleted'],
   },
 
   customers: {
     name: 'customers',
     columns: localizedColumns({
       id: {
-        schema: 'TEXT PRIMARY KEY',
+        schema: 'TEXT',
         encoded: false,
       },
       address1: {
