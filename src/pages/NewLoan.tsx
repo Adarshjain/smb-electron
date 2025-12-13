@@ -72,7 +72,7 @@ export default function NewLoan() {
   const defaultValues = useMemo<Loan>(
     () => ({
       serial,
-      loan_no: loanNo ? parseInt(loanNo) : 1,
+      loan_no: loanNo ?? '',
       old_loan_no: 0,
       old_serial: '',
       loan_amount: '0.00',
@@ -235,11 +235,11 @@ export default function NewLoan() {
       return;
     }
     await deleteRecord('bill_items', {
-      loan_no: enteredNumber,
+      loan_no: parseInt(enteredNumber),
       serial: enteredSerial,
     });
     await deleteRecord('bills', {
-      loan_no: enteredNumber,
+      loan_no: parseInt(enteredNumber),
       serial: enteredSerial,
     });
     onNewClick();
@@ -343,7 +343,7 @@ export default function NewLoan() {
     try {
       const formattedLoan: TablesInsert['bills'] = {
         serial: data.serial,
-        loan_no: data.loan_no,
+        loan_no: parseInt(data.loan_no),
         customer_id: data.customer?.customer.id ?? '',
         date: data.date,
         loan_amount: parseInt(data.loan_amount || '0'),
@@ -367,7 +367,7 @@ export default function NewLoan() {
       const formatterProduct: TablesInsert['bill_items'][] =
         data.billing_items.map((item): TablesInsert['bill_items'] => ({
           serial: data.serial,
-          loan_no: data.loan_no,
+          loan_no: parseInt(data.loan_no),
           gross_weight: parseFloat(item.gross_weight || '0'),
           ignore_weight: parseFloat(item.ignore_weight || '0'),
           net_weight:
@@ -392,7 +392,7 @@ export default function NewLoan() {
         await createProductsIfNotExist(data.billing_items, data.metal_type);
         const reloadedLoan = await loadBillWithDeps(
           enteredSerial,
-          enteredNumber
+          parseInt(enteredNumber)
         );
         if (reloadedLoan) {
           handleOnOldLoanLoaded(reloadedLoan);
@@ -470,7 +470,7 @@ export default function NewLoan() {
   ) => {
     if (!skipSerial) {
       setValue('serial', loan.serial);
-      setValue('loan_no', loan.loan_no);
+      setValue('loan_no', '' + loan.loan_no);
     }
     setValue('customer', loan.full_customer);
     fieldArray.replace(
@@ -512,7 +512,7 @@ export default function NewLoan() {
       first_month_interest: loan.first_month_interest.toFixed(2),
       customer: loan.full_customer,
       serial: loan.serial,
-      loan_no: loan.loan_no,
+      loan_no: '' + loan.loan_no,
     });
     setLoadedLoan(loan);
     setTimeout(() => next('loan_amount'), 100);

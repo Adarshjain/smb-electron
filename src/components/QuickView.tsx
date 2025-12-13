@@ -15,7 +15,7 @@ import { errorToast } from '@/lib/myUtils.tsx';
 
 export const QuickViewSchema = z.object({
   serial: z.string().length(1),
-  loan_no: z.number(),
+  loan_no: z.string(),
 });
 export type IQuickView = z.infer<typeof QuickViewSchema>;
 
@@ -23,7 +23,7 @@ export default function QuickView() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const defaultValues: IQuickView = {
     serial: '',
-    loan_no: 0,
+    loan_no: '',
   };
 
   const { control, setValue, getValues, watch } = useForm<IQuickView>({
@@ -77,7 +77,7 @@ export default function QuickView() {
         'bills',
         {
           serial,
-          loan_no: loanNo,
+          loan_no: parseInt(loanNo),
         },
         'customer_id'
       );
@@ -110,7 +110,7 @@ export default function QuickView() {
           showCustomerInfo
           customerId={customerId}
           skipReleased={false}
-          currentBillNumber={serialNumber}
+          currentBillNumber={[serialNumber[0], parseInt(serialNumber[1] ?? 0)]}
         />
       )}
     </div>

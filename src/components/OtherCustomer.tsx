@@ -35,7 +35,7 @@ import { Label } from '@/components/ui/label';
 
 const SerialSchema = z.object({
   serial: z.string().length(1),
-  loan_no: z.number(),
+  loan_no: z.string(),
 });
 type ISerial = z.infer<typeof SerialSchema>;
 
@@ -55,7 +55,7 @@ export default function OtherCustomer() {
 
   const defaultValues: ISerial = {
     serial: '',
-    loan_no: 0,
+    loan_no: '',
   };
 
   const { control, getValues } = useForm<ISerial>({
@@ -154,7 +154,7 @@ export default function OtherCustomer() {
     try {
       const bill = await read('bills', {
         serial: serial.toUpperCase(),
-        loan_no,
+        loan_no: parseInt(loan_no),
       });
       if (bill?.length) {
         await loadCustomer(bill[0].customer_id);
