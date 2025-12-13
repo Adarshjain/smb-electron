@@ -1,12 +1,7 @@
 // Form field widths and dimensions
 export const FIELD_WIDTHS = {
-<<<<<<< HEAD
-  SERIAL_INPUT: 'w-14',
-  LOAN_NO_INPUT: 'w-24',
-=======
   SERIAL_INPUT: 'w-10',
   LOAN_NO_INPUT: 'w-14',
->>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
   METAL_TYPE_SELECT: 'min-w-60 ml-auto',
   PRODUCT_FIELD: 'w-[280px] min-w-[280px]',
   QUALITY_FIELD: 'w-[280px] min-w-[280px]',

@@ -56,10 +56,7 @@ export default function ProductSelector(props: {
       inputName={props.inputName}
       autoConvert={props.autoConvert}
       value={props.value}
-<<<<<<< HEAD
-=======
       allowTempValues={props.allowTempValues}
->>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
     />
   );
 }
