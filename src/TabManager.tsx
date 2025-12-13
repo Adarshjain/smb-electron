@@ -16,6 +16,7 @@ import { isToday, viewableDate } from '@/lib/myUtils.tsx';
 import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
+import { Kbd } from '@/components/ui/kbd.tsx';
 
 interface Tab {
   id: string;
@@ -117,7 +118,9 @@ export const TabManager: React.FC = () => {
         </div>
         {company ? (
           <div className="w-1/3 flex justify-center items-center gap-4">
-            {company.name}{' '}
+            <div className="flex items-center gap-2">
+              <Kbd>F1</Kbd> {company.name}
+            </div>
             <Badge
               variant="secondary"
               className={cn(

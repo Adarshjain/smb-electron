@@ -1,4 +1,3 @@
-import CompanySelector from '@/components/CompanySelector.tsx';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button.tsx';
 import { useEffect } from 'react';
@@ -17,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
+import { useCompany } from '@/context/CompanyProvider.tsx';
 
 const shortCutMapping: {
   shortcutKey: string;
@@ -37,6 +37,7 @@ const shortCutMapping: {
 ];
 
 export function Home() {
+  const { cycleCompany } = useCompany();
   const navigate = useNavigate();
   const { openTab } = useTabs();
 
@@ -44,7 +45,7 @@ export function Home() {
     const listener = (e: KeyboardEvent) => {
       switch (e.key) {
         case 'F1': {
-          document.getElementById('company-switcher')?.click();
+          cycleCompany();
           break;
         }
         case 'F9': {
@@ -80,7 +81,6 @@ export function Home() {
         <QuickView />
       </div>
       <div className="flex flex-col gap-3 p-6 w-[300px]">
-        <CompanySelector />
         <Button
           variant="outline"
           className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
