@@ -26,6 +26,10 @@ interface AutocompleteSelectProps<T> {
   dropdownWidth?: string;
   triggerWidth?: string;
   autoConvert: boolean;
+<<<<<<< HEAD
+=======
+  allowTempValues?: boolean;
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
 }
 
 export default function AutocompleteSelect<T = string>({
@@ -45,6 +49,10 @@ export default function AutocompleteSelect<T = string>({
   dropdownWidth = 'w-[610px]',
   triggerWidth = 'w-[500px]',
   autoConvert,
+<<<<<<< HEAD
+=======
+  allowTempValues = false,
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
 }: AutocompleteSelectProps<T>) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -107,10 +115,15 @@ export default function AutocompleteSelect<T = string>({
       // Handle when value is cleared
       setSearch('');
       prevValueRef.current = undefined;
+<<<<<<< HEAD
+=======
+      // sfg
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
     }
   }, [value]); //  Do not add displayValueGetter it fucks the flow
 
   useEffect(() => {
+<<<<<<< HEAD
     if (options.length > 0 && document.activeElement === inputRef.current) {
       setHighlightedIndex(0);
       setIsKeyboardNavigating(true);
@@ -125,6 +138,24 @@ export default function AutocompleteSelect<T = string>({
       setHighlightedIndex(-1);
     }
   }, [options.length, virtualizer]);
+=======
+    if (!allowTempValues) {
+      if (options.length > 0 && document.activeElement === inputRef.current) {
+        setHighlightedIndex(0);
+        setIsKeyboardNavigating(true);
+        setOpen(true);
+
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            virtualizer.scrollToIndex(0, { align: 'start', behavior: 'auto' });
+          }, 0);
+        });
+      } else {
+        setHighlightedIndex(-1);
+      }
+    }
+  }, [allowTempValues, options.length, virtualizer]);
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
 
   useEffect(() => {
     if (
@@ -302,6 +333,15 @@ export default function AutocompleteSelect<T = string>({
             onFocus={(e) => {
               e.currentTarget.select();
             }}
+<<<<<<< HEAD
+=======
+            onBlur={() => {
+              setTimeout(() => {
+                setOpen(false);
+                setHighlightedIndex(-1);
+              }, 100);
+            }}
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
           />

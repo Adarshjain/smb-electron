@@ -3,7 +3,11 @@ import type { FullCustomer } from '@/../tables';
 
 export const newLoanSchema = z.object({
   serial: z.string().length(1),
+<<<<<<< HEAD
   loan_no: z.number(),
+=======
+  loan_no: z.string(),
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
   old_serial: z.string().optional(),
   old_loan_no: z.number().optional(),
   loan_amount: z.string(),
@@ -43,7 +47,11 @@ export type FormFieldName =
 
 export const releaseLoanSchema = z.object({
   serial: z.string().length(1),
+<<<<<<< HEAD
   loan_no: z.number(),
+=======
+  loan_no: z.string(),
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
   date: z.string(),
   loan_amount: z.string(),
   interest_amount: z.string(),

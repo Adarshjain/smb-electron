@@ -15,7 +15,11 @@ import { errorToast } from '@/lib/myUtils.tsx';
 
 export const QuickViewSchema = z.object({
   serial: z.string().length(1),
+<<<<<<< HEAD
   loan_no: z.number(),
+=======
+  loan_no: z.string(),
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
 });
 export type IQuickView = z.infer<typeof QuickViewSchema>;
 
@@ -23,7 +27,11 @@ export default function QuickView() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const defaultValues: IQuickView = {
     serial: '',
+<<<<<<< HEAD
     loan_no: 0,
+=======
+    loan_no: '',
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
   };
 
   const { control, setValue, getValues, watch } = useForm<IQuickView>({
@@ -77,7 +85,11 @@ export default function QuickView() {
         'bills',
         {
           serial,
+<<<<<<< HEAD
           loan_no: loanNo,
+=======
+          loan_no: parseInt(loanNo),
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
         },
         'customer_id'
       );
@@ -110,7 +122,11 @@ export default function QuickView() {
           showCustomerInfo
           customerId={customerId}
           skipReleased={false}
+<<<<<<< HEAD
           currentBillNumber={serialNumber}
+=======
+          currentBillNumber={[serialNumber[0], parseInt(serialNumber[1] ?? 0)]}
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
         />
       )}
     </div>

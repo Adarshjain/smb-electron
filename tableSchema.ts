@@ -36,7 +36,11 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
     name: 'areas',
     columns: localizedColumns({
       name: {
+<<<<<<< HEAD
         schema: 'TEXT PRIMARY KEY UNIQUE',
+=======
+        schema: 'TEXT',
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
         encoded: true,
       },
       post: {
@@ -60,7 +64,11 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
     name: 'companies',
     columns: localizedColumns({
       name: {
+<<<<<<< HEAD
         schema: 'TEXT PRIMARY KEY UNIQUE',
+=======
+        schema: 'TEXT',
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
         encoded: false,
       },
       current_date: {
@@ -84,7 +92,11 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
     name: 'products',
     columns: localizedColumns({
       name: {
+<<<<<<< HEAD
         schema: 'TEXT PRIMARY KEY',
+=======
+        schema: 'TEXT NOT NULL',
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
         encoded: true,
       },
       metal_type: {
@@ -99,14 +111,22 @@ export const TablesSQliteSchema: Record<TableName, TableSchema> = {
       },
     }),
     requiredFields: ['name', 'metal_type', 'product_type'],
+<<<<<<< HEAD
     primary: ['name', 'deleted'],
+=======
+    primary: ['name', 'metal_type', 'deleted'],
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
   },
 
   customers: {
     name: 'customers',
     columns: localizedColumns({
       id: {
+<<<<<<< HEAD
         schema: 'TEXT PRIMARY KEY',
+=======
+        schema: 'TEXT',
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
         encoded: false,
       },
       address1: {

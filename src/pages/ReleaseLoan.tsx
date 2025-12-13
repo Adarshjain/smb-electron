@@ -33,7 +33,11 @@ export default function ReleaseLoan() {
   const defaultValues = useMemo<ReleaseLoan>(
     () => ({
       serial: '',
+<<<<<<< HEAD
       loan_no: 0,
+=======
+      loan_no: '',
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
       date: company?.current_date ?? '',
       interest_amount: '',
       loan_amount: '',
@@ -72,7 +76,11 @@ export default function ReleaseLoan() {
 
           await create('releases', {
             serial: data.serial,
+<<<<<<< HEAD
             loan_no: data.loan_no,
+=======
+            loan_no: parseInt(data.loan_no),
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
             date: releaseDate,
             loan_amount,
             interest_amount: parseFloat(data.interest_amount ?? 0),
@@ -83,7 +91,11 @@ export default function ReleaseLoan() {
           });
           await update('bills', {
             serial: data.serial,
+<<<<<<< HEAD
             loan_no: data.loan_no,
+=======
+            loan_no: parseInt(data.loan_no),
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
             released: 1,
           });
           reset({
@@ -101,11 +113,19 @@ export default function ReleaseLoan() {
         } else {
           await deleteRecord('releases', {
             serial: data.serial,
+<<<<<<< HEAD
             loan_no: data.loan_no,
           });
           await update('bills', {
             serial: data.serial,
             loan_no: data.loan_no,
+=======
+            loan_no: parseInt(data.loan_no),
+          });
+          await update('bills', {
+            serial: data.serial,
+            loan_no: parseInt(data.loan_no),
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
             released: 0,
           });
           reset({
@@ -186,7 +206,11 @@ export default function ReleaseLoan() {
           const monthDiff = getMonthDiff(loan.date, release.date);
           reset({
             date: release.date,
+<<<<<<< HEAD
             loan_no: loan.loan_no,
+=======
+            loan_no: '' + loan.loan_no,
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
             serial: loan.serial,
             released: 1,
             loan_amount: loan.loan_amount.toFixed(2),
@@ -212,7 +236,11 @@ export default function ReleaseLoan() {
     );
     reset({
       date: company?.current_date,
+<<<<<<< HEAD
       loan_no: loan.loan_no,
+=======
+      loan_no: '' + loan.loan_no,
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
       serial: loan.serial,
       released: 0,
       interest_rate: loan.interest_rate.toFixed(2),
@@ -235,6 +263,7 @@ export default function ReleaseLoan() {
         <div className="flex-1">
           <div className="flex flex-1 flex-row gap-4 items-center">
             <GoHome />
+<<<<<<< HEAD
             <div className="flex flex-col gap-1">
               <Label>Loan Number</Label>
               <LoanNumber<ReleaseLoan>
@@ -258,6 +287,25 @@ export default function ReleaseLoan() {
                   />
                 </div>
                 <div className="animate-caret-blink text-center flex-1 [animation-duration:1000ms]">
+=======
+            <LoanNumber<ReleaseLoan>
+              control={control}
+              serialFieldName="serial"
+              numberFieldName="loan_no"
+              onLoanLoad={handleOnOldLoanLoaded}
+              autoFocus
+            />
+            {loadedLoan && (
+              <>
+                <DatePicker
+                  className="w-27.5 opacity-100"
+                  id="date"
+                  name="date"
+                  value={loadedLoan.date}
+                  disabled
+                />
+                <div className="animate-caret-blink text-center text-lg flex-1 [animation-duration:1000ms]">
+>>>>>>> ac0b3504712b02c28a5cb5bc14acc55fa1bde170
                   **{getValues('released') === 0 ? 'Active' : 'Redeemed'}
                   **
                 </div>
