@@ -89,7 +89,12 @@ export const TabManager: React.FC = () => {
   // Memoize the tab bar so UI updates don’t reset children
   const tabBar = useMemo(
     () => (
-      <div className="flex border-gray-300 justify-between items-center px-4 h-10 sticky top-0 bg-green-100 z-10">
+      <div
+        className={cn(
+          'flex border-gray-300 justify-between items-center px-4 h-10 sticky top-0 z-10',
+          company?.name === 'Mahaveer Bankers' ? 'bg-yellow-100' : 'bg-blue-100'
+        )}
+      >
         <div className="flex">
           {tabs.map((tab) => (
             <div
@@ -97,7 +102,7 @@ export const TabManager: React.FC = () => {
               className={cn(
                 'py-1 pl-4 pr-2 inline-flex items-center border border-b-0 border-transparent rounded-t-lg focus:outline-hidden focus:text-gray-700 disabled:opacity-50 disabled:pointer-events-none mt-2 cursor-pointer',
                 tab.id === activeTabId
-                  ? 'bg-green-300 border-gray-200'
+                  ? `${company?.name === 'Mahaveer Bankers' ? 'bg-yellow-300' : 'bg-blue-300'} border-gray-200`
                   : 'hover:text-gray-700 hover:bg-blue-100 rounded',
                 tab.isMain ? 'pr-4' : ''
               )}
@@ -146,7 +151,12 @@ export const TabManager: React.FC = () => {
 
   return (
     <TabContext.Provider value={{ openTab, switchToMain, closeTab }}>
-      <div className="flex flex-col h-screen bg-green-100 overflow-auto">
+      <div
+        className={cn(
+          'flex flex-col h-screen overflow-auto',
+          company?.name === 'Mahaveer Bankers' ? 'bg-yellow-100' : 'bg-blue-100'
+        )}
+      >
         {tabBar}
 
         {/* Keep all tabs mounted; just hide inactive ones */}
