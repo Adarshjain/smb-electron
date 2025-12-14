@@ -28,7 +28,6 @@ import {
   FieldLabel,
   FieldSet,
 } from '@/components/ui/field';
-import { format } from 'date-fns';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
 import { create, query, update } from '@/hooks/dbUtil.ts';
 import { errorToast, successToast } from '@/lib/myUtils.tsx';
@@ -58,7 +57,7 @@ export function CrudCompany({ company, label, onSave }: CrudCompanyProps) {
   const defaultValues = useMemo(
     () => ({
       name: '',
-      current_date: format(new Date(), 'yyyy-MM-dd'),
+      current_date: new Date().toISOString().split('T')[0],
       is_default: false,
       next_serial_letter: 'A',
       next_serial_number: 1,

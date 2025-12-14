@@ -1,5 +1,4 @@
 import { toast } from 'sonner';
-import { format, isBefore, startOfDay, subDays } from 'date-fns';
 import type { ElectronToReactResponse } from '../../shared-types';
 import type {
   FullCustomer,
@@ -12,6 +11,43 @@ import { batchQuery, query, read } from '@/hooks/dbUtil.ts';
 import { toastStyles } from '@/constants/loanForm.ts';
 import { cn } from '@/lib/utils.ts';
 import { captureException } from '@/lib/sentry.ts';
+
+// Native date utility functions (replacing date-fns)
+function padZero(n: number): string {
+  return n < 10 ? `0${n}` : `${n}`;
+}
+
+function formatDate(date: Date, formatStr: string): string {
+  const day = padZero(date.getDate());
+  const month = padZero(date.getMonth() + 1);
+  const year = date.getFullYear();
+  const hours24 = date.getHours();
+  const hours12 = hours24 % 12 || 12;
+  const minutes = padZero(date.getMinutes());
+  const seconds = padZero(date.getSeconds());
+  const ampm = hours24 >= 12 ? 'PM' : 'AM';
+
+  switch (formatStr) {
+    case 'dd/MM/yyyy':
+      return `${day}/${month}/${year}`;
+    case 'dd/MM/yyyy hh:mm:ss a':
+      return `${day}/${month}/${year} ${padZero(hours12)}:${minutes}:${seconds} ${ampm}`;
+    case 'yyyy-MM-dd':
+      return `${year}-${month}-${day}`;
+    default:
+      return date.toISOString();
+  }
+}
+
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function subDays(date: Date, n: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() - n);
+  return result;
+}
 
 export function mapToRegex(map: Record<string, string>) {
   return new RegExp(
@@ -44,7 +80,7 @@ export function viewableDate(
   dateStr?: string | Date,
   includeTime = false
 ): string {
-  return format(
+  return formatDate(
     dateStr ? new Date(dateStr) : new Date(),
     includeTime ? 'dd/MM/yyyy hh:mm:ss a' : 'dd/MM/yyyy'
   );
@@ -179,9 +215,9 @@ export function adjustEndDate(startDate: Date, endDate: Date, n: number): Date {
   const start = startOfDay(startDate);
   let end = startOfDay(endDate);
 
-  if (isBefore(end, start)) {
+  if (end < start) {
     end = subDays(end, n);
-    if (isBefore(end, start)) {
+    if (end < start) {
       end = start;
     }
   }
@@ -453,7 +489,10 @@ export function getFinancialYearRange(year: number): [string, string] {
   const startDate = new Date(year, 3, 1); // April 1
   const endDate = new Date(year + 1, 2, 31); // March 31
 
-  return [format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd')];
+  return [
+    formatDate(startDate, 'yyyy-MM-dd'),
+    formatDate(endDate, 'yyyy-MM-dd'),
+  ];
 }
 
 export function jsNumberFix(num: number): number {

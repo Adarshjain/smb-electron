@@ -8,7 +8,22 @@ import {
   type TablesInsert,
 } from '../../tables';
 import { decodeRecord, TablesSQliteSchema } from '../../tableSchema';
-import { addMonths, differenceInMonths, isBefore } from 'date-fns';
+
+function addMonths(date: Date, months: number): Date {
+  const result = new Date(date);
+  const day = result.getDate();
+  result.setMonth(result.getMonth() + months);
+  if (result.getDate() !== day) {
+    result.setDate(0);
+  }
+  return result;
+}
+
+function differenceInMonths(endDate: Date, startDate: Date): number {
+  const yearDiff = endDate.getFullYear() - startDate.getFullYear();
+  const monthDiff = endDate.getMonth() - startDate.getMonth();
+  return yearDiff * 12 + monthDiff;
+}
 
 const openingBalanceMap: Record<string, Record<string, number>> = {
   'Mahaveer Bankers': {
@@ -141,8 +156,8 @@ export function monthDiffRoundedUp(startDate: Date, endDate: Date): number {
 
   const dateAfterDiff = addMonths(startDate, diff);
 
-  if (isBefore(dateAfterDiff, endDate)) {
-    diff += 1; // round up
+  if (dateAfterDiff < endDate) {
+    diff += 1;
   }
 
   return diff;
