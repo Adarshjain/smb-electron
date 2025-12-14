@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input.tsx';
 import { Button } from '@/components/ui/button';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import { create, query } from '@/hooks/dbUtil.ts';
-import { errorToast, jsNumberFix } from '@/lib/myUtils.tsx';
+import { errorToast, jsNumberFix, successToast } from '@/lib/myUtils.tsx';
 
 const dailyEntrySchema = z.object({
   entries: z.array(
@@ -301,7 +301,7 @@ export function DailyEntriesTables({
           true
         );
       }
-      alert('Success!');
+      successToast('Success!');
     } catch (e) {
       errorToast(e);
     }
