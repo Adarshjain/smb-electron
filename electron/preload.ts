@@ -38,6 +38,11 @@ contextBridge.exposeInMainWorld('api', {
       justRun?: boolean
     ): Promise<ElectronToReactResponse<unknown>> =>
       ipcRenderer.invoke('db:query', query, params, justRun),
+    // Batch multiple queries in a single IPC call
+    batch: (
+      queries: { sql: string; params?: unknown[]; justRun?: boolean }[]
+    ): Promise<ElectronToReactResponse<unknown[][]>> =>
+      ipcRenderer.invoke('db:batch', queries),
     initSeed: (): Promise<ElectronToReactResponse<void>> =>
       ipcRenderer.invoke('init-seed'),
   },

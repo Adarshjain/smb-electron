@@ -8,6 +8,7 @@ import { SyncManager } from './db/SyncManager';
 import {
   create,
   deleteRecord,
+  executeBatch,
   executeSql,
   migrateSchema,
   read,
@@ -118,23 +119,33 @@ const createWindow = () => {
   win = new BrowserWindow({
     title: 'Sri Mahaveer Bankers',
     autoHideMenuBar: true,
+    show: false,
+    backgroundColor: '#ffffff',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       webSecurity: false,
       allowRunningInsecureContent: false,
+      nodeIntegration: false,
+      contextIsolation: true,
+      spellcheck: false,
+      enableWebSQL: false,
+      v8CacheOptions: 'bypassHeatCheck',
     },
     icon: iconPath,
   });
+
+  win.once('ready-to-show', () => {
+    win?.show();
+    win?.maximize();
+  });
+
   if (process.env.VITE_DEV_SERVER_URL) {
     void win.loadURL(process.env.VITE_DEV_SERVER_URL);
     win.webContents.openDevTools();
   } else {
-    // In production, load the built renderer from app.asar/dist/index.html
-    // __dirname points to app.asar/dist-electron/electron when packaged
     const prodIndex = path.join(app.getAppPath(), 'dist', 'index.html');
     void win.loadFile(prodIndex);
   }
-  win.maximize();
 
   win.on('closed', () => {
     win = null;
@@ -169,14 +180,22 @@ const initSupabase = () => {
 // Set app name before app is ready (important for macOS)
 app.name = 'Sri Mahaveer Bankers';
 
-// Configure remote debugging port for development
-app.commandLine.appendSwitch('remote-debugging-port', '7070');
 // Allow local file URLs to load other local file resources in production
 app.commandLine.appendSwitch('allow-file-access-from-files');
 
-// Initialize database before creating window
+// Enable hardware acceleration
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
+app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder');
+
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
+
+app.commandLine.appendSwitch(
+  'disable-features',
+  'IsolateOrigins,site-per-process'
+);
+
 void app.whenReady().then(() => {
-  // Set dock icon on macOS (use PNG as icns can be problematic)
   if (process.platform === 'darwin' && app.dock) {
     const dockIconPath = path.join(
       process.cwd(),
@@ -184,11 +203,7 @@ void app.whenReady().then(() => {
       'build',
       'logo.png'
     );
-    try {
-      app.dock.setIcon(dockIconPath);
-    } catch (error) {
-      console.error('❌ Failed to set dock icon:', error);
-    }
+    app.dock.setIcon(dockIconPath);
   }
   initDatabase();
   migrateSchema();
@@ -216,9 +231,7 @@ ipcMain.handle(
     try {
       const result = await dialog.showOpenDialog({
         properties: ['openFile'],
-        filters: [
-          { name: 'Access Database Files', extensions: ['mdb'] }, // 👈 restricts to .mdb only
-        ],
+        filters: [{ name: 'Access Database Files', extensions: ['mdb'] }],
       });
 
       if (!result.canceled) {
@@ -484,6 +497,37 @@ ipcMain.handle(
             query,
             type: 'ipc-handler',
             arg: { query, params },
+          },
+        },
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+    }
+  }
+);
+
+// Batch query handler - execute multiple queries in a single IPC call
+ipcMain.handle(
+  'db:batch',
+  (
+    _event: IpcMainInvokeEvent,
+    queries: { sql: string; params?: unknown[]; justRun?: boolean }[]
+  ): ElectronToReactResponse<unknown[][]> => {
+    try {
+      return {
+        success: true,
+        data: executeBatch(queries),
+      };
+    } catch (error) {
+      Sentry.captureException(error, {
+        contexts: {
+          operation: {
+            name: 'db:batch',
+            type: 'ipc-handler',
+            queryCount: queries.length,
           },
         },
       });

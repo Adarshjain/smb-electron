@@ -5,6 +5,8 @@ import CustomerPicker from '@/components/CustomerPicker.tsx';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
 import {
   type KeyboardEvent as ReactKeyboardEvent,
+  memo,
+  useCallback,
   useEffect,
   useState,
 } from 'react';
@@ -19,7 +21,7 @@ export const QuickViewSchema = z.object({
 });
 export type IQuickView = z.infer<typeof QuickViewSchema>;
 
-export default function QuickView() {
+export default memo(function QuickView() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const defaultValues: IQuickView = {
     serial: '',
@@ -66,28 +68,36 @@ export default function QuickView() {
     };
   }, [next, setValue]);
 
-  async function onLoanNumberInput(e?: ReactKeyboardEvent<HTMLInputElement>) {
-    if (e) e.preventDefault();
-    const { serial, loan_no: loanNo } = getValues();
-    if (!serial || !loanNo) {
-      return;
-    }
-    try {
-      const readBillsResponse = await read(
-        'bills',
-        {
-          serial,
-          loan_no: parseInt(loanNo),
-        },
-        'customer_id'
-      );
-      if (readBillsResponse?.length) {
-        setCustomerId(readBillsResponse[0].customer_id);
+  const onLoanNumberInput = useCallback(
+    async (e?: ReactKeyboardEvent<HTMLInputElement>) => {
+      if (e) e.preventDefault();
+      const { serial, loan_no: loanNo } = getValues();
+      if (!serial || !loanNo) {
+        return;
       }
-    } catch (error) {
-      errorToast(error);
-    }
-  }
+      try {
+        const readBillsResponse = await read(
+          'bills',
+          {
+            serial,
+            loan_no: parseInt(loanNo),
+          },
+          'customer_id'
+        );
+        if (readBillsResponse?.length) {
+          setCustomerId(readBillsResponse[0].customer_id);
+        }
+      } catch (error) {
+        errorToast(error);
+      }
+    },
+    [getValues]
+  );
+
+  const handleCustomerSelect = useCallback(
+    (customer: { id: string }) => setCustomerId(customer.id),
+    []
+  );
 
   return (
     <div ref={setFormRef} className="grid gap-2">
@@ -101,7 +111,7 @@ export default function QuickView() {
         />
         <CustomerPicker
           inputClassName="w-[400px]"
-          onSelect={(customer) => setCustomerId(customer.id)}
+          onSelect={handleCustomerSelect}
           showShortcut="F9"
         />
       </div>
@@ -115,4 +125,4 @@ export default function QuickView() {
       )}
     </div>
   );
-}
+});

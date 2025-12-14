@@ -6,7 +6,7 @@ import type {
   TablesDelete,
   TablesUpdate,
 } from '../../tables';
-import { db } from './database';
+import { db, getCachedStatement } from './database';
 import { TablesSQliteSchema } from '../../tableSchema';
 
 export const tables: TableName[] = [
@@ -53,6 +53,57 @@ export function validate<K extends TableName>(
     }
   }
 }
+
+// Performance indexes for common queries
+const PERFORMANCE_INDEXES: {
+  table: string;
+  columns: string[];
+  name: string;
+}[] = [
+  // Customer searches by name
+  { table: 'customers', columns: ['name'], name: 'idx_customers_name' },
+  // Bills by customer and date
+  {
+    table: 'bills',
+    columns: ['customer_id', 'deleted'],
+    name: 'idx_bills_customer',
+  },
+  { table: 'bills', columns: ['date', 'company'], name: 'idx_bills_date' },
+  {
+    table: 'bills',
+    columns: ['released', 'deleted'],
+    name: 'idx_bills_released',
+  },
+  // Bill items lookup
+  {
+    table: 'bill_items',
+    columns: ['serial', 'loan_no'],
+    name: 'idx_bill_items_loan',
+  },
+  // Daily entries by date and company
+  {
+    table: 'daily_entries',
+    columns: ['company', 'date', 'main_code'],
+    name: 'idx_daily_entries_lookup',
+  },
+  // Releases lookup
+  {
+    table: 'releases',
+    columns: ['serial', 'loan_no'],
+    name: 'idx_releases_loan',
+  },
+  {
+    table: 'releases',
+    columns: ['company', 'date'],
+    name: 'idx_releases_date',
+  },
+  // Products lookup for autocomplete
+  {
+    table: 'products',
+    columns: ['metal_type', 'product_type'],
+    name: 'idx_products_type',
+  },
+];
 
 export function migrateSchema() {
   if (!db) {
@@ -120,6 +171,33 @@ export function migrateSchema() {
       }
     }
   }
+
+  // Create performance indexes
+  for (const index of PERFORMANCE_INDEXES) {
+    try {
+      const indexExists = db
+        .prepare(
+          `SELECT name FROM sqlite_master WHERE type = 'index' AND name = ?`
+        )
+        .get(index.name);
+      if (!indexExists) {
+        db.exec(
+          `CREATE INDEX IF NOT EXISTS ${index.name} ON ${index.table} (${index.columns.join(', ')})`
+        );
+        console.log(`📊 Created performance index: ${index.name}`);
+      }
+    } catch {
+      // Index creation might fail if table doesn't exist yet
+    }
+  }
+
+  // Run ANALYZE to update query planner statistics
+  try {
+    db.exec('ANALYZE');
+    console.log('📈 Updated query planner statistics');
+  } catch {
+    // Ignore analyze errors
+  }
 }
 
 export function create<K extends TableName>(table: K, record: Tables[K]): null {
@@ -127,28 +205,16 @@ export function create<K extends TableName>(table: K, record: Tables[K]): null {
 
   validate(table, record);
 
-  const doesExist = read(
-    table,
-    record as unknown as Partial<LocalTables<K>>,
-    undefined,
-    undefined,
-    false
-  );
+  const keys = Object.keys(record);
+  const values = Object.values(record);
+  const placeholders = keys.map(() => '?').join(', ');
 
-  if (doesExist?.length) {
-    update(table, { ...record, deleted: null, synced: 0 });
-  } else {
-    const keys = Object.keys(record);
-    const values = Object.values(record);
-    const placeholders = keys.map(() => '?').join(', ');
+  const sql = `INSERT OR REPLACE INTO ${table} (${keys.join(', ')}, synced, deleted)
+     VALUES (${placeholders}, 0, NULL)`;
 
-    const stmt = db.prepare(
-      `INSERT INTO ${table} (${keys.join(', ')}, synced, deleted)
-       VALUES (${placeholders}, 0, NULL)`
-    );
+  const stmt = getCachedStatement(sql);
+  stmt.run(...values);
 
-    stmt.run(...values);
-  }
   return null;
 }
 
@@ -217,12 +283,11 @@ export function markAsSynced<K extends TableName>(
     (field) => record[field as keyof LocalTables<K>]
   );
 
-  db.prepare(
-    `UPDATE ${table}
+  const sql = `UPDATE ${table}
      SET synced = 1
-     WHERE ${whereClauses}`
-  ).run(...whereValues);
+     WHERE ${whereClauses}`;
 
+  getCachedStatement(sql).run(...whereValues);
   return null;
 }
 
@@ -244,11 +309,11 @@ export function deleteSynced<K extends TableName>(
     (field) => record[field as keyof LocalTables<K>]
   );
 
-  db.prepare(
-    `DELETE
+  const sql = `DELETE
      from ${table}
-     WHERE ${whereClauses} AND deleted IS NOT NULL`
-  ).run(...whereValues);
+     WHERE ${whereClauses} AND deleted IS NOT NULL`;
+
+  getCachedStatement(sql).run(...whereValues);
   return null;
 }
 
@@ -281,11 +346,10 @@ export function read<K extends TableName>(
 
   const whereClause = whereClauses.join(' AND ');
 
-  const stmt = db.prepare(
-    `SELECT ${String(fields)}
-     FROM ${table} ${whereClauses.length ? `WHERE ${whereClause}` : ''}`
-  );
+  const sql = `SELECT ${String(fields)}
+     FROM ${table} ${whereClauses.length ? `WHERE ${whereClause}` : ''}`;
 
+  const stmt = getCachedStatement(sql);
   return stmt.all(...whereValues) as LocalTables<K>[];
 }
 
@@ -307,13 +371,12 @@ export function deleteRecord<K extends TableName>(
     (field) => record[field as keyof TablesDelete[K]]
   );
 
-  const stmt = db.prepare(
-    `UPDATE ${table}
+  const sql = `UPDATE ${table}
      SET synced  = 0,
          deleted = 1
-     WHERE ${whereClauses}`
-  );
+     WHERE ${whereClauses}`;
 
+  const stmt = getCachedStatement(sql);
   stmt.run(...whereValues);
   return null;
 }
@@ -346,13 +409,12 @@ export function update<K extends TableName>(
     .filter((key) => !pkFields.includes(key))
     .map((key) => record[key as keyof TablesUpdate[K]]);
 
-  const stmt = db.prepare(
-    `UPDATE ${table}
+  const sql = `UPDATE ${table}
      SET ${updateFields},
          synced = 0
-     WHERE ${whereClauses}`
-  );
+     WHERE ${whereClauses}`;
 
+  const stmt = getCachedStatement(sql);
   stmt.run(...updateValues, ...whereValues);
   return null;
 }
@@ -364,11 +426,36 @@ export function executeSql(
 ): unknown[] | null {
   if (!db) return null;
 
+  const stmt = getCachedStatement(sql);
+
   if (justRun) {
-    db.prepare(sql).run(...params);
+    stmt.run(...params);
     return null;
   }
 
-  const stmt = db.prepare(sql);
   return stmt.all(...params);
+}
+
+// Batch execute multiple queries in a transaction for better performance
+export function executeBatch(
+  queries: { sql: string; params?: unknown[]; justRun?: boolean }[]
+): unknown[][] {
+  if (!db) return [];
+
+  const results: unknown[][] = [];
+
+  const transaction = db.transaction(() => {
+    for (const { sql, params = [], justRun = false } of queries) {
+      const stmt = getCachedStatement(sql);
+      if (justRun) {
+        stmt.run(...params);
+        results.push([]);
+      } else {
+        results.push(stmt.all(...params));
+      }
+    }
+  });
+
+  transaction();
+  return results;
 }

@@ -3,6 +3,7 @@ import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   type KeyboardEvent,
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -32,7 +33,7 @@ const dailyEntrySchema = z.object({
 });
 export type DailyEntry = z.infer<typeof dailyEntrySchema>;
 
-export function DailyEntriesTables({
+export const DailyEntriesTables = memo(function DailyEntriesTables({
   currentAccountHead,
   accountHeads,
   entries,
@@ -350,7 +351,7 @@ export function DailyEntriesTables({
           />
         </div>
         {fieldArray.fields.map((row, index) => (
-          <div key={JSON.stringify(row)} className="flex">
+          <div key={row.sort_order} className="flex">
             <Controller
               name={`entries.${index}.title`}
               control={control}
@@ -473,4 +474,4 @@ export function DailyEntriesTables({
       </div>
     </>
   );
-}
+});

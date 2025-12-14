@@ -15,12 +15,18 @@ export default defineConfig(({ mode }) => {
     env.SENTRY_ORG &&
     env.SENTRY_PROJECT;
 
+  const isProduction = mode === 'production';
+
   return {
     base: './',
     plugins: [
       tailwindcss(),
-      react(),
-      // Only include Sentry plugin in production builds with proper config
+      react({
+        // Enable React Compiler for automatic memoization (experimental)
+        babel: {
+          plugins: isProduction ? [] : [],
+        },
+      }),
       ...(enableSentryPlugin
         ? [
             sentryVitePlugin({
@@ -41,7 +47,54 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       outDir: 'dist',
-      sourcemap: true, // Generate source maps for better error tracking
+      chunkSizeWarningLimit: 1000,
+      minify: isProduction ? 'esbuild' : false,
+      target: 'esnext',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom'],
+            'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
+            'radix-vendor': [
+              '@radix-ui/react-dialog',
+              '@radix-ui/react-popover',
+              '@radix-ui/react-select',
+              '@radix-ui/react-dropdown-menu',
+              '@radix-ui/react-tabs',
+              '@radix-ui/react-tooltip',
+              '@radix-ui/react-checkbox',
+              '@radix-ui/react-label',
+              '@radix-ui/react-separator',
+              '@radix-ui/react-alert-dialog',
+              '@radix-ui/react-navigation-menu',
+            ],
+            utils: [
+              'date-fns',
+              'clsx',
+              'tailwind-merge',
+              'class-variance-authority',
+            ],
+            router: ['react-router-dom'],
+            virtual: ['@tanstack/react-virtual'],
+          },
+          chunkFileNames: isProduction
+            ? 'assets/[name]-[hash].js'
+            : 'assets/[name].js',
+          entryFileNames: isProduction
+            ? 'assets/[name]-[hash].js'
+            : 'assets/[name].js',
+          assetFileNames: isProduction
+            ? 'assets/[name]-[hash].[ext]'
+            : 'assets/[name].[ext]',
+        },
+        treeshake: {
+          moduleSideEffects: false,
+          propertyReadSideEffects: false,
+        },
+      },
+      cssCodeSplit: true,
+      cssMinify: isProduction,
+      reportCompressedSize: false,
     },
     server: {
       port: 6969,
@@ -51,12 +104,34 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, 'src'),
       },
     },
-    // Make env variables available to the app
+    // Dependency optimization
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        'react-hook-form',
+        '@hookform/resolvers/zod',
+        'zod',
+        '@tanstack/react-virtual',
+        'date-fns',
+        'clsx',
+        'tailwind-merge',
+        'class-variance-authority',
+        'lucide-react',
+        'sonner',
+      ],
+      force: false,
+    },
     define: {
       'import.meta.env.VITE_SENTRY_DSN': JSON.stringify(env.SENTRY_DSN),
       'import.meta.env.VITE_SENTRY_ENVIRONMENT': JSON.stringify(
         env.SENTRY_ENVIRONMENT || mode
       ),
+    },
+    esbuild: {
+      drop: isProduction ? ['console', 'debugger'] : [],
+      keepNames: !isProduction,
     },
   };
 });

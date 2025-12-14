@@ -69,3 +69,14 @@ export const query = async <T>(
   }
   throw new Error(response.error);
 };
+
+// Execute multiple queries in a single IPC call - much faster than multiple query() calls
+export const batchQuery = async <T extends unknown[][]>(
+  queries: { sql: string; params?: unknown[]; justRun?: boolean }[]
+): Promise<T> => {
+  const response = await window.api.db.batch(queries);
+  if (response.success) {
+    return (response.data as T) ?? ([] as unknown as T);
+  }
+  throw new Error(response.error);
+};

@@ -8,7 +8,7 @@ import type {
   Tables,
 } from '../../tables';
 import MyCache from '../../MyCache.ts';
-import { query, read } from '@/hooks/dbUtil.ts';
+import { batchQuery, query, read } from '@/hooks/dbUtil.ts';
 import { toastStyles } from '@/constants/loanForm.ts';
 import { cn } from '@/lib/utils.ts';
 import { captureException } from '@/lib/sentry.ts';
@@ -209,28 +209,39 @@ export async function loadBillWithDeps(
   loanNo: number
 ): Promise<Tables['full_bill'] | null> {
   try {
-    const loan = await read('bills', {
-      serial: serial.toUpperCase(),
-      loan_no: loanNo,
-    });
-    if (!loan?.length) {
+    const upperSerial = serial.toUpperCase();
+
+    // Batch all queries in a single IPC call
+    const results = await batchQuery<
+      [LocalTables<'bills'>[], LocalTables<'bill_items'>[]]
+    >([
+      {
+        sql: `SELECT * FROM bills WHERE serial = ? AND loan_no = ? AND deleted IS NULL`,
+        params: [upperSerial, loanNo],
+      },
+      {
+        sql: `SELECT * FROM bill_items WHERE serial = ? AND loan_no = ? AND deleted IS NULL`,
+        params: [upperSerial, loanNo],
+      },
+    ]);
+
+    const [loans, billItems] = results;
+
+    if (!loans?.length) {
       errorToast('No loan found with given Serial and Loan Number');
       return null;
     }
-    const currentLoan = loan[0];
+    const currentLoan = loans[0];
 
-    const fullCustomer = await fetchFullCustomer(currentLoan.customer_id);
-    if (!fullCustomer) {
-      errorToast('No fullCustomer match');
+    if (!billItems?.length) {
+      errorToast('No items match');
       return null;
     }
 
-    const billItems = await read('bill_items', {
-      serial: serial.toUpperCase(),
-      loan_no: loanNo,
-    });
-    if (!billItems?.length) {
-      errorToast('No items match');
+    // Fetch customer separately (needs customer_id from loan)
+    const fullCustomer = await fetchFullCustomer(currentLoan.customer_id);
+    if (!fullCustomer) {
+      errorToast('No fullCustomer match');
       return null;
     }
 
@@ -245,9 +256,16 @@ export async function loadBillWithDeps(
   }
 }
 
+// Cache for customers and areas
+const customerCache = new MyCache<FullCustomer>('CustomerCache');
+
 export async function fetchFullCustomer(
   customerId: string
 ): Promise<FullCustomer | null> {
+  // Check cache first
+  const cached = customerCache.get(customerId);
+  if (cached) return cached;
+
   try {
     const customers = await read('customers', {
       id: customerId,
@@ -264,10 +282,15 @@ export async function fetchFullCustomer(
       errorToast('No area match');
       return null;
     }
-    return {
+    const fullCustomer = {
       customer: customer,
       area: areas[0],
     };
+
+    // Cache the result
+    customerCache.set(customerId, fullCustomer);
+
+    return fullCustomer;
   } catch (e) {
     errorToast(e);
     return null;
@@ -279,11 +302,12 @@ export async function fetchBillsByCustomer(
   skipReleased = true
 ): Promise<Tables['full_bill'][] | undefined> {
   try {
-    const fetchBillsQueryReleased = `SELECT * FROM bills WHERE customer_id = ? AND deleted IS NULL AND released = 0 order by date`;
-    const fetchBillsQueryAll = `SELECT * FROM bills WHERE customer_id = ? AND deleted IS NULL order by date`;
+    // Fetch bills and customer in parallel
     const [billsResponse, fullCustomer] = await Promise.all([
       query<LocalTables<'bills'>[] | null>(
-        skipReleased ? fetchBillsQueryReleased : fetchBillsQueryAll,
+        skipReleased
+          ? `SELECT * FROM bills WHERE customer_id = ? AND deleted IS NULL AND released = 0 ORDER BY date`
+          : `SELECT * FROM bills WHERE customer_id = ? AND deleted IS NULL ORDER BY date`,
         [customerId]
       ),
       fetchFullCustomer(customerId),
@@ -293,38 +317,55 @@ export async function fetchBillsByCustomer(
       return undefined;
     }
 
-    // Batch fetch all bill items and releases
-    const billItemsPromises = billsResponse.map((bill) =>
-      read('bill_items', {
-        serial: bill.serial,
-        loan_no: bill.loan_no,
-      })
-    );
+    // Build a single batch query for all bill items
+    const billItemQueries = billsResponse.map((bill) => ({
+      sql: `SELECT * FROM bill_items WHERE serial = ? AND loan_no = ? AND deleted IS NULL`,
+      params: [bill.serial, bill.loan_no] as unknown[],
+    }));
 
-    const releasePromises = !skipReleased
-      ? billsResponse.map((bill) =>
-          bill.released === 1
-            ? read('releases', {
-                serial: bill.serial,
-                loan_no: bill.loan_no,
-              })
-            : Promise.resolve(null)
-        )
+    // If we need releases, add those queries too
+    const releaseQueries = !skipReleased
+      ? billsResponse
+          .filter((bill) => bill.released === 1)
+          .map((bill) => ({
+            sql: `SELECT * FROM releases WHERE serial = ? AND loan_no = ? AND deleted IS NULL`,
+            params: [bill.serial, bill.loan_no] as unknown[],
+          }))
       : [];
 
-    const [allBillItems, allReleases] = await Promise.all([
-      Promise.all(billItemsPromises),
-      releasePromises.length > 0
-        ? Promise.all(releasePromises)
-        : Promise.resolve([]),
+    // Execute all queries in a single batch IPC call
+    const allResults = await batchQuery<unknown[][]>([
+      ...billItemQueries,
+      ...releaseQueries,
     ]);
+
+    // Split results
+    const allBillItems = allResults.slice(
+      0,
+      billsResponse.length
+    ) as LocalTables<'bill_items'>[][];
+
+    // Build a map of releases by serial-loan_no
+    const releaseMap = new Map<string, LocalTables<'releases'>>();
+    if (!skipReleased && releaseQueries.length > 0) {
+      const releaseResults = allResults.slice(
+        billsResponse.length
+      ) as LocalTables<'releases'>[][];
+      const releasedBills = billsResponse.filter((bill) => bill.released === 1);
+      releasedBills.forEach((bill, i) => {
+        const release = releaseResults[i]?.[0];
+        if (release) {
+          releaseMap.set(`${bill.serial}-${bill.loan_no}`, release);
+        }
+      });
+    }
 
     // Combine results
     const fullBills: Tables['full_bill'][] = [];
     for (let i = 0; i < billsResponse.length; i++) {
       const bill = billsResponse[i];
       const billItems = allBillItems[i];
-      const release = allReleases[i]?.[0];
+      const release = releaseMap.get(`${bill.serial}-${bill.loan_no}`);
 
       if (billItems?.length) {
         fullBills.push({

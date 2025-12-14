@@ -4,7 +4,7 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { cn } from '@/lib/utils';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
 import { Kbd } from '@/components/ui/kbd';
@@ -29,7 +29,16 @@ interface AutocompleteSelectProps<T> {
   allowTempValues?: boolean;
 }
 
-export default function AutocompleteSelect<T = string>({
+// Cache the segmenter instance - creating it is expensive
+const segmenter = new Intl.Segmenter('ta', { granularity: 'grapheme' });
+
+function deleteLastGrapheme(str: string) {
+  const g = [...segmenter.segment(str)].map((s) => s.segment);
+  g.pop();
+  return g.join('');
+}
+
+function AutocompleteSelectInner<T = string>({
   options,
   value,
   onSelect,
@@ -56,13 +65,6 @@ export default function AutocompleteSelect<T = string>({
   const { convert } = useThanglish();
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const segmenter = new Intl.Segmenter('ta', { granularity: 'grapheme' });
-
-  const deleteLastGrapheme = (str: string) => {
-    const g = [...segmenter.segment(str)].map((s) => s.segment);
-    g.pop();
-    return g.join('');
-  };
 
   // Default implementations for string arrays
   const defaultGetDisplayValue = (item: T): string => {
@@ -378,3 +380,9 @@ export default function AutocompleteSelect<T = string>({
     </div>
   );
 }
+
+// Memoized export with generic support
+const AutocompleteSelect = memo(
+  AutocompleteSelectInner
+) as typeof AutocompleteSelectInner;
+export default AutocompleteSelect;

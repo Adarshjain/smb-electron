@@ -44,6 +44,9 @@ declare global {
           params?: unknown[],
           justRun?: boolean
         ) => Promise<ElectronToReactResponse<T | null>>;
+        batch: (
+          queries: { sql: string; params?: unknown[]; justRun?: boolean }[]
+        ) => Promise<ElectronToReactResponse<unknown[][]>>;
         initSeed: () => Promise<ElectronToReactResponse<void>>;
       };
       supabase: {

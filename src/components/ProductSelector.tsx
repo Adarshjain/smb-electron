@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import AutocompleteSelect from '@/components/AutocompleteSelect.tsx';
 
-export default function ProductSelector(props: {
+interface ProductSelectorProps {
   options: string[];
   value?: string;
   inputName?: string;
@@ -15,48 +15,66 @@ export default function ProductSelector(props: {
   autoFocus?: boolean;
   autoConvert: boolean;
   allowTempValues?: boolean;
-}) {
+}
+
+export default memo(function ProductSelector({
+  options,
+  value,
+  inputName,
+  inputClassName,
+  placeholder,
+  onChange,
+  triggerWidth,
+  autoFocus,
+  autoConvert,
+  allowTempValues = false,
+}: ProductSelectorProps) {
   const [search, setSearch] = useState('');
-  const [filteredProducts, setFilteredProducts] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (!search.trim()) {
-      setFilteredProducts([]);
-      return;
-    }
-    const productNames = [
-      ...new Set([
-        ...props.options.filter((item) =>
-          item.toLowerCase().startsWith(search.toLowerCase())
-        ),
-        ...props.options.filter((item) =>
-          item.toLowerCase().includes(search.toLowerCase())
-        ),
-      ]),
-    ];
-    setFilteredProducts(productNames);
-  }, [props.options, search]);
+  // Memoize filtered products to prevent recalculation
+  const filteredProducts = useMemo(() => {
+    if (!search.trim()) return [];
 
-  const onSearchChange = (value: string) => {
-    if (props.allowTempValues) {
-      props.onChange?.(value);
+    const searchLower = search.toLowerCase();
+    const startsWithMatches: string[] = [];
+    const containsMatches: string[] = [];
+
+    for (const item of options) {
+      const itemLower = item.toLowerCase();
+      if (itemLower.startsWith(searchLower)) {
+        startsWithMatches.push(item);
+      } else if (itemLower.includes(searchLower)) {
+        containsMatches.push(item);
+      }
     }
-    setSearch(value);
-  };
+
+    // Combine and dedupe
+    return [...new Set([...startsWithMatches, ...containsMatches])];
+  }, [options, search]);
+
+  const onSearchChange = useCallback(
+    (value: string) => {
+      if (allowTempValues) {
+        onChange?.(value);
+      }
+      setSearch(value);
+    },
+    [allowTempValues, onChange]
+  );
 
   return (
     <AutocompleteSelect<string>
       options={filteredProducts}
-      onSelect={props.onChange}
+      onSelect={onChange}
       onSearchChange={onSearchChange}
-      placeholder={props.placeholder}
-      autofocus={props.autoFocus}
-      inputClassName={props.inputClassName}
-      triggerWidth={props.triggerWidth}
-      inputName={props.inputName}
-      autoConvert={props.autoConvert}
-      value={props.value}
-      allowTempValues={props.allowTempValues}
+      placeholder={placeholder}
+      autofocus={autoFocus}
+      inputClassName={inputClassName}
+      triggerWidth={triggerWidth}
+      inputName={inputName}
+      autoConvert={autoConvert}
+      value={value}
+      allowTempValues={allowTempValues}
     />
   );
-}
+});
