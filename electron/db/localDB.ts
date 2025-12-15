@@ -6,7 +6,7 @@ import type {
   TablesDelete,
   TablesUpdate,
 } from '../../tables';
-import { db, getCachedStatement } from './database';
+import { db } from './database';
 import { TablesSQliteSchema } from '../../tableSchema';
 
 export const tables: TableName[] = [
@@ -53,57 +53,6 @@ export function validate<K extends TableName>(
     }
   }
 }
-
-// Performance indexes for common queries
-const PERFORMANCE_INDEXES: {
-  table: string;
-  columns: string[];
-  name: string;
-}[] = [
-  // Customer searches by name
-  { table: 'customers', columns: ['name'], name: 'idx_customers_name' },
-  // Bills by customer and date
-  {
-    table: 'bills',
-    columns: ['customer_id', 'deleted'],
-    name: 'idx_bills_customer',
-  },
-  { table: 'bills', columns: ['date', 'company'], name: 'idx_bills_date' },
-  {
-    table: 'bills',
-    columns: ['released', 'deleted'],
-    name: 'idx_bills_released',
-  },
-  // Bill items lookup
-  {
-    table: 'bill_items',
-    columns: ['serial', 'loan_no'],
-    name: 'idx_bill_items_loan',
-  },
-  // Daily entries by date and company
-  {
-    table: 'daily_entries',
-    columns: ['company', 'date', 'main_code'],
-    name: 'idx_daily_entries_lookup',
-  },
-  // Releases lookup
-  {
-    table: 'releases',
-    columns: ['serial', 'loan_no'],
-    name: 'idx_releases_loan',
-  },
-  {
-    table: 'releases',
-    columns: ['company', 'date'],
-    name: 'idx_releases_date',
-  },
-  // Products lookup for autocomplete
-  {
-    table: 'products',
-    columns: ['metal_type', 'product_type'],
-    name: 'idx_products_type',
-  },
-];
 
 export function migrateSchema() {
   if (!db) {
@@ -171,33 +120,6 @@ export function migrateSchema() {
       }
     }
   }
-
-  // Create performance indexes
-  for (const index of PERFORMANCE_INDEXES) {
-    try {
-      const indexExists = db
-        .prepare(
-          `SELECT name FROM sqlite_master WHERE type = 'index' AND name = ?`
-        )
-        .get(index.name);
-      if (!indexExists) {
-        db.exec(
-          `CREATE INDEX IF NOT EXISTS ${index.name} ON ${index.table} (${index.columns.join(', ')})`
-        );
-        console.log(`📊 Created performance index: ${index.name}`);
-      }
-    } catch {
-      // Index creation might fail if table doesn't exist yet
-    }
-  }
-
-  // Run ANALYZE to update query planner statistics
-  try {
-    db.exec('ANALYZE');
-    console.log('📈 Updated query planner statistics');
-  } catch {
-    // Ignore analyze errors
-  }
 }
 
 export function create<K extends TableName>(table: K, record: Tables[K]): null {
@@ -212,7 +134,7 @@ export function create<K extends TableName>(table: K, record: Tables[K]): null {
   const sql = `INSERT OR REPLACE INTO ${table} (${keys.join(', ')}, synced, deleted)
      VALUES (${placeholders}, 0, NULL)`;
 
-  const stmt = getCachedStatement(sql);
+  const stmt = db.prepare(sql);
   stmt.run(...values);
 
   return null;
@@ -287,7 +209,7 @@ export function markAsSynced<K extends TableName>(
      SET synced = 1
      WHERE ${whereClauses}`;
 
-  getCachedStatement(sql).run(...whereValues);
+  db.prepare(sql).run(...whereValues);
   return null;
 }
 
@@ -313,7 +235,7 @@ export function deleteSynced<K extends TableName>(
      from ${table}
      WHERE ${whereClauses} AND deleted IS NOT NULL`;
 
-  getCachedStatement(sql).run(...whereValues);
+  db.prepare(sql).run(...whereValues);
   return null;
 }
 
@@ -349,7 +271,7 @@ export function read<K extends TableName>(
   const sql = `SELECT ${String(fields)}
      FROM ${table} ${whereClauses.length ? `WHERE ${whereClause}` : ''}`;
 
-  const stmt = getCachedStatement(sql);
+  const stmt = db.prepare(sql);
   return stmt.all(...whereValues) as LocalTables<K>[];
 }
 
@@ -376,7 +298,7 @@ export function deleteRecord<K extends TableName>(
          deleted = 1
      WHERE ${whereClauses}`;
 
-  const stmt = getCachedStatement(sql);
+  const stmt = db.prepare(sql);
   stmt.run(...whereValues);
   return null;
 }
@@ -414,7 +336,7 @@ export function update<K extends TableName>(
          synced = 0
      WHERE ${whereClauses}`;
 
-  const stmt = getCachedStatement(sql);
+  const stmt = db.prepare(sql);
   stmt.run(...updateValues, ...whereValues);
   return null;
 }
@@ -426,7 +348,7 @@ export function executeSql(
 ): unknown[] | null {
   if (!db) return null;
 
-  const stmt = getCachedStatement(sql);
+  const stmt = db.prepare(sql);
 
   if (justRun) {
     stmt.run(...params);
@@ -445,8 +367,11 @@ export function executeBatch(
   const results: unknown[][] = [];
 
   const transaction = db.transaction(() => {
+    if (!db) {
+      return;
+    }
     for (const { sql, params = [], justRun = false } of queries) {
-      const stmt = getCachedStatement(sql);
+      const stmt = db.prepare(sql);
       if (justRun) {
         stmt.run(...params);
         results.push([]);

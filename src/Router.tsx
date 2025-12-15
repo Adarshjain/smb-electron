@@ -1,23 +1,19 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { Home } from './pages/Home.tsx';
 import { ErrorBoundary } from '@/components/ErrorBoundary.tsx';
-
-// Lazy load less frequently used pages for faster initial load
-const TableView = lazy(() =>
-  import('@/pages/TableView.tsx').then((m) => ({ default: m.TableView }))
-);
-const Settings = lazy(() => import('@/pages/Settings.tsx'));
-const NewLoan = lazy(() => import('@/pages/NewLoan.tsx'));
-const ReleaseLoan = lazy(() => import('@/pages/ReleaseLoan.tsx'));
-const DayBook = lazy(() => import('@/pages/DayBook.tsx'));
-const CustomerCrud = lazy(() => import('@/pages/CustomerCrud.tsx'));
-const OtherCustomer = lazy(() => import('@/components/OtherCustomer.tsx'));
-const CustomersByArea = lazy(() => import('@/components/CustomersByArea.tsx'));
-const AccountHead = lazy(() => import('@/components/AccountHead.tsx'));
-const ItemsMaster = lazy(() => import('@/components/ItemsMaster.tsx'));
-const Dashboard = lazy(() => import('@/components/Dashboard.tsx'));
-const OldLoans = lazy(() => import('@/components/OldLoans.tsx'));
+import { TableView } from '@/pages/TableView.tsx';
+import Settings from '@/pages/Settings.tsx';
+import OtherCustomer from '@/components/OtherCustomer.tsx';
+import NewLoan from '@/pages/NewLoan.tsx';
+import ReleaseLoan from '@/pages/ReleaseLoan.tsx';
+import DayBook from '@/pages/DayBook.tsx';
+import CustomerCrud from '@/pages/CustomerCrud.tsx';
+import CustomersByArea from '@/components/CustomersByArea.tsx';
+import AccountHead from '@/components/AccountHead.tsx';
+import ItemsMaster from '@/components/ItemsMaster.tsx';
+import Dashboard from '@/components/Dashboard.tsx';
+import OldLoans from '@/components/OldLoans.tsx';
 
 // Simple loading fallback
 function PageLoader() {
