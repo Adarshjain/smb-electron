@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Select,
   SelectContent,
@@ -38,6 +38,10 @@ export default function DailyEntries() {
     []
   );
   const [openingBalance, setOpeningBalance] = useState(0);
+  const entryableAccountHeads = useMemo<Tables['account_head'][]>(
+    () => accountHeads.filter((head) => head.code !== currentAccountHead?.code),
+    [accountHeads, currentAccountHead?.code]
+  );
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
@@ -335,7 +339,7 @@ export default function DailyEntries() {
   }, [loadDailyEntries]);
 
   return (
-    <div className="ml-2 mt-3 pb-30 w-[85%]">
+    <div className="mx-2 mt-3 pb-30 min-w-[820px] max-w-[85%]">
       <div className="flex gap-3 mb-4 mx-24">
         <div className="text-xl mr-auto">Cash Book</div>
         {currentAccountHead && (
@@ -365,7 +369,7 @@ export default function DailyEntries() {
         />
       </div>
       <DailyEntriesTables
-        accountHeads={accountHeads}
+        accountHeads={entryableAccountHeads}
         openingBalance={openingBalance}
         entries={todaysEntries}
         currentAccountHead={currentAccountHead}

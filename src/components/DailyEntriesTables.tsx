@@ -461,13 +461,15 @@ export const DailyEntriesTables = memo(function DailyEntriesTables({
         </div>
       </form>
       <div className="flex justify-center gap-12 fixed bottom-0 left-0 right-0 py-3 border-t border-gray-200">
-        <Button
-          className="border-black"
-          variant="outline"
-          onClick={() => void onLoadToday()}
-        >
-          Load Today's Entries
-        </Button>
+        {currentAccountHead?.name === 'CASH' ? (
+          <Button
+            className="border-black"
+            variant="outline"
+            onClick={() => void onLoadToday()}
+          >
+            Load Today's Entries
+          </Button>
+        ) : null}
         <Button className="border-black" onClick={() => void saveDailyEntry()}>
           Update
         </Button>
