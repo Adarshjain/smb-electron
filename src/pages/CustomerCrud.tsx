@@ -338,9 +338,6 @@ export default function CustomerCrud({
             <AreaSelector
               value={areasList.find((area) => area.name === field.value.name)}
               onChange={field.onChange}
-              onFocus={(e) => {
-                e.currentTarget.select();
-              }}
               options={areasList}
               inputName="area"
               placeholder="Area"

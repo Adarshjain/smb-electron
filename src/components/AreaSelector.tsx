@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import SearchSelect from '@/components/SearchSelect.tsx';
 import type { Tables } from '../../tables';
+import AutocompleteSelect from '@/components/AutocompleteSelect.tsx';
 
 export default function AreaSelector(props: {
   options: Tables['areas'][];
@@ -9,8 +9,6 @@ export default function AreaSelector(props: {
   placeholder?: string;
   onChange?: (value: Tables['areas']) => void;
   triggerWidth?: string;
-  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-  onFocus?: (event: React.FocusEvent<HTMLInputElement>) => void;
   autoFocus?: boolean;
 }) {
   const [search, setSearch] = useState('');
@@ -35,18 +33,16 @@ export default function AreaSelector(props: {
   }, [props.options, search]);
 
   return (
-    <SearchSelect<Tables['areas']>
+    <AutocompleteSelect<Tables['areas']>
       options={filteredArea}
       value={props.value}
       onSearchChange={setSearch}
       inputName={props.inputName}
       placeholder={props.placeholder}
-      onChange={props.onChange}
+      onSelect={props.onChange}
       triggerWidth={props.triggerWidth}
-      onKeyDown={props.onKeyDown}
-      onFocus={props.onFocus}
-      autoFocus={props.autoFocus}
-      popoverWidth="w-[700px]"
+      autofocus={props.autoFocus}
+      dropdownWidth="w-[700px]"
       renderRow={(area: Tables['areas']) => {
         return (
           <div className="w-full">
@@ -56,6 +52,7 @@ export default function AreaSelector(props: {
           </div>
         );
       }}
+      autoConvert
     />
   );
 }

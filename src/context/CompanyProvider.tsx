@@ -37,9 +37,13 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
           // Use setState callback form to access current company without adding it as dependency
           setCompany((currentCompany) => {
             if (currentCompany === null) {
-              return response.find((comp) => comp.is_default === 1) ?? response[0];
+              return (
+                response.find((comp) => comp.is_default === 1) ?? response[0]
+              );
             } else {
-              const matched = response.find((c) => c.name === currentCompany.name);
+              const matched = response.find(
+                (c) => c.name === currentCompany.name
+              );
               return matched ?? currentCompany;
             }
           });
@@ -106,13 +110,18 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       refetch: fetchCompanies,
       cycleCompany,
     }),
-    [company, allCompanies, setCurrentDate, setNextSerial, fetchCompanies, cycleCompany]
+    [
+      company,
+      allCompanies,
+      setCurrentDate,
+      setNextSerial,
+      fetchCompanies,
+      cycleCompany,
+    ]
   );
 
   return (
-    <CompanyContext.Provider value={value}>
-      {children}
-    </CompanyContext.Provider>
+    <CompanyContext.Provider value={value}>{children}</CompanyContext.Provider>
   );
 }
 
