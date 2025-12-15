@@ -287,8 +287,7 @@ export default function NewLoan() {
     if (!loan) {
       return;
     }
-    handleOnOldLoanLoaded(loan);
-    setLoadedLoan(loan);
+    handleEditLoan(loan);
   };
 
   const createProductsIfNotExist = async (
@@ -399,7 +398,7 @@ export default function NewLoan() {
           parseInt(enteredNumber)
         );
         if (reloadedLoan) {
-          handleOnOldLoanLoaded(reloadedLoan);
+          handleEditLoan(reloadedLoan);
         }
       } else {
         await create('bills', formattedLoan);
