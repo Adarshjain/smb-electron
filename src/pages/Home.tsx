@@ -80,7 +80,7 @@ export function Home() {
       <div className="flex-1 p-4">
         <QuickView />
       </div>
-      <div className="flex flex-col gap-3 p-6 w-[300px]">
+      <div className="flex flex-col gap-3 mt-6 mr-3 w-[280px]">
         <Button
           variant="outline"
           className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"

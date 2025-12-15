@@ -36,6 +36,8 @@ export default memo(function BillsByCustomer({
     };
   }, [customerId, skipReleased]);
 
+  if (!bills.length) return <div>No Loans Matched</div>;
+
   if (!showCustomerInfo) {
     return <BillAsLineItem bills={bills} />;
   }
