@@ -371,7 +371,7 @@ export default function NewLoan() {
           gross_weight: parseFloat(item.gross_weight || '0'),
           ignore_weight: parseFloat(item.ignore_weight || '0'),
           net_weight:
-            parseFloat(item.gross_weight || '0') +
+            parseFloat(item.net_weight || '0') +
             parseFloat(item.ignore_weight || '0'),
           product: item.product,
           quantity: item.quantity,
@@ -379,13 +379,17 @@ export default function NewLoan() {
           extra: item.extra,
           sort_order: ++sortOrder,
         }));
-
       if (isEditMode) {
         await update('bills', formattedLoan);
-        await deleteRecord('bill_items', {
-          loan_no: formattedLoan.loan_no,
-          serial: formattedLoan.serial,
-        });
+        await query(
+          `UPDATE bill_items
+           SET synced  = 0,
+               deleted = 1
+           WHERE loan_no = ?
+             AND serial = ?`,
+          [formattedLoan.loan_no, formattedLoan.serial],
+          true
+        );
         for (const item of formatterProduct) {
           await create('bill_items', item);
         }
