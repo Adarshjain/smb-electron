@@ -115,7 +115,7 @@ export const DailyEntriesTables = memo(function DailyEntriesTables({
           };
         }) ?? [];
 
-    while (filteredEntries.length <= 10) {
+    while (filteredEntries.length < 10) {
       filteredEntries.push({
         title: '',
         debit: '',
@@ -351,7 +351,7 @@ export const DailyEntriesTables = memo(function DailyEntriesTables({
           />
         </div>
         {fieldArray.fields.map((row, index) => (
-          <div key={row.sort_order} className="flex">
+          <div key={JSON.stringify(row)} className="flex">
             <Controller
               name={`entries.${index}.title`}
               control={control}
