@@ -61,13 +61,20 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       .then((response) => {
         if (response?.length) {
           setAllCompanies(response);
-          const companyMatch =
-            response.find((comp) => comp.is_default === 1) ?? response[0];
-          setCompany(companyMatch);
+          if (company === null) {
+            const companyMatch =
+              response.find((comp) => comp.is_default === 1) ?? response[0];
+            setCompany(companyMatch);
+          } else {
+            const matched = response.find((c) => c.name === company.name);
+            if (matched) {
+              setCompany(matched);
+            }
+          }
         }
       })
       .catch(errorToast);
-  }, []);
+  }, [company]);
 
   const cycleCompany = () => {
     const matchedIndex = allCompanies.findIndex(
