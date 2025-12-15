@@ -335,7 +335,7 @@ export default function DailyEntries() {
   }, [loadDailyEntries]);
 
   return (
-    <div className="mx-auto mt-3 pb-30 w-[85%]">
+    <div className="ml-2 mt-3 pb-30 w-[85%]">
       <div className="flex gap-3 mb-4 mx-24">
         <div className="text-xl mr-auto">Cash Book</div>
         {currentAccountHead && (

@@ -323,7 +323,7 @@ export const DailyEntriesTables = memo(function DailyEntriesTables({
 
   return (
     <>
-      <form ref={setFormRef} className="de-input-matrix mx-24">
+      <form ref={setFormRef} className="de-input-matrix">
         <div className="flex">
           <div className="px-3 py-1 min-w-[300px]">Title</div>
           <div className="px-3 py-1 flex-1">Description</div>

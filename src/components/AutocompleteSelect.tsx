@@ -51,7 +51,7 @@ function AutocompleteSelectInner<T = string>({
   getDisplayValue,
   renderRow,
   getKey,
-  estimatedRowHeight = 34,
+  estimatedRowHeight = 24,
   dropdownWidth = 'w-[610px]',
   triggerWidth = 'w-[500px]',
   autoConvert,
@@ -330,7 +330,7 @@ function AutocompleteSelectInner<T = string>({
         <div
           ref={panelRef}
           className={cn(
-            'absolute z-50 mt-1 max-h-80 overflow-auto rounded-md border bg-white shadow-lg',
+            'absolute z-50 mt-1 max-h-100 overflow-auto rounded-md border bg-white shadow-lg',
             dropdownWidth
           )}
         >
@@ -366,7 +366,7 @@ function AutocompleteSelectInner<T = string>({
                     transform: `translateY(${row.start}px)`,
                   }}
                   className={cn(
-                    'cursor-pointer px-2 py-1 flex gap-2 items-center',
+                    'cursor-pointer px-2 py-1 flex gap-2 items-center text-sm',
                     isActive && 'bg-blue-600 text-white'
                   )}
                 >
