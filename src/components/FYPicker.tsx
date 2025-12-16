@@ -18,7 +18,7 @@ export default function FYPicker(props: {
   year?: number;
   range?: [string, string];
 }) {
-  const [year, setYear] = useState<number>(new Date().getFullYear() - 1);
+  const [year, setYear] = useState<number>(new Date().getFullYear());
   const [startDate, setStartDate] = useState(
     props.range ? props.range[0] : getFinancialYearRange(year)[0]
   );
