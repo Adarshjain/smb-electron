@@ -80,7 +80,10 @@ export const LoanCustomerSection = memo(function LoanCustomerSection(
         />
       )}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogContent
+          onPointerDownOutside={(e) => e.preventDefault()}
+          className="top-[37%]"
+        >
           <DialogTitle className="sr-only">Add Customer</DialogTitle>
           <CustomerCrud
             cantEdit
