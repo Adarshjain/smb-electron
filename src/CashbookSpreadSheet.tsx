@@ -4,10 +4,10 @@ import type { Column, RenderEditCellProps } from 'react-data-grid';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import type { Tables } from '../tables';
-import { formatCurrency } from '@/lib/myUtils.tsx';
+import { formatCurrency, getAccountById } from '@/lib/myUtils.tsx';
 
 interface CashbookRow {
-  accountHead: Tables['account_head'] | undefined;
+  accountHead: Tables['account_head'] | string | undefined;
   description: string | null;
   credit: number | null;
   debit: number | null;
@@ -225,31 +225,31 @@ export interface CashbookSpreadSheetProps {
   onLoadToday: () => Promise<void>;
 }
 
-const getAccountById = (
-  accountHeads: Tables['account_head'][],
-  code: number
-): Tables['account_head'] | undefined =>
-  accountHeads.find((head) => head.code === code);
-
 export default function CashbookSpreadSheet({
   entries,
-  date,
-  onLoadToday,
   openingBalance,
-  currentAccountHead,
   accountHeads,
 }: CashbookSpreadSheetProps) {
-  const [rows, setRows] = useState<CashbookRow[]>(
-    entries.map((entry) => {
-      return {
-        accountHead: getAccountById(accountHeads, entry.sub_code),
-        description: entry.description,
-        credit: entry.credit,
-        debit: entry.debit,
-        sort_order: entry.sort_order,
-      };
-    })
-  );
+  const [rows, setRows] = useState<CashbookRow[]>([
+    {
+      accountHead: 'Opening Balance',
+      sort_order: -1,
+      credit: openingBalance >= 0 ? openingBalance : null,
+      debit: openingBalance < 0 ? openingBalance : null,
+      description: null,
+    },
+    ...entries
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((entry) => {
+        return {
+          accountHead: getAccountById(accountHeads, entry.sub_code),
+          description: entry.description,
+          credit: entry.credit,
+          debit: entry.debit,
+          sort_order: entry.sort_order,
+        };
+      }),
+  ]);
 
   // Keep a ref to accountHeads that's always current
   const accountHeadsRef = useRef(accountHeads);
@@ -261,16 +261,24 @@ export default function CashbookSpreadSheet({
     [] // Empty deps - the ref pattern means we don't need to recreate
   );
 
+  // Helper to check if row is editable
+  const isRowEditable = (row: CashbookRow) => row.sort_order !== -1;
+
   const columns: Column<CashbookRow>[] = [
     {
       key: 'accountHead',
       name: 'Account',
       width: 300,
       resizable: true,
+      editable: isRowEditable,
       renderEditCell: AutoCompleteEditor,
       renderCell: ({ row }) => {
         return (
-          <div className="truncate px-1">{row.accountHead?.name ?? ''}</div>
+          <div className="truncate px-1 select-text">
+            {typeof row.accountHead === 'string'
+              ? row.accountHead
+              : (row.accountHead?.name ?? '')}
+          </div>
         );
       },
     },
@@ -279,9 +287,9 @@ export default function CashbookSpreadSheet({
       name: 'Description',
       width: 300,
       resizable: true,
-      editable: true,
+      editable: isRowEditable,
       renderCell: ({ row }) => (
-        <div className="truncate px-1">{row.description}</div>
+        <div className="truncate px-1 select-text">{row.description}</div>
       ),
     },
     {
@@ -289,10 +297,11 @@ export default function CashbookSpreadSheet({
       name: 'Credit',
       width: 130,
       resizable: true,
+      editable: isRowEditable,
       renderEditCell: NumberEditor,
       renderCell: ({ row }) => (
-        <div className="text-right pr-2">
-          {row.credit ? formatCurrency(row.credit) : null}
+        <div className="text-right pr-2 select-text">
+          {row.credit ? formatCurrency(row.credit, true) : null}
         </div>
       ),
     },
@@ -301,26 +310,34 @@ export default function CashbookSpreadSheet({
       name: 'Debit',
       width: 130,
       resizable: true,
+      editable: isRowEditable,
       renderEditCell: NumberEditor,
       renderCell: ({ row }) => (
-        <div className="text-right pr-2">
-          {row.debit ? formatCurrency(row.debit) : null}
+        <div className="text-right pr-2 select-text">
+          {row.debit ? formatCurrency(row.debit, true) : null}
         </div>
       ),
     },
   ];
 
   useEffect(() => {
-    setRows(
-      entries.map((entry) => ({
+    setRows([
+      {
+        accountHead: 'Opening Balance',
+        sort_order: -1,
+        credit: openingBalance >= 0 ? openingBalance : null,
+        debit: openingBalance < 0 ? openingBalance : null,
+        description: null,
+      },
+      ...entries.map((entry) => ({
         accountHead: getAccountById(accountHeads, entry.sub_code),
         description: entry.description,
         credit: entry.credit,
         debit: entry.debit,
         sort_order: entry.sort_order,
-      }))
-    );
-  }, [accountHeads, entries]);
+      })),
+    ]);
+  }, [accountHeads, entries, openingBalance]);
 
   const handleRowsChange = useCallback((newRows: CashbookRow[]) => {
     setRows(newRows);

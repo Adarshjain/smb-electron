@@ -519,3 +519,10 @@ export function datesToRange(
 export function uniqueV6() {
   return Date.now().toString(36) + Math.random().toString(36);
 }
+
+export function getAccountById(
+  accountHeads: Tables['account_head'][],
+  code: number
+): Tables['account_head'] | undefined {
+  return accountHeads.find((head) => head.code === code);
+}
