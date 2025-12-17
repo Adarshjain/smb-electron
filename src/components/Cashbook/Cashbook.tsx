@@ -1,8 +1,8 @@
-import CashbookSpreadSheet from '@/components/CashbookSpreadSheet.tsx';
+import CashbookSpreadSheet from '@/components/Cashbook/CashbookSpreadSheet.tsx';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import { useTabs } from '@/TabManager.tsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Tables } from '../../tables';
+import type { Tables } from '../../../tables';
 import { query, read } from '@/hooks/dbUtil.ts';
 import { errorToast } from '@/lib/myUtils.tsx';
 import {

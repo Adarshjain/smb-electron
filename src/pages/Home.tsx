@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { useCompany } from '@/context/CompanyProvider.tsx';
-import Cashbook from '@/components/Cashbook.tsx';
+import Cashbook from '@/components/Cashbook/Cashbook.tsx';
 
 const shortCutMapping: {
   shortcutKey: string;
