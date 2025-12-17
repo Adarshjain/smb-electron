@@ -4,7 +4,7 @@ import type { Column, RenderEditCellProps } from 'react-data-grid';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import type { Tables } from '../tables';
-import { formatCurrency, getAccountById } from '@/lib/myUtils.tsx';
+import { formatCurrency, getAccountById, jsNumberFix } from '@/lib/myUtils.tsx';
 
 interface CashbookRow {
   accountHead: Tables['account_head'] | string | undefined;
@@ -262,7 +262,8 @@ export default function CashbookSpreadSheet({
   );
 
   // Helper to check if row is editable
-  const isRowEditable = (row: CashbookRow) => row.sort_order !== -1;
+  const isRowEditable = (row: CashbookRow) =>
+    row.sort_order !== -1 && row.sort_order !== -2;
 
   const columns: Column<CashbookRow>[] = [
     {
@@ -321,6 +322,10 @@ export default function CashbookSpreadSheet({
   ];
 
   useEffect(() => {
+    const closingBalance =
+      entries.reduce((sum, entry) => {
+        return jsNumberFix(sum + (entry.credit ?? 0) - (entry.debit ?? 0));
+      }, 0) + openingBalance;
     setRows([
       {
         accountHead: 'Opening Balance',
@@ -336,6 +341,13 @@ export default function CashbookSpreadSheet({
         debit: entry.debit,
         sort_order: entry.sort_order,
       })),
+      {
+        accountHead: 'Closing Balance',
+        sort_order: -2,
+        credit: closingBalance >= 0 ? closingBalance : null,
+        debit: closingBalance < 0 ? closingBalance : null,
+        description: null,
+      },
     ]);
   }, [accountHeads, entries, openingBalance]);
 
