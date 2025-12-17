@@ -229,14 +229,14 @@ export default function DailyEntries() {
             query<[{ total: number }]>(
               `SELECT SUM(loan_amount) as total 
                FROM bills 
-               WHERE "date" = ? AND company = ?`,
+               WHERE "date" = ? AND company = ? AND deleted IS NULL`,
               [date, company.name]
             ),
             query<[{ principal: number; interest: number }]>(
               `SELECT SUM(loan_amount) AS principal,
                       FLOOR(SUM(tax_interest_amount)) AS interest
                FROM releases
-               WHERE company = ? AND date = ?`,
+               WHERE company = ? AND date = ? AND deleted IS NULL`,
               [company.name, date]
             ),
             query<[{ sort_order: number }]>(

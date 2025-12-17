@@ -118,3 +118,35 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* React Data Grid Custom Styles */
+.rdg {
+  --rdg-header-background-color: #f9fafb;
+  --rdg-background-color: #ffffff;
+  --rdg-row-hover-background-color: #f3f4f6;
+  --rdg-selection-color: #3b82f6;
+  --rdg-border-color: #e5e7eb;
+}
+
+.rdg-header-row {
+  font-weight: 600;
+  color: #374151;
+}
+
+.rdg-cell {
+  border-right: 1px solid var(--rdg-border-color);
+  border-bottom: 1px solid var(--rdg-border-color);
+}
+
+.rdg-cell[aria-selected='true'] {
+  outline: 2px solid var(--rdg-selection-color);
+  outline-offset: -2px;
+}
+
+.rdg-row:hover {
+  background-color: var(--rdg-row-hover-background-color);
+}
+
+.rdg-editor-container {
+  padding: 0;
+}

@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { useCompany } from '@/context/CompanyProvider.tsx';
+import Cashbook from '@/components/Cashbook.tsx';
 
 const shortCutMapping: {
   shortcutKey: string;
@@ -100,7 +101,7 @@ export function Home() {
         <Button
           variant="outline"
           className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
-          onClick={() => openTab('Cash Book', <DailyEntries />)}
+          onClick={() => openTab('Cash Book', <Cashbook />)}
         >
           <Kbd className="justify-self-start col-start-1">F5</Kbd>
           <div className="justify-self-center col-start-2">Cash Book</div>
