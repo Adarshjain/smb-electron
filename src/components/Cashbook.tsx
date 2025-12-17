@@ -1,4 +1,4 @@
-import CashbookSpreadSheet from '@/CashbookSpreadSheet.tsx';
+import CashbookSpreadSheet from '@/components/CashbookSpreadSheet.tsx';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import { useTabs } from '@/TabManager.tsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';

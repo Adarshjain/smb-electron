@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import type { Column, RenderEditCellProps } from 'react-data-grid';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
-import type { Tables } from '../tables';
+import type { Tables } from '../../tables';
 import { formatCurrency, getAccountById, jsNumberFix } from '@/lib/myUtils.tsx';
 
 interface CashbookRow {
