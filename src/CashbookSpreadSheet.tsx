@@ -197,14 +197,13 @@ function NumberEditor({
       ref={inputRef}
       type="text"
       className="h-full w-full border-none bg-white px-2 text-right text-sm outline-none focus:ring-2 focus:ring-blue-500"
-      value={'' + inputValue}
+      value={!inputValue ? '' : '' + inputValue}
       onChange={(e) => {
         const val = e.target.value;
-        if (val === '') {
-          setInputValue(null);
-        }
         if (/^-?\d*\.?\d*$/.test(val)) {
           setInputValue(parseFloat(val));
+        } else {
+          setInputValue(null);
         }
       }}
       onKeyDown={handleKeyDown}
@@ -225,31 +224,39 @@ export interface CashbookSpreadSheetProps {
   onLoadToday: () => Promise<void>;
 }
 
+// Special sort_order values
+const OPENING_BALANCE_SORT = -1;
+const CLOSING_BALANCE_SORT = -2;
+const EMPTY_ROW_SORT = 0; // Empty row for new entries
+
+// Helper to create an empty row
+const createEmptyRow = (sortOrder: number = EMPTY_ROW_SORT): CashbookRow => ({
+  accountHead: undefined,
+  description: null,
+  credit: null,
+  debit: null,
+  sort_order: sortOrder,
+});
+
+// Check if a row has any data entered
+const isRowEmpty = (row: CashbookRow): boolean =>
+  !row.accountHead || (!row.credit && !row.debit);
+
 export default function CashbookSpreadSheet({
   entries,
   openingBalance,
   accountHeads,
 }: CashbookSpreadSheetProps) {
-  const [rows, setRows] = useState<CashbookRow[]>([
-    {
-      accountHead: 'Opening Balance',
-      sort_order: -1,
-      credit: openingBalance >= 0 ? openingBalance : null,
-      debit: openingBalance < 0 ? openingBalance : null,
-      description: null,
-    },
-    ...entries
-      .sort((a, b) => a.sort_order - b.sort_order)
-      .map((entry) => {
-        return {
-          accountHead: getAccountById(accountHeads, entry.sub_code),
-          description: entry.description,
-          credit: entry.credit,
-          debit: entry.debit,
-          sort_order: entry.sort_order,
-        };
-      }),
-  ]);
+  // Generate next sort_order for new entries
+  const getNextSortOrder = useCallback(() => {
+    const maxSortOrder = entries.reduce(
+      (max, entry) => Math.max(max, entry.sort_order),
+      0
+    );
+    return maxSortOrder + 1;
+  }, [entries]);
+
+  const [rows, setRows] = useState<CashbookRow[]>([]);
 
   // Keep a ref to accountHeads that's always current
   const accountHeadsRef = useRef(accountHeads);
@@ -261,15 +268,16 @@ export default function CashbookSpreadSheet({
     [] // Empty deps - the ref pattern means we don't need to recreate
   );
 
-  // Helper to check if row is editable
+  // Helper to check if row is editable (not opening/closing balance)
   const isRowEditable = (row: CashbookRow) =>
-    row.sort_order !== -1 && row.sort_order !== -2;
+    row.sort_order !== OPENING_BALANCE_SORT &&
+    row.sort_order !== CLOSING_BALANCE_SORT;
 
   const columns: Column<CashbookRow>[] = [
     {
       key: 'accountHead',
       name: 'Account',
-      width: 300,
+      width: 360,
       resizable: true,
       editable: isRowEditable,
       renderEditCell: AutoCompleteEditor,
@@ -286,7 +294,7 @@ export default function CashbookSpreadSheet({
     {
       key: 'description',
       name: 'Description',
-      width: 300,
+      width: 360,
       resizable: true,
       editable: isRowEditable,
       renderCell: ({ row }) => (
@@ -321,53 +329,108 @@ export default function CashbookSpreadSheet({
     },
   ];
 
+  // Build rows from entries + opening/closing balance + empty row
   useEffect(() => {
     const closingBalance =
       entries.reduce((sum, entry) => {
         return jsNumberFix(sum + (entry.credit ?? 0) - (entry.debit ?? 0));
       }, 0) + openingBalance;
+
     setRows([
       {
         accountHead: 'Opening Balance',
-        sort_order: -1,
+        sort_order: OPENING_BALANCE_SORT,
         credit: openingBalance >= 0 ? openingBalance : null,
         debit: openingBalance < 0 ? openingBalance : null,
         description: null,
       },
-      ...entries.map((entry) => ({
-        accountHead: getAccountById(accountHeads, entry.sub_code),
-        description: entry.description,
-        credit: entry.credit,
-        debit: entry.debit,
-        sort_order: entry.sort_order,
-      })),
+      ...entries
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((entry) => ({
+          accountHead: getAccountById(accountHeads, entry.sub_code),
+          description: entry.description,
+          credit: entry.credit,
+          debit: entry.debit,
+          sort_order: entry.sort_order,
+        })),
+      createEmptyRow(getNextSortOrder()), // Empty row for new entry
       {
         accountHead: 'Closing Balance',
-        sort_order: -2,
+        sort_order: CLOSING_BALANCE_SORT,
         credit: closingBalance >= 0 ? closingBalance : null,
         debit: closingBalance < 0 ? closingBalance : null,
         description: null,
       },
     ]);
-  }, [accountHeads, entries, openingBalance]);
+  }, [accountHeads, entries, openingBalance, getNextSortOrder]);
 
-  const handleRowsChange = useCallback((newRows: CashbookRow[]) => {
-    setRows(newRows);
-  }, []);
+  const handleRowsChange = useCallback(
+    (newRows: CashbookRow[]) => {
+      // Find data rows (excluding opening/closing balance)
+      const dataRows = newRows.filter(
+        (r) =>
+          r.sort_order !== OPENING_BALANCE_SORT &&
+          r.sort_order !== CLOSING_BALANCE_SORT
+      );
 
-  // const handleAddRow = useCallback(() => {
-  //   const newId = Math.max(...rows.map((r) => r.sort_order)) + 1;
-  //   setRows([
-  //     ...rows,
-  //     {
-  //       id: newId,
-  //       accountHead: '',
-  //       description: '',
-  //       credit: null,
-  //       debit: null,
-  //     },
-  //   ]);
-  // }, [rows]);
+      // Check if there's at least one empty row
+      const hasEmptyRow = dataRows.some(isRowEmpty);
+
+      if (!hasEmptyRow) {
+        // All data rows have content - add a new empty row before closing balance
+        const closingBalanceIndex = newRows.findIndex(
+          (r) => r.sort_order === CLOSING_BALANCE_SORT
+        );
+
+        // Calculate next sort_order
+        const maxSortOrder = Math.max(...dataRows.map((r) => r.sort_order), 0);
+
+        const updatedRows = [...newRows];
+        updatedRows.splice(
+          closingBalanceIndex,
+          0,
+          createEmptyRow(maxSortOrder + 1)
+        );
+
+        // Recalculate closing balance
+        const newClosingBalance =
+          dataRows.reduce((sum, row) => {
+            return jsNumberFix(sum + (row.credit ?? 0) - (row.debit ?? 0));
+          }, 0) + openingBalance;
+
+        const closingRow = updatedRows.find(
+          (r) => r.sort_order === CLOSING_BALANCE_SORT
+        );
+        if (closingRow) {
+          closingRow.credit = newClosingBalance >= 0 ? newClosingBalance : null;
+          closingRow.debit = newClosingBalance < 0 ? newClosingBalance : null;
+        }
+
+        setRows(updatedRows);
+      } else {
+        // Recalculate closing balance with current data
+        const filledRows = dataRows.filter((r) => !isRowEmpty(r));
+        const newClosingBalance =
+          filledRows.reduce((sum, row) => {
+            return jsNumberFix(sum + (row.credit ?? 0) - (row.debit ?? 0));
+          }, 0) + openingBalance;
+
+        const updatedRows = newRows.map((row) => {
+          if (row.sort_order === CLOSING_BALANCE_SORT) {
+            return {
+              ...row,
+              credit: newClosingBalance >= 0 ? newClosingBalance : null,
+              debit: newClosingBalance < 0 ? newClosingBalance : null,
+            };
+          }
+          return row;
+        });
+
+        setRows(updatedRows);
+      }
+    },
+    [openingBalance]
+  );
 
   return (
     <DataGrid
@@ -375,7 +438,7 @@ export default function CashbookSpreadSheet({
       rows={rows}
       onRowsChange={handleRowsChange}
       rowKeyGetter={(row) => row.sort_order}
-      className="rdg-light h-full !bg-transparent m-3"
+      className="rdg-light min-h-full !bg-transparent m-3"
       style={{
         fontSize: '14px',
       }}
