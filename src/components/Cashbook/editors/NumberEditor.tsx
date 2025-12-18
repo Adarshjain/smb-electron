@@ -8,27 +8,20 @@ export function NumberEditor({
   onRowChange,
   onClose,
 }: RenderEditCellProps<CashbookRow>) {
-  const [inputValue, setInputValue] = useState<string>(() => {
-    const val = row[column.key as keyof CashbookRow];
-    return typeof val === 'number' ? String(val) : '';
-  });
   const inputRef = useRef<HTMLInputElement>(null);
+  const value = row[column.key as keyof CashbookRow];
+  // Keep string representation for editing (allows typing "12." before completing "12.5")
+  const [inputValue, setInputValue] = useState<string>(() =>
+    typeof value === 'number' ? String(value) : ''
+  );
 
   useEffect(() => {
     inputRef.current?.focus();
     inputRef.current?.select();
   }, []);
 
-  const commit = () => {
-    const numVal = inputValue ? parseFloat(inputValue) : null;
-    onRowChange({ ...row, [column.key]: numVal }, true);
-    onClose(true);
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === 'Tab') {
-      commit();
-    } else if (e.key === 'Escape') {
+    if (e.key === 'Escape') {
       onClose(false);
     }
   };
@@ -40,12 +33,20 @@ export function NumberEditor({
       className="h-full w-full border-none px-2 text-right text-sm outline-none focus:ring-2 focus:ring-blue-500"
       value={inputValue}
       onChange={(e) => {
-        if (/^-?\d*\.?\d*$/.test(e.target.value)) {
-          setInputValue(e.target.value);
+        const newValue = e.target.value;
+        if (/^-?\d*\.?\d*$/.test(newValue)) {
+          setInputValue(newValue);
+          const numVal = newValue ? parseFloat(newValue) : null;
+          // Only commit valid numbers (not incomplete like "12." or "-")
+          if (numVal !== null && !isNaN(numVal)) {
+            onRowChange({ ...row, [column.key]: numVal });
+          } else if (newValue === '') {
+            onRowChange({ ...row, [column.key]: null });
+          }
         }
       }}
       onKeyDown={handleKeyDown}
-      onBlur={commit}
+      onBlur={() => onClose(true)}
     />
   );
 }

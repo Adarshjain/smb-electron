@@ -335,7 +335,7 @@ export default function CashbookSpreadSheet({
         onRowsChange={handleRowsChange}
         onCellKeyDown={handleCellKeyDown}
         rowKeyGetter={(row) => row.sort_order}
-        className="rdg-light min-h-full pb-20 !bg-transparent m-3 w-[min-content] h-[min-content]"
+        className="rdg-light min-h-full pb-20 !bg-transparent m-3 w-[min-content]"
         style={{ fontSize: '14px' }}
         rowHeight={42}
         headerRowHeight={35}
@@ -350,7 +350,10 @@ export default function CashbookSpreadSheet({
             Load Today's Entries
           </Button>
         ) : null}
-        <Button className="border-black" onClick={() => void onUpdate()}>
+        <Button
+          className="border-black"
+          onClick={() => setTimeout(onUpdate, 10)}
+        >
           Update
         </Button>
       </div>
