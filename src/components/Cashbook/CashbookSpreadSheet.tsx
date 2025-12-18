@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { CellKeyDownArgs, Column } from 'react-data-grid';
+import type { CellKeyboardEvent, CellKeyDownArgs, Column } from 'react-data-grid';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import {
@@ -196,11 +196,34 @@ export default function CashbookSpreadSheet({
   );
 
   const handleCellKeyDown = useCallback(
-    (args: CellKeyDownArgs<CashbookRow>, event: React.KeyboardEvent) => {
+    (args: CellKeyDownArgs<CashbookRow>, event: CellKeyboardEvent) => {
+      const { row, column, rowIdx } = args;
+
+      // Handle Enter key to move to next cell (only in SELECT mode)
+      if (event.key === 'Enter' && args.mode === 'SELECT') {
+        event.preventGridDefault();
+
+        const columnKeys = columns.map((col) => col.key);
+        const currentColIdx = columnKeys.indexOf(column.key);
+        const lastColIdx = columnKeys.length - 1;
+
+        if (currentColIdx < lastColIdx) {
+          // Move to next column in same row
+          args.selectCell({ rowIdx, idx: currentColIdx + 1 });
+        } else {
+          // Move to first column of next row
+          const nextRowIdx = rowIdx + 1;
+          if (nextRowIdx < rows.length) {
+            args.selectCell({ rowIdx: nextRowIdx, idx: 0 });
+          }
+        }
+        return;
+      }
+
+      // Handle Delete key
       if (event.key !== 'Delete') {
         return;
       }
-      const { row } = args;
       if (isSpecialRow(row.sort_order)) return;
       event.preventDefault();
       setRows((currentRows) => {
@@ -238,7 +261,7 @@ export default function CashbookSpreadSheet({
         return updatedRows;
       });
     },
-    [openingBalance]
+    [columns, openingBalance, rows.length]
   );
 
   const onUpdate = async () => {
