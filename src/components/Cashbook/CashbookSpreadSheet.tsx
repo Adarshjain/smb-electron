@@ -106,7 +106,11 @@ export default function CashbookSpreadSheet({
         renderEditCell: NumberEditor,
         renderCell: ({ row }) => (
           <div className="text-right pr-2 select-text">
-            {row.credit ? formatCurrency(row.credit, true) : null}
+            {row.credit
+              ? formatCurrency(row.credit, true)
+              : isSpecialRow(row.sort_order)
+                ? 0
+                : null}
           </div>
         ),
       },

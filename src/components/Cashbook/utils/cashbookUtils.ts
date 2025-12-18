@@ -43,7 +43,7 @@ export const createBalanceRow = (
 ): CashbookRow => ({
   accountHead: label,
   sort_order: sortOrder,
-  credit: balance >= 0 ? balance : null,
+  credit: balance > 0 ? balance : balance === 0 ? 0 : null,
   debit: balance < 0 ? balance : null,
   description: null,
 });
