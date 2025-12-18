@@ -53,7 +53,10 @@ export function createAutoCompleteEditor(
 
     const handleSelect = useCallback(
       (value: string) => {
-        onRowChange({ ...row, [column.key]: value }, true);
+        const matchedAccountHead = accountHeadsRef.current.find(
+          (head) => head.name === value
+        );
+        onRowChange({ ...row, [column.key]: matchedAccountHead }, true);
         onClose(true);
       },
       [column.key, onClose, onRowChange, row]
