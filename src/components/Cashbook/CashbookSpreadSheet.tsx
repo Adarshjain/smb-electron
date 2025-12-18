@@ -40,6 +40,7 @@ export default function CashbookSpreadSheet({
   currentAccountHead,
   onLoadToday,
   date,
+  refreshEntries,
 }: CashbookSpreadSheetProps) {
   const { company } = useCompany();
   const [rows, setRows] = useState<CashbookRow[]>([]);
@@ -109,15 +110,6 @@ export default function CashbookSpreadSheet({
           <div className="text-right pr-2 select-text">
             {row.debit ? formatCurrency(row.debit, true) : null}
           </div>
-        ),
-      },
-      {
-        key: 'sort_order',
-        name: 'Debit',
-        width: 130,
-        resizable: true,
-        renderCell: ({ row }) => (
-          <div className="text-right pr-2 select-text">{row.sort_order}</div>
         ),
       },
     ],
@@ -293,7 +285,10 @@ export default function CashbookSpreadSheet({
       const deleted = await deleteDailyEntries(deletedEntryIds, company.name);
       isDone &&= deleted;
     }
-    if (isDone) successToast('Updated!');
+    if (isDone) {
+      successToast('Updated!');
+      await refreshEntries();
+    }
   };
 
   return (

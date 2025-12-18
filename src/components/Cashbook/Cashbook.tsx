@@ -174,6 +174,7 @@ export default function Cashbook() {
         currentAccountHead={currentAccountHead}
         date={date}
         onLoadToday={async () => {}}
+        refreshEntries={loadDailyEntries}
       />
     </div>
   );

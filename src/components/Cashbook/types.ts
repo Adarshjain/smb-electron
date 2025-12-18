@@ -15,4 +15,5 @@ export interface CashbookSpreadSheetProps {
   openingBalance: number;
   date: string;
   onLoadToday: () => Promise<void>;
+  refreshEntries: () => Promise<void>;
 }
