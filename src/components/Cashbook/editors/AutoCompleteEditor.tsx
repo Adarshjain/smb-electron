@@ -6,11 +6,13 @@ import type { CashbookRow } from '../types';
 import { getInitialInputValue } from '../utils/cashbookUtils';
 
 export function createAutoCompleteEditor(
-  accountHeadsRef: React.RefObject<Tables['account_head'][]>
+  accountHeadsRef: React.RefObject<Tables['account_head'][]>,
+  onSelectComplete?: (rowIdx: number) => void
 ) {
   return function AutoCompleteEditor({
     row,
     column,
+    rowIdx,
     onRowChange,
     onClose,
   }: RenderEditCellProps<CashbookRow>) {
@@ -57,9 +59,11 @@ export function createAutoCompleteEditor(
           (head) => head.name === value
         );
         onRowChange({ ...row, [column.key]: matchedAccountHead }, true);
-        onClose(true);
+        onClose(true, false);
+        // Move focus to next column after selection
+        setTimeout(() => onSelectComplete?.(rowIdx), 0);
       },
-      [column.key, onClose, onRowChange, row]
+      [column.key, onClose, onRowChange, row, rowIdx]
     );
 
     const commitSelection = () => {

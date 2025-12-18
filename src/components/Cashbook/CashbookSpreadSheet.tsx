@@ -3,6 +3,7 @@ import type {
   CellKeyboardEvent,
   CellKeyDownArgs,
   Column,
+  DataGridHandle,
 } from 'react-data-grid';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
@@ -51,10 +52,16 @@ export default function CashbookSpreadSheet({
   const accountHeadsRef = useRef(accountHeads);
   accountHeadsRef.current = accountHeads;
   const nextEmptyRowSortOrderRef = useRef(EMPTY_ROW_START);
+  const gridRef = useRef<DataGridHandle>(null);
+
+  const selectNextColumn = useCallback((rowIdx: number) => {
+    // Move to second column (description) after account selection
+    gridRef.current?.selectCell({ rowIdx, idx: 1 });
+  }, []);
 
   const AutoCompleteEditor = useMemo(
-    () => createAutoCompleteEditor(accountHeadsRef),
-    []
+    () => createAutoCompleteEditor(accountHeadsRef, selectNextColumn),
+    [selectNextColumn]
   );
 
   const isRowEditable = useCallback(
@@ -330,6 +337,7 @@ export default function CashbookSpreadSheet({
   return (
     <>
       <DataGrid
+        ref={gridRef}
         columns={columns}
         rows={rows}
         onRowsChange={handleRowsChange}
