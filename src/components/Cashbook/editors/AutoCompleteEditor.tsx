@@ -118,7 +118,7 @@ export function createAutoCompleteEditor(
             >
               {filteredOptions.map((option, index) => (
                 <div
-                  key={option}
+                  key={option + index}
                   data-option
                   className={`cursor-pointer px-3 py-1.5 text-sm ${
                     index === highlightedIndex

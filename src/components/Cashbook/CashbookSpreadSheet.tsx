@@ -5,15 +5,17 @@ import 'react-data-grid/lib/styles.css';
 import { formatCurrency, getAccountById } from '@/lib/myUtils.tsx';
 import type { CashbookRow, CashbookSpreadSheetProps } from './types';
 import {
-  SORT_ORDER,
+  calculateBalance,
+  createBalanceRow,
+  createEmptyRow,
   isRowEmpty,
   isSpecialRow,
-  createEmptyRow,
-  createBalanceRow,
-  calculateBalance,
+  SORT_ORDER,
 } from './utils/cashbookUtils';
 import { createAutoCompleteEditor } from './editors/AutoCompleteEditor';
 import { NumberEditor } from './editors/NumberEditor';
+
+const EMPTY_ROW_START = -3;
 
 export default function CashbookSpreadSheet({
   entries,
@@ -23,6 +25,7 @@ export default function CashbookSpreadSheet({
   const [rows, setRows] = useState<CashbookRow[]>([]);
   const accountHeadsRef = useRef(accountHeads);
   accountHeadsRef.current = accountHeads;
+  const nextEmptyRowSortOrderRef = useRef(EMPTY_ROW_START);
 
   const AutoCompleteEditor = useMemo(
     () => createAutoCompleteEditor(accountHeadsRef),
@@ -92,12 +95,11 @@ export default function CashbookSpreadSheet({
   );
 
   useEffect(() => {
+    // Reset empty row counter when props change
+    nextEmptyRowSortOrderRef.current = EMPTY_ROW_START;
+
     const sortedEntries = [...entries].sort(
       (a, b) => a.sort_order - b.sort_order
-    );
-    const maxSortOrder = entries.reduce(
-      (max, e) => Math.max(max, e.sort_order),
-      0
     );
 
     const dataRows: CashbookRow[] = sortedEntries.map((entry) => ({
@@ -110,6 +112,8 @@ export default function CashbookSpreadSheet({
 
     const closingBalance = calculateBalance(dataRows, openingBalance);
 
+    const emptyRowSortOrder = nextEmptyRowSortOrderRef.current--;
+
     setRows([
       createBalanceRow(
         'Opening Balance',
@@ -117,7 +121,7 @@ export default function CashbookSpreadSheet({
         openingBalance
       ),
       ...dataRows,
-      createEmptyRow(maxSortOrder + 1),
+      createEmptyRow(emptyRowSortOrder),
       createBalanceRow(
         'Closing Balance',
         SORT_ORDER.CLOSING_BALANCE,
@@ -147,10 +151,10 @@ export default function CashbookSpreadSheet({
         const closingIdx = updatedRows.findIndex(
           (r) => r.sort_order === SORT_ORDER.CLOSING_BALANCE
         );
-        const maxSortOrder = Math.max(...dataRows.map((r) => r.sort_order), 0);
+        const emptyRowSortOrder = nextEmptyRowSortOrderRef.current--;
         updatedRows = [
           ...updatedRows.slice(0, closingIdx),
-          createEmptyRow(maxSortOrder + 1),
+          createEmptyRow(emptyRowSortOrder),
           ...updatedRows.slice(closingIdx),
         ];
       }
