@@ -321,7 +321,6 @@ const upsertDualEntry = async ({
   creditAmount,
   description,
 }: UpsertDualEntryParams) => {
-  debugger;
   if (!existingEntry) {
     if (!total) return;
 

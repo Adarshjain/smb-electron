@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { Kbd } from '@/components/ui/kbd';
 import QuickView from '@/components/QuickView.tsx';
 import { useTabs } from '@/TabManager.tsx';
-import DailyEntries from '@/components/DailyEntries.tsx';
 import CurrentDateCrud from '@/components/CurrentDateCrud.tsx';
 import ProfitAndLoss from '@/components/ProfitAndLoss.tsx';
 import BalanceSheet from '@/components/BalanceSheet.tsx';
@@ -57,7 +56,7 @@ export function Home() {
           break;
         }
         case 'F5':
-          openTab('Cash Book', <DailyEntries />);
+          openTab('Cash Book', <Cashbook />);
           break;
         case 'F7':
           document.getElementById('change-date-button')?.click();
