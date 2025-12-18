@@ -126,6 +126,8 @@
   --rdg-row-hover-background-color: #f3f4f6;
   --rdg-selection-color: #3b82f6;
   --rdg-border-color: #e5e7eb;
+  overflow: visible !important;
+  block-size: auto !important;
 }
 
 .rdg-header-row {
