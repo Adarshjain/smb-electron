@@ -86,6 +86,20 @@ export function viewableDate(
   );
 }
 
+export function getDay(date: string): string {
+  const days = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+  ];
+
+  return days[new Date(date).getDay()];
+}
+
 export function isToday(dateStr: string): boolean {
   const date = new Date(dateStr);
   const today = new Date();

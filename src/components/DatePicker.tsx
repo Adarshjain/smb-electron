@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import {
   currentIsoDate,
+  getDay,
   nextIsoDate,
   previousIsoDate,
 } from '@/lib/myUtils.tsx';
@@ -16,6 +17,7 @@ export interface IPropsDatePicker {
   isError?: boolean;
   className?: string;
   navigated?: boolean;
+  showDay?: boolean;
 }
 
 export default function DatePicker({
@@ -24,6 +26,7 @@ export default function DatePicker({
   isError,
   className,
   navigated = false,
+  showDay,
   ...props
 }: React.ComponentProps<'input'> & IPropsDatePicker) {
   const [isInternalError, setIsError] = useState<boolean>(false);
@@ -43,9 +46,15 @@ export default function DatePicker({
       )}
     />
   );
-  if (!navigated) return input;
+  if (!navigated)
+    return (
+      <div>
+        {input}
+        {showDay ? <span className="pl-2">{getDay(value)}</span> : null}
+      </div>
+    );
   return (
-    <div className="flex">
+    <div className="flex items-center">
       <Button
         variant="outline"
         className="border-input border-r-0 rounded-r-none"
@@ -61,6 +70,7 @@ export default function DatePicker({
       >
         <ArrowRight />
       </Button>
+      {showDay ? <span className="pl-2">{getDay(value)}</span> : null}
     </div>
   );
 }

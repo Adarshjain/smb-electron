@@ -160,6 +160,7 @@ export default function Cashbook() {
           value={date}
           onInputChange={setDate}
           navigated
+          showDay
         />
       </div>
       <CashbookSpreadSheet

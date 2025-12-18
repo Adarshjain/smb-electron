@@ -550,6 +550,7 @@ export default function NewLoan() {
                           id="date"
                           name="date"
                           isError={fieldState.invalid}
+                          showDay
                         />
                       )}
                     />

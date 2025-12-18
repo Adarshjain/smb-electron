@@ -146,6 +146,7 @@ export default function DayBook() {
           value={date}
           onInputChange={setDate}
           navigated
+          showDay
         />
         <div className="text-xl">Releases</div>
         <div className="text-xl"></div>
