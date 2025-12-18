@@ -13,14 +13,9 @@ import {
   SelectValue,
 } from '@/components/ui/select.tsx';
 import DatePicker from '@/components/DatePicker.tsx';
+import { updateTodayLoansAndReleases } from '@/components/Cashbook/utils/cashbookUtils.ts';
 
-const LOAN_AMOUNT = 'LOAN  AMOUNT';
-const REDEMPTION_AMOUNT = 'REDEMPTION AMOUNT';
-const BEING_REDEEMED_LOAN_INTEREST = 'BEING REDEEMED LOAN INTEREST';
 const CASH_ACCOUNT_NAME = 'CASH';
-const CASH_ACCOUNT_CODE = 14;
-const LOAN_ACCOUNT_CODE = 1;
-const INTEREST_ACCOUNT_CODE = 9;
 
 export default function Cashbook() {
   const { company } = useCompany();
@@ -173,7 +168,10 @@ export default function Cashbook() {
         entries={todaysEntries}
         currentAccountHead={currentAccountHead}
         date={date}
-        onLoadToday={async () => {}}
+        onLoadToday={async () => {
+          await updateTodayLoansAndReleases(date, company?.name ?? '');
+          await loadDailyEntries();
+        }}
         refreshEntries={loadDailyEntries}
       />
     </div>

@@ -1,6 +1,6 @@
-import { errorToast, jsNumberFix } from '@/lib/myUtils.tsx';
+import { errorToast, jsNumberFix, successToast } from '@/lib/myUtils.tsx';
 import type { CashbookRow } from '../types';
-import type { Tables } from '@/../tables';
+import type { LocalTables, Tables } from '@/../tables';
 import { create, query } from '@/hooks/dbUtil.ts';
 
 export const SORT_ORDER = {
@@ -8,6 +8,13 @@ export const SORT_ORDER = {
   CLOSING_BALANCE: -2,
   EMPTY_ROW: 0,
 } as const;
+
+const LOAN_AMOUNT = 'LOAN  AMOUNT';
+const REDEMPTION_AMOUNT = 'REDEMPTION AMOUNT';
+const BEING_REDEEMED_LOAN_INTEREST = 'BEING REDEEMED LOAN INTEREST';
+const CASH_ACCOUNT_CODE = 14;
+const LOAN_ACCOUNT_CODE = 1;
+const INTEREST_ACCOUNT_CODE = 9;
 
 export const isRowEmpty = (row: CashbookRow): boolean =>
   !row.accountHead || (!row.credit && !row.debit);
@@ -183,8 +190,71 @@ export const updateDailyEntries = async (
   company: string
 ): Promise<boolean> => {
   try {
-    const queries: PromiseLike<any>[] = [];
-    const updateQuery = `UPDATE daily_entries
+    for (const entry of entries) {
+      const currentAccountCode = currentAccountHead.code;
+      const entryCode = (entry.accountHead as Tables['account_head']).code;
+
+      await updateDualEntry(
+        currentAccountCode,
+        entryCode,
+        entry.credit ?? 0,
+        entry.debit ?? 0,
+        date,
+        company,
+        entry.description ?? '',
+        entry.sort_order
+      );
+    }
+    return true;
+  } catch (e) {
+    errorToast(e);
+    return false;
+  }
+};
+
+const createDualEntry = async (
+  main_code: number,
+  sub_code: number,
+  credit: number,
+  debit: number,
+  date: string,
+  company: string,
+  description: string,
+  sort_order: number
+) => {
+  await create('daily_entries', {
+    main_code: main_code,
+    sub_code: sub_code,
+    credit: credit,
+    debit: debit,
+    date,
+    company,
+    description: description,
+    sort_order: sort_order,
+  });
+  await create('daily_entries', {
+    main_code: sub_code,
+    sub_code: main_code,
+    credit: debit,
+    debit: credit,
+    date,
+    company,
+    description: description,
+    sort_order: sort_order,
+  });
+};
+
+const updateDualEntry = async (
+  main_code: number,
+  sub_code: number,
+  credit: number,
+  debit: number,
+  date: string,
+  company: string,
+  description: string,
+  sort_order: number
+) => {
+  const updateQuery = `UPDATE daily_entries
        SET credit      = ?,
            debit       = ?,
            description = ?
@@ -194,45 +264,273 @@ export const updateDailyEntries = async (
          AND sub_code = ?
          AND sort_order = ?
          AND deleted IS NULL`;
-    for (const entry of entries) {
-      const currentAccountCode = currentAccountHead.code;
-      const entryCode = (entry.accountHead as Tables['account_head']).code;
+  const main = query(
+    updateQuery,
+    [
+      credit,
+      debit,
+      description,
+      company,
+      date,
+      main_code,
+      sub_code,
+      sort_order,
+    ],
+    true
+  );
 
-      const main = query(
-        updateQuery,
-        [
-          entry.credit,
-          entry.debit,
-          entry.description,
-          company,
-          date,
-          currentAccountCode,
-          entryCode,
-          entry.sort_order,
-        ],
-        true
-      );
+  const inverted = query(
+    updateQuery,
+    [
+      debit,
+      credit,
+      description,
+      company,
+      date,
+      sub_code,
+      main_code,
+      sort_order,
+    ],
+    true
+  );
+  await Promise.all([main, inverted]);
+};
 
-      const inverted = query(
-        updateQuery,
-        [
-          entry.debit,
-          entry.credit,
-          entry.description,
-          company,
-          date,
-          entryCode,
-          currentAccountCode,
-          entry.sort_order,
-        ],
-        true
-      );
-      queries.push(main, inverted);
+interface UpsertDualEntryParams {
+  existingEntry?: LocalTables<'daily_entries'>;
+  total: number | null;
+  date: string;
+  company: string;
+  sortOrder: number;
+  mainAccountCode: number;
+  subAccountCode: number;
+  debitAmount: number;
+  creditAmount: number;
+  description: string;
+}
+
+const upsertDualEntry = async ({
+  existingEntry,
+  total,
+  date,
+  company,
+  sortOrder,
+  mainAccountCode,
+  subAccountCode,
+  debitAmount,
+  creditAmount,
+  description,
+}: UpsertDualEntryParams) => {
+  debugger;
+  if (!existingEntry) {
+    if (!total) return;
+
+    await createDualEntry(
+      mainAccountCode,
+      subAccountCode,
+      debitAmount,
+      creditAmount,
+      date,
+      company,
+      description,
+      sortOrder
+    );
+    return;
+  }
+
+  if (total) {
+    await updateDualEntry(
+      mainAccountCode,
+      subAccountCode,
+      debitAmount,
+      creditAmount,
+      date,
+      company,
+      description,
+      existingEntry.sort_order
+    );
+  } else {
+    await deleteDailyEntries([existingEntry.sort_order], company);
+  }
+};
+
+const updateLoan = async (
+  loanEntries: LocalTables<'daily_entries'>[],
+  loanTotal: number | null,
+  date: string,
+  company: string,
+  sortOrder: number
+) => {
+  const existingLoanEntry = loanEntries.find((entry) =>
+    entry.description?.toLowerCase().startsWith(LOAN_AMOUNT.toLowerCase())
+  );
+  await upsertDualEntry({
+    existingEntry: existingLoanEntry,
+    total: loanTotal,
+    date,
+    company,
+    creditAmount: 0,
+    debitAmount: loanTotal ?? 0,
+    mainAccountCode: LOAN_ACCOUNT_CODE,
+    subAccountCode: CASH_ACCOUNT_CODE,
+    description: LOAN_AMOUNT,
+    sortOrder: sortOrder,
+  });
+  if (!existingLoanEntry && loanTotal) sortOrder += 1;
+  return sortOrder;
+};
+
+const updateReleasesPrincipal = async (
+  releaseEntries: LocalTables<'daily_entries'>[],
+  releaseTotal: number | null,
+  date: string,
+  company: string,
+  sortOrder: number
+) => {
+  const existingReleaseEntry = releaseEntries.find((entry) =>
+    entry.description?.toLowerCase().startsWith(REDEMPTION_AMOUNT.toLowerCase())
+  );
+  await upsertDualEntry({
+    existingEntry: existingReleaseEntry,
+    total: releaseTotal,
+    date,
+    company,
+    creditAmount: releaseTotal ?? 0,
+    debitAmount: 0,
+    mainAccountCode: LOAN_ACCOUNT_CODE,
+    subAccountCode: CASH_ACCOUNT_CODE,
+    description: REDEMPTION_AMOUNT,
+    sortOrder: sortOrder,
+  });
+  if (!existingReleaseEntry && releaseTotal) sortOrder += 1;
+  return sortOrder;
+};
+
+const updateReleasesInterest = async (
+  releaseEntries: LocalTables<'daily_entries'>[],
+  releaseTotal: number | null,
+  date: string,
+  company: string,
+  sortOrder: number
+) => {
+  const existingReleaseEntry = releaseEntries.find((entry) =>
+    entry.description
+      ?.toLowerCase()
+      .startsWith(BEING_REDEEMED_LOAN_INTEREST.toLowerCase())
+  );
+  await upsertDualEntry({
+    existingEntry: existingReleaseEntry,
+    total: releaseTotal,
+    date,
+    company,
+    creditAmount: releaseTotal ?? 0,
+    debitAmount: 0,
+    mainAccountCode: INTEREST_ACCOUNT_CODE,
+    subAccountCode: CASH_ACCOUNT_CODE,
+    description: BEING_REDEEMED_LOAN_INTEREST,
+    sortOrder: sortOrder,
+  });
+};
+
+const updateTodaysEntries = async (
+  loanEntries: LocalTables<'daily_entries'>[],
+  loanTotal: number | null,
+  releaseTotal: number | null,
+  interestTotal: number | null,
+  date: string,
+  company: string,
+  latestSortOrder: number
+) => {
+  latestSortOrder = await updateLoan(
+    loanEntries,
+    loanTotal,
+    date,
+    company,
+    latestSortOrder
+  );
+
+  latestSortOrder = await updateReleasesPrincipal(
+    loanEntries,
+    releaseTotal,
+    date,
+    company,
+    latestSortOrder
+  );
+
+  await updateReleasesInterest(
+    loanEntries,
+    interestTotal,
+    date,
+    company,
+    latestSortOrder
+  );
+};
+
+const fetchTodaysLoans = async (date: string, company: string) => {
+  return Promise.all([
+    query<[{ total: number }]>(
+      `SELECT SUM(loan_amount) as total 
+               FROM bills 
+               WHERE "date" = ? AND company = ? AND deleted IS NULL`,
+      [date, company]
+    ),
+    query<[{ principal: number; interest: number }]>(
+      `SELECT SUM(loan_amount) AS principal,
+                      FLOOR(SUM(tax_interest_amount)) AS interest
+               FROM releases
+               WHERE company = ? AND date = ? AND deleted IS NULL`,
+      [company, date]
+    ),
+    query<[{ sort_order: number }]>(
+      `SELECT sort_order
+               FROM daily_entries
+               ORDER BY sort_order DESC
+               LIMIT 1`
+    ),
+    query<LocalTables<'daily_entries'>[] | null>(
+      `select *
+           from daily_entries
+           where date = ?
+             and company = ?
+             and main_code = ?
+             and (sub_code = ? or sub_code = ?)`,
+      [
+        date,
+        company,
+        CASH_ACCOUNT_CODE,
+        LOAN_ACCOUNT_CODE,
+        INTEREST_ACCOUNT_CODE,
+      ]
+    ),
+  ]);
+};
+
+export const updateTodayLoansAndReleases = async (
+  date: string,
+  company: string
+) => {
+  try {
+    const [
+      loanAmountTotal,
+      releaseTotalResponse,
+      sortOrderResponse,
+      loanEntries,
+    ] = await fetchTodaysLoans(date, company);
+    const latestSortOrder = sortOrderResponse?.[0].sort_order;
+    if (!latestSortOrder) {
+      throw Error('Something went wrong');
     }
-    await Promise.all(queries);
-    return true;
+    await updateTodaysEntries(
+      loanEntries ?? [],
+      loanAmountTotal?.[0].total ?? null,
+      releaseTotalResponse?.[0].principal ?? null,
+      releaseTotalResponse?.[0].interest ?? null,
+      date,
+      company,
+      latestSortOrder
+    );
+    successToast('Updated!');
   } catch (e) {
     errorToast(e);
-    return false;
   }
 };

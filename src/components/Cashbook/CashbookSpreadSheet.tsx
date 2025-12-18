@@ -112,6 +112,15 @@ export default function CashbookSpreadSheet({
           </div>
         ),
       },
+      // {
+      //   key: 'sort_order',
+      //   name: 'Debit',
+      //   width: 130,
+      //   resizable: true,
+      //   renderCell: ({ row }) => (
+      //     <div className="text-right pr-2 select-text">{row.sort_order}</div>
+      //   ),
+      // },
     ],
     [AutoCompleteEditor, isRowEditable]
   );
