@@ -84,6 +84,7 @@ export default function BalanceSheet() {
                  WHERE de.company = ?
                    AND ah.company = ?
                    AND de.date < ?
+                   AND de.deleted IS NULL
                    AND ah.hisaab_group = 'Income')
                              -
                 (SELECT SUM(de.credit - de.debit)
@@ -93,6 +94,7 @@ export default function BalanceSheet() {
                  WHERE de.company = ?
                    AND ah.company = ?
                    AND de.date < ?
+                   AND de.deleted IS NULL
                    AND ah.hisaab_group = 'Expenses')
                              AS netProfit`,
           [
@@ -112,6 +114,8 @@ export default function BalanceSheet() {
          WHERE ah.hisaab_group = 'Capital Account'
            ANd ah.company = ?
            ANd de.company = ?
+           AND de.deleted IS NULL
+           AND ah.deleted IS NULL
            and de.date < ?`,
           [company.name, company.name, startDate]
         ),

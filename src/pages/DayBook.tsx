@@ -60,7 +60,7 @@ export default function DayBook() {
     const run = async () => {
       try {
         const billsPromise = query<Tables['bills'][]>(
-          `SELECT * from bills where date = ? order by loan_no`,
+          `SELECT * from bills where date = ? and deleted IS NULL order by loan_no`,
           [date]
         );
         const releasesPromise = read('releases', {

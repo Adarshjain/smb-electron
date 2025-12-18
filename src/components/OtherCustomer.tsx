@@ -107,7 +107,7 @@ export default function OtherCustomer() {
       ]);
       const customerIds = [...new Set(loans?.map((l) => l.customer_id))];
       const customers = await query<LocalTables<'customers'>[]>(
-        `SELECT * from customers where id IN ('${customerIds.join("','")}')`
+        `SELECT * from customers where id IN ('${customerIds.join("','")}') and deleted is NULL`
       );
       const map: Record<string, LocalTables<'customers'>> = {};
       customers?.forEach((customer) => (map[customer.id] = customer));
@@ -126,7 +126,8 @@ export default function OtherCustomer() {
                        SET customer_id = ?,
                            synced      = 0
                        WHERE serial = ?
-                         AND loan_no = ?`,
+                         AND loan_no = ?
+                         and deleted is null`,
         [customerId, currentLoan?.serial, currentLoan?.loan_no],
         true
       );

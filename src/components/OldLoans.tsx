@@ -87,7 +87,7 @@ export default function OldLoans() {
                         and loan_amount < ?
                         and released = 0
                         and date < date('now', '-${parseInt(months) - 1} months')
-                        and deleted is null)`,
+                        and deleted is null) AND deleted IS NULL`,
         [minAmount, maxAmount]
       );
 

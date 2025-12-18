@@ -157,7 +157,8 @@ export default function DailyEntries() {
                                  AND date = ?
                                  AND main_code = ?
                                  AND sub_code = ?
-                                 AND sort_order = ?`;
+                                 AND sort_order = ?
+                                 AND deleted IS NULL`;
           await query<null>(
             updateQuery,
             [

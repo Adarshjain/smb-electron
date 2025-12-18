@@ -257,7 +257,8 @@ const updateDualEntry = async (
   const updateQuery = `UPDATE daily_entries
        SET credit      = ?,
            debit       = ?,
-           description = ?
+           description = ?,
+           synced      = 0
        WHERE company = ?
          AND date = ?
          AND main_code = ?
@@ -492,7 +493,8 @@ const fetchTodaysLoans = async (date: string, company: string) => {
            where date = ?
              and company = ?
              and main_code = ?
-             and (sub_code = ? or sub_code = ?)`,
+             and (sub_code = ? or sub_code = ?)
+             AND deleted IS NULL`,
       [
         date,
         company,

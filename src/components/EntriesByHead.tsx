@@ -103,14 +103,16 @@ export default function EntriesByHead({
         from daily_entries
         where company = ?
           and date < ?
-          and main_code = ?;
+          and main_code = ?
+          AND deleted IS NULL
       `;
       const closingBalanceQuery = `
         select SUM(credit - debit) as balance
         from daily_entries
         where company = ?
           and date <= ?
-          and main_code = ?;
+          and main_code = ?
+          AND deleted IS NULL
       `;
 
       const [openingBalanceResponse, closingBalanceResponse] =
