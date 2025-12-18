@@ -66,7 +66,6 @@ export default defineConfig(({ mode }) => {
               '@radix-ui/react-label',
               '@radix-ui/react-separator',
               '@radix-ui/react-alert-dialog',
-              '@radix-ui/react-navigation-menu',
             ],
             utils: ['clsx', 'tailwind-merge', 'class-variance-authority'],
             router: ['react-router-dom'],
