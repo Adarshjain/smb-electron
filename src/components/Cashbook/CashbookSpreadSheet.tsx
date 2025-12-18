@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Column } from 'react-data-grid';
+import type { CellKeyDownArgs, Column } from 'react-data-grid';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { formatCurrency, getAccountById } from '@/lib/myUtils.tsx';
@@ -14,6 +14,7 @@ import {
 } from './utils/cashbookUtils';
 import { createAutoCompleteEditor } from './editors/AutoCompleteEditor';
 import { NumberEditor } from './editors/NumberEditor';
+import { StringEditor } from './editors/StringEditor';
 
 const EMPTY_ROW_START = -3;
 
@@ -60,6 +61,7 @@ export default function CashbookSpreadSheet({
         width: 360,
         resizable: true,
         editable: isRowEditable,
+        renderEditCell: StringEditor,
         renderCell: ({ row }) => (
           <div className="truncate px-1 select-text">{row.description}</div>
         ),
@@ -164,11 +166,58 @@ export default function CashbookSpreadSheet({
     [openingBalance]
   );
 
+  const handleCellKeyDown = useCallback(
+    (args: CellKeyDownArgs<CashbookRow>, event: React.KeyboardEvent) => {
+      if (event.key !== 'Delete') {
+        return;
+      }
+      const { row } = args;
+      if (isSpecialRow(row.sort_order)) return;
+      event.preventDefault();
+      setRows((currentRows) => {
+        const newRows = currentRows.filter(
+          (r) => r.sort_order !== row.sort_order
+        );
+        const dataRows = newRows.filter((r) => !isSpecialRow(r.sort_order));
+        const hasEmptyRow = dataRows.some(isRowEmpty);
+        const filledRows = dataRows.filter((r) => !isRowEmpty(r));
+        const closingBalance = calculateBalance(filledRows, openingBalance);
+
+        let updatedRows = newRows.map((r) =>
+          r.sort_order === SORT_ORDER.CLOSING_BALANCE
+            ? {
+                ...r,
+                credit: closingBalance >= 0 ? closingBalance : null,
+                debit: closingBalance < 0 ? closingBalance : null,
+              }
+            : r
+        );
+
+        // Ensure there's always an empty row
+        if (!hasEmptyRow) {
+          const closingIdx = updatedRows.findIndex(
+            (r) => r.sort_order === SORT_ORDER.CLOSING_BALANCE
+          );
+          const emptyRowSortOrder = nextEmptyRowSortOrderRef.current--;
+          updatedRows = [
+            ...updatedRows.slice(0, closingIdx),
+            createEmptyRow(emptyRowSortOrder),
+            ...updatedRows.slice(closingIdx),
+          ];
+        }
+
+        return updatedRows;
+      });
+    },
+    [openingBalance]
+  );
+
   return (
     <DataGrid
       columns={columns}
       rows={rows}
       onRowsChange={handleRowsChange}
+      onCellKeyDown={handleCellKeyDown}
       rowKeyGetter={(row) => row.sort_order}
       className="rdg-light min-h-full !bg-transparent m-3"
       style={{ fontSize: '14px' }}
