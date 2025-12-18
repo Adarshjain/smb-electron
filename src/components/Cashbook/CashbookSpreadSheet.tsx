@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { CellKeyboardEvent, CellKeyDownArgs, Column } from 'react-data-grid';
+import type {
+  CellKeyboardEvent,
+  CellKeyDownArgs,
+  Column,
+} from 'react-data-grid';
 import { DataGrid } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import {
@@ -331,7 +335,7 @@ export default function CashbookSpreadSheet({
         onRowsChange={handleRowsChange}
         onCellKeyDown={handleCellKeyDown}
         rowKeyGetter={(row) => row.sort_order}
-        className="rdg-light min-h-full pb-20 !bg-transparent m-3"
+        className="rdg-light min-h-full pb-20 !bg-transparent m-3 w-[min-content] h-[min-content]"
         style={{ fontSize: '14px' }}
         rowHeight={42}
         headerRowHeight={35}

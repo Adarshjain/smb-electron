@@ -143,6 +143,11 @@
   outline-offset: -2px;
 }
 
+/* Remove selection highlight when grid is not focused */
+.rdg:not(:focus-within) .rdg-cell[aria-selected='true'] {
+  outline: none;
+}
+
 .rdg-row:hover {
   background-color: var(--rdg-row-hover-background-color);
 }
