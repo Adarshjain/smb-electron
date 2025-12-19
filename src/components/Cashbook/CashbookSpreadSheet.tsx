@@ -11,6 +11,7 @@ import {
   errorToast,
   formatCurrency,
   getAccountById,
+  sortOrderPromise,
   successToast,
 } from '@/lib/myUtils.tsx';
 import type { CashbookRow, CashbookSpreadSheetProps } from './types';
@@ -34,7 +35,7 @@ import { NumberEditor } from './editors/NumberEditor';
 import { StringEditor } from './editors/StringEditor';
 import { Button } from '@/components/ui/button.tsx';
 import { useCompany } from '@/context/CompanyProvider.tsx';
-import { query } from '@/hooks/dbUtil.ts';
+import { loadRapipay } from '@/components/Cashbook/utils/rapipayUtils.ts';
 
 const EMPTY_ROW_START = -3;
 
@@ -294,12 +295,7 @@ export default function CashbookSpreadSheet({
 
     if (newEntries.length) {
       try {
-        const sortOrderResp = await query<[{ sort_order: number }]>(
-          `SELECT sort_order
-           FROM daily_entries
-           ORDER BY sort_order DESC
-           LIMIT 1`
-        );
+        const sortOrderResp = await sortOrderPromise();
 
         const sortOrder = sortOrderResp?.[0]?.sort_order;
         if (!sortOrder) {
@@ -360,6 +356,21 @@ export default function CashbookSpreadSheet({
             onClick={() => void onLoadToday()}
           >
             Load Today's Entries
+          </Button>
+        ) : null}
+        {currentAccountHead?.name === 'RAPIPAY' &&
+        company?.name === 'Mahaveer Bankers' ? (
+          <Button
+            className="border-black"
+            variant="outline"
+            onClick={() => {
+              (async () => {
+                await loadRapipay(company?.name ?? '', date);
+                await refreshEntries();
+              })().catch(errorToast);
+            }}
+          >
+            Load Rapipay
           </Button>
         ) : null}
         <Button

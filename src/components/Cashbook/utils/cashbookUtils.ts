@@ -1,4 +1,9 @@
-import { errorToast, jsNumberFix, successToast } from '@/lib/myUtils.tsx';
+import {
+  errorToast,
+  sortOrderPromise,
+  jsNumberFix,
+  successToast,
+} from '@/lib/myUtils.tsx';
 import type { CashbookRow } from '../types';
 import type { LocalTables, Tables } from '@/../tables';
 import { create, query } from '@/hooks/dbUtil.ts';
@@ -310,7 +315,7 @@ interface UpsertDualEntryParams {
   description: string;
 }
 
-const upsertDualEntry = async ({
+export const upsertDualEntry = async ({
   existingEntry,
   total,
   date,
@@ -481,12 +486,7 @@ const fetchTodaysLoans = async (date: string, company: string) => {
                WHERE company = ? AND date = ? AND deleted IS NULL`,
       [company, date]
     ),
-    query<[{ sort_order: number }]>(
-      `SELECT sort_order
-               FROM daily_entries
-               ORDER BY sort_order DESC
-               LIMIT 1`
-    ),
+    sortOrderPromise(),
     query<LocalTables<'daily_entries'>[] | null>(
       `select *
            from daily_entries
