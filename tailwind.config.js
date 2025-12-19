@@ -1,4 +1,9 @@
 module.exports = {
+  safelist: [
+    {
+      pattern: /bg-(blue|yellow)-(100|300)/,
+    },
+  ],
   theme: {
     extend: {
       keyframes: {
