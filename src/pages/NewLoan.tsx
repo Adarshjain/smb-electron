@@ -70,6 +70,7 @@ export default function NewLoan() {
   );
   const isEditMode = useMemo(() => loadedLoan !== null, [loadedLoan]);
   const [isDeleteConfirmation, setIsDeleteConfirmation] = useState(false);
+  const [isCommitting, setIsCommitting] = useState(false);
 
   const defaultValues = useMemo<Loan>(
     () => ({
@@ -363,6 +364,10 @@ export default function NewLoan() {
   };
 
   const onCommitChanges = async (data?: Loan) => {
+    if (isCommitting) {
+      return;
+    }
+    setIsCommitting(true);
     data ??= getValues();
     try {
       const formattedLoan: TablesInsert['bills'] = {
@@ -443,6 +448,8 @@ export default function NewLoan() {
       errorToast(
         error instanceof Error ? error.message : 'Failed to save loan'
       );
+    } finally {
+      setIsCommitting(false);
     }
   };
 
