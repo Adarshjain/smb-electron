@@ -41,7 +41,7 @@ export const useTabs = () => {
 
 export const TabManager: React.FC = () => {
   const { isTamil, setIsTamil } = useThanglish();
-  const { company } = useCompany();
+  const { company, companyColor } = useCompany();
   const [tabs, setTabs] = useState<Tab[]>(() => [
     {
       id: 'main',
@@ -92,7 +92,7 @@ export const TabManager: React.FC = () => {
       <div
         className={cn(
           'flex border-gray-300 justify-between items-center px-4 h-10 sticky top-0 z-10',
-          company?.name === 'Mahaveer Bankers' ? 'bg-yellow-100' : 'bg-blue-100'
+          `bg-${companyColor}-100`
         )}
       >
         <div className="flex">
@@ -102,7 +102,7 @@ export const TabManager: React.FC = () => {
               className={cn(
                 'py-1 pl-4 pr-2 inline-flex items-center border border-b-0 border-transparent rounded-t-lg focus:outline-hidden focus:text-gray-700 disabled:opacity-50 disabled:pointer-events-none mt-2 cursor-pointer',
                 tab.id === activeTabId
-                  ? `${company?.name === 'Mahaveer Bankers' ? 'bg-yellow-300' : 'bg-blue-300'} border-gray-200`
+                  ? `bg-${companyColor}-300 border-gray-200`
                   : 'hover:text-gray-700 hover:bg-blue-100 rounded',
                 tab.isMain ? 'pr-4' : ''
               )}
@@ -146,7 +146,7 @@ export const TabManager: React.FC = () => {
         </Button>
       </div>
     ),
-    [tabs, company, isTamil, activeTabId, closeTab, setIsTamil]
+    [companyColor, tabs, company, isTamil, activeTabId, closeTab, setIsTamil]
   );
 
   return (
@@ -154,7 +154,7 @@ export const TabManager: React.FC = () => {
       <div
         className={cn(
           'flex flex-col h-screen overflow-auto',
-          company?.name === 'Mahaveer Bankers' ? 'bg-yellow-100' : 'bg-blue-100'
+          `bg-${companyColor}-100`
         )}
       >
         {tabBar}

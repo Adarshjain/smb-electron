@@ -13,6 +13,7 @@ import { errorToast, getNextSerial } from '@/lib/myUtils.tsx';
 
 interface CompanyContextType {
   company: LocalTables<'companies'> | null;
+  companyColor: string;
   allCompanies: LocalTables<'companies'>[];
   setCompany: (company: LocalTables<'companies'>) => void;
   setCurrentDate: (date: string) => Promise<void>;
@@ -28,6 +29,11 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const [allCompanies, setAllCompanies] = useState<LocalTables<'companies'>[]>(
     []
   );
+
+  const companyColor = useMemo(() => {
+    if (!company) return '';
+    return company.name === 'Mahaveer Bankers' ? 'yellow' : 'blue';
+  }, [company]);
 
   const fetchCompanies = useCallback(() => {
     read('companies', {})
@@ -109,6 +115,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       setNextSerial,
       refetch: fetchCompanies,
       cycleCompany,
+      companyColor,
     }),
     [
       company,
@@ -117,6 +124,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       setNextSerial,
       fetchCompanies,
       cycleCompany,
+      companyColor,
     ]
   );
 

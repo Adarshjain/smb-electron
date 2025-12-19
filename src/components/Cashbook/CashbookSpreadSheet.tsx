@@ -36,6 +36,7 @@ import { StringEditor } from './editors/StringEditor';
 import { Button } from '@/components/ui/button.tsx';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import { loadRapipay } from '@/components/Cashbook/utils/rapipayUtils.ts';
+import { cn } from '@/lib/utils.ts';
 
 const EMPTY_ROW_START = -3;
 
@@ -48,7 +49,7 @@ export default function CashbookSpreadSheet({
   date,
   refreshEntries,
 }: CashbookSpreadSheetProps) {
-  const { company } = useCompany();
+  const { company, companyColor } = useCompany();
   const [rows, setRows] = useState<CashbookRow[]>([]);
   const accountHeadsRef = useRef(accountHeads);
   accountHeadsRef.current = accountHeads;
@@ -348,7 +349,12 @@ export default function CashbookSpreadSheet({
         rowHeight={42}
         headerRowHeight={35}
       />
-      <div className="flex justify-center gap-12 fixed bottom-0 left-0 right-0 py-3 border-t border-gray-200">
+      <div
+        className={cn(
+          'flex justify-center gap-12 fixed bottom-0 left-0 right-0 py-3 border-t border-gray-200',
+          `bg-${companyColor}-100`
+        )}
+      >
         {currentAccountHead?.name === 'CASH' ? (
           <Button
             className="border-black"

@@ -73,7 +73,6 @@ export const loadRapipay = async (company: string, date: string) => {
     const { bonus, charges, principal, tdsTotal, comission } = JSON.parse(
       await navigator.clipboard.readText()
     ) as RapipayData;
-    // TODO: have non zero check
     if (
       isNaN(bonus) ||
       isNaN(charges) ||

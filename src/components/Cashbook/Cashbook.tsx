@@ -133,7 +133,7 @@ export default function Cashbook() {
   }, [loadDailyEntries]);
 
   return (
-    <div className="mx-2 mt-3 pb-5">
+    <div className="mx-2 mt-3 pb-35">
       <div className="flex gap-3 mb-4 mx-24 items-center">
         <div className="text-xl mr-auto">Cash Book</div>
         {currentAccountHead && (
