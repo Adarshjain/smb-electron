@@ -352,7 +352,7 @@ export default function CashbookSpreadSheet({
       <div
         className={cn(
           'flex justify-center gap-12 fixed bottom-0 left-0 right-0 py-3 border-t border-gray-200',
-          `bg-${companyColor}-100`
+          companyColor === 'yellow' ? 'bg-yellow-100' : 'bg-blue-100'
         )}
       >
         {currentAccountHead?.name === 'CASH' ? (

@@ -92,7 +92,7 @@ export const TabManager: React.FC = () => {
       <div
         className={cn(
           'flex border-gray-300 justify-between items-center px-4 h-10 sticky top-0 z-10',
-          `bg-${companyColor}-100`
+          companyColor === 'yellow' ? 'bg-yellow-100' : 'bg-blue-100'
         )}
       >
         <div className="flex">
@@ -102,7 +102,7 @@ export const TabManager: React.FC = () => {
               className={cn(
                 'py-1 pl-4 pr-2 inline-flex items-center border border-b-0 border-transparent rounded-t-lg focus:outline-hidden focus:text-gray-700 disabled:opacity-50 disabled:pointer-events-none mt-2 cursor-pointer',
                 tab.id === activeTabId
-                  ? `bg-${companyColor}-300 border-gray-200`
+                  ? `${companyColor === 'yellow' ? 'bg-yellow-300' : 'bg-blue-300'} border-gray-200`
                   : 'hover:text-gray-700 hover:bg-blue-100 rounded',
                 tab.isMain ? 'pr-4' : ''
               )}
@@ -154,7 +154,7 @@ export const TabManager: React.FC = () => {
       <div
         className={cn(
           'flex flex-col h-screen overflow-auto',
-          `bg-${companyColor}-100`
+          companyColor === 'yellow' ? 'bg-yellow-100' : 'bg-blue-100'
         )}
       >
         {tabBar}
