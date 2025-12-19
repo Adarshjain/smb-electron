@@ -145,15 +145,6 @@ export class SyncManager {
         deleteRecords.length
       );
 
-      if (upsertRecords.length) {
-        const { error: upsertError } = await this.supabase
-          .from(tableName)
-          .upsert(upsertRecords);
-        if (upsertError) throw upsertError;
-
-        upsertRecords.forEach((record) => markAsSynced(tableName, record));
-      }
-
       if (deleteRecords.length) {
         const pkFields = TablesSQliteSchema[tableName].primary.filter(
           (key) => key !== 'deleted'
@@ -169,6 +160,15 @@ export class SyncManager {
 
           deleteSynced(tableName, record);
         }
+      }
+
+      if (upsertRecords.length) {
+        const { error: upsertError } = await this.supabase
+          .from(tableName)
+          .upsert(upsertRecords);
+        if (upsertError) throw upsertError;
+
+        upsertRecords.forEach((record) => markAsSynced(tableName, record));
       }
     } catch (error) {
       console.error(`Error syncing ${tableName}:`, error);

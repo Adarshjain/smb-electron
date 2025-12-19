@@ -11,6 +11,7 @@ import type { Tables } from '@/../tables';
 import { loadBillWithDeps } from '@/lib/myUtils.tsx';
 import { cn } from '@/lib/utils.ts';
 import { type KeyboardEvent } from 'react';
+import { read } from '@/hooks/dbUtil.ts';
 
 interface LoanNumberProps<T extends FieldValues> {
   control: Control<T>;
@@ -41,6 +42,14 @@ export function LoanNumber<T extends FieldValues>({
   ): Promise<void> => {
     if (e) e.preventDefault();
     if (!serialValue || !numberValue) {
+      return;
+    }
+    const resp = await read('bills', {
+      serial: serialValue,
+      loan_no: parseInt(numberValue),
+    });
+    // If this is true, then loan does not exist
+    if (!resp?.length) {
       return;
     }
     const loan = await loadBillWithDeps(serialValue, numberValue);

@@ -17,7 +17,7 @@ interface CompanyContextType {
   allCompanies: LocalTables<'companies'>[];
   setCompany: (company: LocalTables<'companies'>) => void;
   setCurrentDate: (date: string) => Promise<void>;
-  setNextSerial: (date?: string) => Promise<void>;
+  setNextSerial: (next_serial?: string) => Promise<void>;
   cycleCompany: () => void;
   refetch: () => void;
 }

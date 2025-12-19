@@ -45,7 +45,9 @@ import BottomBar from '@/components/LoanForm/BottomBar.tsx';
 import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
 import {
   errorToast,
+  getNextExistingBill,
   getNextSerial,
+  getPreviousExistingBill,
   getPrevSerial,
   loadBillWithDeps,
 } from '@/lib/myUtils.tsx';
@@ -242,6 +244,13 @@ export default function NewLoan() {
       loan_no: parseInt(enteredNumber),
       serial: enteredSerial,
     });
+    const [nextSerial, nextNumber] = getNextSerial(
+      enteredSerial,
+      enteredNumber
+    );
+    if (company?.next_serial === `${nextSerial}-${nextNumber}`) {
+      await setNextSerial(`${enteredSerial}-${enteredNumber}`);
+    }
     onNewClick();
   };
 
@@ -252,8 +261,14 @@ export default function NewLoan() {
       return;
     }
     if (isIncorrect) {
-      errorToast('Loaded incorrect loan');
-      return;
+      const resp = await read('bills', {
+        serial,
+        loan_no: parseInt(loanNo),
+      });
+      if (resp?.length) {
+        errorToast('Loaded incorrect loan');
+        return;
+      }
     }
     if (isEditMode) {
       setIsConfirmDialogOpen(true);
@@ -270,7 +285,12 @@ export default function NewLoan() {
 
   const onPrevClick = async () => {
     const [s, l] = getPrevSerial(enteredSerial, '' + enteredNumber);
-    await handleLoanNavigation(s, l);
+    const resp = await getPreviousExistingBill(s, l);
+    if (!resp) {
+      errorToast('No Loans Found!');
+      return;
+    }
+    await handleLoanNavigation(resp.serial, resp.loanNo);
   };
 
   const onNextClick = async () => {
@@ -279,7 +299,12 @@ export default function NewLoan() {
       onNewClick();
       return;
     }
-    await handleLoanNavigation(s, l);
+    const resp = await getNextExistingBill(s, l);
+    if (!resp) {
+      errorToast('No Loans Found!');
+      return;
+    }
+    await handleLoanNavigation(resp.serial, resp.loanNo);
   };
 
   const handleLoanNavigation = async (serial: string, loanNo: number) => {
@@ -406,7 +431,12 @@ export default function NewLoan() {
           await create('bill_items', item);
         }
         await createProductsIfNotExist(data.billing_items, data.metal_type);
-        await setNextSerial();
+        if (
+          `${formattedLoan.serial}-${formattedLoan.loan_no}` ===
+          company?.next_serial
+        ) {
+          await setNextSerial();
+        }
         setTimeout(() => next('customer_picker' as FormFieldName), 100);
       }
     } catch (error) {

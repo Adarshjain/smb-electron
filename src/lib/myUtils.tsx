@@ -183,7 +183,6 @@ export async function getRate(
   const cache = new MyCache<Tables['interest_rates'][]>('IntRates');
   let intRates = cache.get('intRates');
   if (!intRates) {
-    console.log('cache miss');
     try {
       const interestRates = await read('interest_rates', {});
       cache.set('intRates', interestRates ?? []);
@@ -548,4 +547,51 @@ export function sortOrderPromise() {
                ORDER BY sort_order DESC
                LIMIT 1`
   );
+}
+
+export async function getNextExistingBill(
+  initialSerial: string,
+  initialLoanNo: number,
+  maxIterations = 1000
+) {
+  let serial = initialSerial;
+  let loanNo = initialLoanNo;
+
+  for (let i = 0; i < maxIterations; i++) {
+    const resp = await read('bills', {
+      serial,
+      loan_no: loanNo,
+    });
+
+    if (resp?.length) {
+      return { serial, loanNo };
+    }
+
+    [serial, loanNo] = getNextSerial(serial, String(loanNo));
+  }
+
+  return null;
+}
+export async function getPreviousExistingBill(
+  initialSerial: string,
+  initialLoanNo: number,
+  maxIterations = 1000
+) {
+  let serial = initialSerial;
+  let loanNo = initialLoanNo;
+
+  for (let i = 0; i < maxIterations; i++) {
+    const resp = await read('bills', {
+      serial,
+      loan_no: loanNo,
+    });
+
+    if (resp?.length) {
+      return { serial, loanNo };
+    }
+
+    [serial, loanNo] = getPrevSerial(serial, String(loanNo));
+  }
+
+  return null;
 }
