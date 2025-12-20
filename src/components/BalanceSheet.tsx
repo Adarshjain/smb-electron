@@ -24,7 +24,7 @@ const TypeVsHisaabGroup = {
     'Loans & Advances',
     'Fixed Assets',
     'Sundry Debtors',
-    'Bank Account',
+    'CURRENT ASSETS',
   ],
 };
 
@@ -206,7 +206,7 @@ export default function BalanceSheet() {
           });
 
           capitalRows.unshift([
-            'Capital Account Opening Balance',
+            'Opening Balance',
             formatCurrency(openingBalance, true),
             '',
             undefined,
@@ -234,7 +234,7 @@ export default function BalanceSheet() {
             entry.name === 'CASH' ||
             entry.hisaab_group === 'Sundry Debtors'
           ) {
-            entry.hisaab_group = 'Bank Account';
+            entry.hisaab_group = 'Current Assets';
           }
           const netValue =
             HisaabGroupVsType[entry.hisaab_group] === 'liabilities'
@@ -314,7 +314,7 @@ export default function BalanceSheet() {
           undefined,
         ]);
         liabilitiesRows.push([
-          'Capital Account Closing Balance',
+          'Closing Balance',
           '',
           formatCurrency(netProfit + capitalTotal, true),
           undefined,
@@ -360,7 +360,7 @@ export default function BalanceSheet() {
         </div>
         <div className="flex gap-2">
           {[displayLiabilitiesRows, displayAssetRows].map((type, typeIndex) => (
-            <Table key={typeIndex}>
+            <Table key={typeIndex} className="uppercase">
               <TableBody>
                 {type.map((row, outerIndex) => (
                   <TableRow
@@ -373,7 +373,8 @@ export default function BalanceSheet() {
                           key={JSON.stringify(cell) + index}
                           className={cn(
                             'py-1.5 h-[33px]',
-                            index !== 0 ? 'text-right border-l' : ''
+                            index !== 0 ? 'text-right border-l' : '',
+                            row[2] !== '' ? 'font-semibold' : ''
                           )}
                         >
                           <div className="flex justify-between">
@@ -424,7 +425,14 @@ export default function BalanceSheet() {
                                   }}
                                 />
                               )}
-                            <div className="flex-1">{cell}</div>
+                            <div
+                              className={cn(
+                                'flex-1',
+                                row[1] !== '' ? 'pl-4' : ''
+                              )}
+                            >
+                              {cell}
+                            </div>
                           </div>
                         </TableCell>
                       ) : null

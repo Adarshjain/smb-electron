@@ -182,7 +182,7 @@ export default function ProfitAndLoss({
         </div>
         <div className="flex gap-2">
           {[displayExpenseRows, displayIncomeRows].map((type, typeIndex) => (
-            <Table key={typeIndex}>
+            <Table key={typeIndex} className="uppercase">
               <TableBody>
                 {type.map((row, outerIndex) => (
                   <TableRow
@@ -195,7 +195,8 @@ export default function ProfitAndLoss({
                           key={JSON.stringify(cell) + index}
                           className={cn(
                             'py-1.5 h-[33px]',
-                            index !== 0 ? 'text-right border-l' : ''
+                            index !== 0 ? 'text-right border-l' : '',
+                            row[2] !== '' ? 'font-semibold' : ''
                           )}
                         >
                           <div className="flex justify-between">
@@ -225,7 +226,14 @@ export default function ProfitAndLoss({
                                 }}
                               />
                             )}
-                            <div className="flex-1">{cell}</div>
+                            <div
+                              className={cn(
+                                'flex-1',
+                                row[1] !== '' ? 'pl-4' : ''
+                              )}
+                            >
+                              {cell}
+                            </div>
                           </div>
                         </TableCell>
                       ) : null

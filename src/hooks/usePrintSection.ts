@@ -12,29 +12,34 @@ export function usePrintSection(
     preserveAfterPrint: false,
     pageStyle: `
       @page {
-        size: A4;
-        margin: 0 !important;
+        size: A4 landscape;
+        margin: 5mm;
       }
       @media print {
-      :root {
-      --input: rgba(0, 0, 0, 0.1) !important;
-      }
+        :root {
+        --input: rgba(0, 0, 0, 0.1) !important;
+        }
         html, body {
+          width: 297mm;
+          height: 210mm;
           margin: 0 !important;
           padding: 0 !important;
+          overflow: hidden;
         }
         body {
           -webkit-print-color-adjust: exact;
         }
         .pdf {
+          width: 297mm !important;
+          min-height: 210mm !important;
           margin: 0 !important;
           padding: 0 !important;
-            width: 100%;
-            max-width: 100%;
-            min-width: 100%;
+          
           table {
-            font-size: 10px !important;
+            font-size: 12px !important;
+            margin: 2px;
           }
+          
           td {
             padding: 0;
             padding-inline: 4px;
