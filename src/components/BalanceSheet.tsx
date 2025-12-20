@@ -24,7 +24,7 @@ const TypeVsHisaabGroup = {
     'Loans & Advances',
     'Fixed Assets',
     'Sundry Debtors',
-    'CURRENT ASSETS',
+    'Current Assets',
   ],
 };
 
@@ -232,7 +232,8 @@ export default function BalanceSheet() {
         entriesByHisaabGroup?.forEach((entry) => {
           if (
             entry.name === 'CASH' ||
-            entry.hisaab_group === 'Sundry Debtors'
+            entry.hisaab_group === 'Sundry Debtors' ||
+            entry.hisaab_group === 'Bank Account'
           ) {
             entry.hisaab_group = 'Current Assets';
           }
@@ -253,7 +254,11 @@ export default function BalanceSheet() {
               entries: [lineItem],
             };
           } else {
-            entries[entry.hisaab_group].entries.push(lineItem);
+            if (entry.name === 'CASH') {
+              entries[entry.hisaab_group].entries.unshift(lineItem);
+            } else {
+              entries[entry.hisaab_group].entries.push(lineItem);
+            }
             entries[entry.hisaab_group].total = jsNumberFix(
               entries[entry.hisaab_group].total + netValue
             );
