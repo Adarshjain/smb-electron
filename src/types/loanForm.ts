@@ -5,7 +5,7 @@ export const newLoanSchema = z.object({
   serial: z.string().length(1),
   loan_no: z.string(),
   old_serial: z.string().optional(),
-  old_loan_no: z.number().optional(),
+  old_loan_no: z.string().optional(),
   loan_amount: z.string(),
   interest_rate: z.string(),
   first_month_interest: z.string(),

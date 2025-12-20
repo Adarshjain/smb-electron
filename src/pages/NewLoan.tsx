@@ -76,7 +76,7 @@ export default function NewLoan() {
     () => ({
       serial,
       loan_no: loanNo ?? '',
-      old_loan_no: 0,
+      old_loan_no: '',
       old_serial: '',
       loan_amount: '0.00',
       total: '0.00',
@@ -369,6 +369,23 @@ export default function NewLoan() {
     }
     setIsCommitting(true);
     data ??= getValues();
+    let isNumberSwitch = false;
+    if (isEditMode) {
+      if (
+        `${loadedLoan?.serial}-${loadedLoan?.loan_no}` !==
+        `${data.serial}-${data.loan_no}`
+      ) {
+        await deleteRecord('bill_items', {
+          serial: loadedLoan?.serial,
+          loan_no: loadedLoan?.loan_no,
+        });
+        await deleteRecord('bills', {
+          serial: loadedLoan?.serial,
+          loan_no: loadedLoan?.loan_no,
+        });
+        isNumberSwitch = true;
+      }
+    }
     try {
       const formattedLoan: TablesInsert['bills'] = {
         serial: data.serial,
@@ -408,7 +425,7 @@ export default function NewLoan() {
           extra: item.extra,
           sort_order: ++sortOrder,
         }));
-      if (isEditMode) {
+      if (isEditMode && !isNumberSwitch) {
         await update('bills', formattedLoan);
         await query(
           `UPDATE bill_items
