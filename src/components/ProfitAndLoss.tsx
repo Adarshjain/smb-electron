@@ -1,5 +1,5 @@
 import FYPicker from '@/components/FYPicker.tsx';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { query } from '@/hooks/dbUtil.ts';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
@@ -10,10 +10,11 @@ import {
   viewableDate,
 } from '@/lib/myUtils.tsx';
 import { cn } from '@/lib/utils.ts';
-import { PrinterIcon, SearchIcon } from 'lucide-react';
+import { SearchIcon } from 'lucide-react';
 import { useTabs } from '@/TabManager.tsx';
 import EntriesByHead from '@/components/EntriesByHead.tsx';
 import { usePrintSection } from '@/hooks/usePrintSection.ts';
+import { Button } from '@/components/ui/button.tsx';
 
 export default function ProfitAndLoss({
   year,
@@ -50,7 +51,7 @@ export default function ProfitAndLoss({
     };
   }, [closeTab]);
 
-  useEffect(() => {
+  const fetchAndRender = useCallback(() => {
     if (!startDate || !endDate || !company) return;
     const fetchDetails = async () => {
       try {
@@ -159,6 +160,10 @@ export default function ProfitAndLoss({
     void fetchDetails();
   }, [company, endDate, startDate]);
 
+  useEffect(() => {
+    fetchAndRender();
+  }, [fetchAndRender]);
+
   return (
     <div className="p-4">
       <div className="flex justify-center gap-4 items-center">
@@ -170,7 +175,12 @@ export default function ProfitAndLoss({
             setEndDate(end);
           }}
         />
-        <PrinterIcon onClick={handlePrint} className="cursor-pointer" />
+        <Button variant="outline" onClick={handlePrint} className="ml-12">
+          Print
+        </Button>
+        <Button variant="outline" onClick={fetchAndRender}>
+          Reload
+        </Button>
       </div>
       <div className="flex mt-2 pdf flex-col" ref={printRef}>
         <div className="hidden pdf-header text-center pt-4">

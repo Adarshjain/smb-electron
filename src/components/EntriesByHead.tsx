@@ -17,6 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useTabs } from '@/TabManager.tsx';
+import { Button } from '@/components/ui/button.tsx';
 
 const cache: Record<number, Tables['account_head'] | undefined> = {};
 
@@ -150,7 +151,7 @@ export default function EntriesByHead({
     void loadBalances();
   }, [loadBalances]);
 
-  useEffect(() => {
+  const fetchAndRender = useCallback(() => {
     if (!company) return;
     const fetchData = async () => {
       const response = await query<Tables['daily_entries'][]>(
@@ -167,7 +168,11 @@ export default function EntriesByHead({
       setEntries(response ?? []);
     };
     void fetchData();
-  }, [currentAccountHead, company, endDate, startDate, loadAccountHeads]);
+  }, [currentAccountHead, company, endDate, startDate]);
+
+  useEffect(() => {
+    fetchAndRender();
+  }, [fetchAndRender]);
 
   return (
     <div className="flex gap-2 flex-col p-4 w-[70%] mx-auto">
@@ -194,6 +199,9 @@ export default function EntriesByHead({
             setEndDate(end);
           }}
         />
+        <Button variant="outline" onClick={fetchAndRender}>
+          Reload
+        </Button>
       </div>
       <Table>
         <TableHeader>

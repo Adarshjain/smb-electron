@@ -12,11 +12,12 @@ import {
 import type { LocalTables } from '../../tables';
 import { cn } from '@/lib/utils.ts';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { PrinterIcon, SearchIcon } from 'lucide-react';
+import { SearchIcon } from 'lucide-react';
 import EntriesByHead from '@/components/EntriesByHead.tsx';
 import { useTabs } from '@/TabManager.tsx';
 import { usePrintSection } from '@/hooks/usePrintSection.ts';
 import ProfitAndLoss from '@/components/ProfitAndLoss.tsx';
+import { Button } from '@/components/ui/button.tsx';
 
 const TypeVsHisaabGroup = {
   liabilities: ['Bank OD A/c', 'Sundry Creditors'],
@@ -130,7 +131,7 @@ export default function BalanceSheet() {
     [company, endDate, startDate]
   );
 
-  useEffect(() => {
+  const fetchAndRender = useCallback(() => {
     if (!startDate || !endDate || !company) return;
     const fetchDetails = async () => {
       const capitalEntriesQuery = query<
@@ -342,18 +343,25 @@ export default function BalanceSheet() {
     void fetchDetails();
   }, [calcCapitalAcc, company, endDate, startDate]);
 
+  useEffect(() => {
+    fetchAndRender();
+  }, [fetchAndRender]);
+
   return (
     <div className="p-4">
-      <div className="flex justify-around">
-        <div className="text-xl">Liabilities</div>
+      <div className="flex justify-center gap-4 items-center">
         <FYPicker
           onChange={([start, end]) => {
             setStartDate(start);
             setEndDate(end);
           }}
         />
-        <div className="text-xl">Assets</div>
-        <PrinterIcon onClick={handlePrint} className="cursor-pointer" />
+        <Button variant="outline" onClick={handlePrint} className="ml-12">
+          Print
+        </Button>
+        <Button variant="outline" onClick={fetchAndRender}>
+          Reload
+        </Button>
       </div>
       <div className="flex mt-2 pdf flex-col" ref={printRef}>
         <div className="hidden pdf-header text-center pt-4">
@@ -367,6 +375,11 @@ export default function BalanceSheet() {
           {[displayLiabilitiesRows, displayAssetRows].map((type, typeIndex) => (
             <Table key={typeIndex} className="uppercase">
               <TableBody>
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center font-semibold">
+                    {typeIndex ? 'Assets' : 'Liabilities'}
+                  </TableCell>
+                </TableRow>
                 {type.map((row, outerIndex) => (
                   <TableRow
                     key={JSON.stringify(row) + outerIndex}
