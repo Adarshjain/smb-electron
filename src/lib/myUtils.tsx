@@ -207,13 +207,13 @@ export function getInterest(principal: number, intRate: number, months = 1) {
 export function getMonthDiff(from: string | Date, to?: string | Date): number {
   const now = to ? new Date(to) : new Date();
   const start = new Date(from);
+  if (+start === +now) {
+    return 0;
+  }
   let months =
     (now.getFullYear() - start.getFullYear()) * 12 +
     (now.getMonth() - start.getMonth());
   if (now.getDate() < start.getDate()) months--;
-  if (+start === +now) {
-    return 0;
-  }
   return start.getDate() === now.getDate() ? months - 1 : months;
 }
 

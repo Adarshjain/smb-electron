@@ -459,6 +459,7 @@ export default function NewLoan() {
         ) {
           await setNextSerial();
         }
+        reset(defaultValues);
         setTimeout(() => next('customer_picker' as FormFieldName), 100);
       }
     } catch (error) {
