@@ -22,7 +22,7 @@ const CustomerRow = memo(function CustomerRow({
       <div style={{ width: 160 }}>{customer.name}</div>
       <div style={{ width: 30 }}>{customer.fhtitle}</div>
       <div style={{ width: 160 }}>{customer.fhname}</div>
-      <div style={{ width: 200 }}>{customer.area}</div>
+      <div style={{ width: 290 }}>{customer.area}</div>
     </>
   );
 });

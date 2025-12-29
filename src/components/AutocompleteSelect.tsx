@@ -52,7 +52,7 @@ function AutocompleteSelectInner<T = string>({
   renderRow,
   getKey,
   estimatedRowHeight = 24,
-  dropdownWidth = 'w-[610px]',
+  dropdownWidth = 'w-[700px]',
   triggerWidth = 'w-[500px]',
   autoConvert,
   allowTempValues = false,

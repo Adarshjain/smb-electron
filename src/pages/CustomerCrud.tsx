@@ -337,7 +337,10 @@ export default function CustomerCrud({
           render={({ field }) => (
             <AreaSelector
               value={areasList.find((area) => area.name === field.value.name)}
-              onChange={field.onChange}
+              onChange={(value: Tables['areas']) => {
+                field.onChange(value);
+                setTimeout(() => next('phone_no'), 50);
+              }}
               options={areasList}
               inputName="area"
               placeholder="Area"
