@@ -289,7 +289,7 @@ export default function CashbookSpreadSheet({
       (row) => row.sort_order < -2 && !isFullyEmpty(row)
     );
     const oldEntries = rows.filter((row) => row.sort_order > 0);
-    const deletedEntryIds = fetchDeletedRecords(entries, oldEntries);
+    const deletedEntries = fetchDeletedRecords(entries, oldEntries);
     const modifiedRows = fetchModifiedEntries(entries, oldEntries);
 
     let isDone = true;
@@ -305,7 +305,7 @@ export default function CashbookSpreadSheet({
         }
         const created = await createDailyEntries(
           newEntries,
-          sortOrder,
+          sortOrder + 1,
           currentAccountHead,
           date,
           company.name
@@ -325,8 +325,12 @@ export default function CashbookSpreadSheet({
       );
       isDone &&= updated;
     }
-    if (deletedEntryIds.length) {
-      const deleted = await deleteDailyEntries(deletedEntryIds, company.name);
+    if (deletedEntries.length) {
+      const deleted = await deleteDailyEntries(
+        deletedEntries,
+        company.name,
+        date
+      );
       isDone &&= deleted;
     }
     if (isDone) {
@@ -343,7 +347,11 @@ export default function CashbookSpreadSheet({
         rows={rows}
         onRowsChange={handleRowsChange}
         onCellKeyDown={handleCellKeyDown}
-        rowKeyGetter={(row) => row.sort_order}
+        rowKeyGetter={(row) => {
+          if (!row.accountHead || typeof row.accountHead === 'string')
+            return row.sort_order;
+          return `${row.accountHead.code}-${row.sort_order}`;
+        }}
         className="rdg-light pb-20 !bg-transparent m-3 w-[min-content]"
         style={{ fontSize: '14px' }}
         rowHeight={42}

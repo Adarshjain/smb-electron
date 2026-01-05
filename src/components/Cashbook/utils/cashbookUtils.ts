@@ -1,12 +1,12 @@
 import {
   errorToast,
-  sortOrderPromise,
   jsNumberFix,
+  sortOrderPromise,
   successToast,
 } from '@/lib/myUtils.tsx';
 import type { CashbookRow } from '../types';
 import type { LocalTables, Tables } from '@/../tables';
-import { create, query } from '@/hooks/dbUtil.ts';
+import { create, deleteRecord, query } from '@/hooks/dbUtil.ts';
 
 export const SORT_ORDER = {
   OPENING_BALANCE: -1,
@@ -74,11 +74,17 @@ export const getInitialInputValue = (
 export const fetchDeletedRecords = (
   oldEntries: Tables['daily_entries'][],
   newEntries: CashbookRow[]
-): number[] => {
-  const arr2SortOrders = new Set(newEntries.map((item) => item.sort_order));
-  return oldEntries
-    .filter((item) => !arr2SortOrders.has(item.sort_order))
-    .map((item) => item.sort_order);
+): Tables['daily_entries'][] => {
+  const arr2SortOrders = new Set(
+    newEntries.map((item) => {
+      if (!item.accountHead || typeof item.accountHead === 'string')
+        return item.sort_order;
+      return `${item.sort_order}-${item.accountHead.code}`;
+    })
+  );
+  return oldEntries.filter(
+    (item) => !arr2SortOrders.has(`${item.sort_order}-${item.sub_code}`)
+  );
 };
 
 export const fetchModifiedEntries = (
@@ -165,22 +171,32 @@ export const createDailyEntries = async (
 };
 
 export const deleteDailyEntries = async (
-  sortOrders: number[],
-  company: string
+  entries: Tables['daily_entries'][],
+  company: string,
+  date: string
 ): Promise<boolean> => {
   try {
-    for (const order of sortOrders) {
-      await query<null>(
-        `UPDATE daily_entries
-       SET synced  = 0,
-           deleted = 1
-       WHERE company = ?
-         AND sort_order = ?
-         AND deleted IS NULL`,
-        [company, order],
-        true
-      );
+    const queries: PromiseLike<any>[] = [];
+    for (const entry of entries) {
+      const currentAccountCode = entry.main_code;
+      const entryCode = entry.sub_code;
+      const main = deleteRecord('daily_entries', {
+        main_code: currentAccountCode,
+        sub_code: entryCode,
+        sort_order: entry.sort_order,
+        company,
+        date,
+      });
+      const inverted = deleteRecord('daily_entries', {
+        main_code: entryCode,
+        sub_code: currentAccountCode,
+        sort_order: entry.sort_order,
+        company,
+        date,
+      });
+      queries.push(main, inverted);
     }
+    await Promise.all(queries);
     return true;
   } catch (e) {
     errorToast(e);
@@ -355,7 +371,7 @@ export const upsertDualEntry = async ({
       existingEntry.sort_order
     );
   } else {
-    await deleteDailyEntries([existingEntry.sort_order], company);
+    await deleteDailyEntries([existingEntry], company, date);
   }
 };
 
