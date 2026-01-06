@@ -498,7 +498,11 @@ export function getPrevSerial(
   return [newLetter, number];
 }
 
-export function getFinancialYearRange(year: number): [string, string] {
+export function getFinancialYearRange(date: Date): [string, string] {
+  let year = date.getFullYear();
+  if (date.getMonth() < 3) {
+    year = date.getFullYear() - 1;
+  }
   const startDate = new Date(year, 3, 1); // April 1
   const endDate = new Date(year + 1, 2, 31); // March 31
 

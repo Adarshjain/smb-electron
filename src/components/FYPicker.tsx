@@ -18,12 +18,12 @@ export default function FYPicker(props: {
   year?: number;
   range?: [string, string];
 }) {
-  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [date, setDate] = useState<Date>(new Date());
   const [startDate, setStartDate] = useState(
-    props.range ? props.range[0] : getFinancialYearRange(year)[0]
+    props.range ? props.range[0] : getFinancialYearRange(date)[0]
   );
   const [endDate, setEndDate] = useState(
-    props.range ? props.range[1] : getFinancialYearRange(year)[1]
+    props.range ? props.range[1] : getFinancialYearRange(date)[1]
   );
   const [useDatePicker, setUseDatePicker] = useState<boolean>(
     props.range !== undefined
@@ -31,7 +31,7 @@ export default function FYPicker(props: {
 
   useEffect(() => {
     if (props.year) {
-      setYear(props.year);
+      setDate(new Date(props.year, 3, 1));
       setUseDatePicker(false);
     }
     if (props.range) {
@@ -43,12 +43,12 @@ export default function FYPicker(props: {
 
   useEffect(() => {
     if (!useDatePicker) {
-      const [start, end] = getFinancialYearRange(year);
+      const [start, end] = getFinancialYearRange(date);
       setStartDate(start);
       setEndDate(end);
       props.onChange?.([start, end]);
     }
-  }, [year, props, useDatePicker]);
+  }, [date, props, useDatePicker]);
 
   useEffect(() => {
     if (useDatePicker) {
@@ -65,8 +65,8 @@ export default function FYPicker(props: {
         </div>
       ) : (
         <NativeSelect
-          value={year}
-          onChange={(e) => setYear(parseInt(e.target.value))}
+          value={new Date(startDate).getFullYear()}
+          onChange={(e) => setDate(new Date(parseInt(e.target.value), 3, 1))}
         >
           {years.map((year) => (
             <NativeSelectOption key={year} value={year}>
