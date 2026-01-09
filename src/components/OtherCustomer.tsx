@@ -81,7 +81,7 @@ export default function OtherCustomer() {
          WHERE b.deleted IS NULL
            AND b.company = ?
            AND (b.released = 0 OR b.released = ?)
-         ORDER BY b.serial, b.loan_no
+         ORDER BY b.serial desc, b.loan_no desc
          LIMIT ? OFFSET ?`,
         [company?.name, activeOnly ? 0 : 1, perPage, currentPage * perPage]
       );
@@ -142,6 +142,7 @@ export default function OtherCustomer() {
         true
       );
       setCurrentLoan(null);
+      await fetchSerials();
       successToast('Updated!');
     } catch (e) {
       errorToast(e);
