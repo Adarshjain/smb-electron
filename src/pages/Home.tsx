@@ -128,6 +128,15 @@ export function Home() {
         >
           <div className="justify-self-center col-start-2">Balance Sheet</div>
         </Button>
+        <Button
+          variant="outline"
+          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
+          onClick={() => void navigate('/release-interest')}
+        >
+          <div className="justify-self-center col-start-2">
+            Release Interest
+          </div>
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

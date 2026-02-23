@@ -14,6 +14,7 @@ import AccountHead from '@/components/AccountHead.tsx';
 import ItemsMaster from '@/components/ItemsMaster.tsx';
 import Dashboard from '@/components/Dashboard.tsx';
 import OldLoans from '@/components/OldLoans.tsx';
+import ReleaseInterest from '@/components/ReleaseInterest.tsx';
 
 // Simple loading fallback
 function PageLoader() {
@@ -37,6 +38,7 @@ export function Router() {
             <Route path="/new-loan" element={<NewLoan />} />
             <Route path="/release-loan" element={<ReleaseLoan />} />
             <Route path="/day-book" element={<DayBook />} />
+            <Route path="/release-interest" element={<ReleaseInterest />} />
             <Route path="/customer-crud" element={<CustomerCrud />} />
             <Route path="/customer-by-area" element={<CustomersByArea />} />
             <Route path="/account-head" element={<AccountHead />} />

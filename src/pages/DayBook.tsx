@@ -151,7 +151,6 @@ export default function DayBook() {
         <div className="text-xl">Releases</div>
         <div className="text-xl"></div>
       </div>
-      <div className="flex justify-around"></div>
       <div className="flex justify-between gap-3">
         {/* Loan Summary */}
         <Table className="table-auto">
@@ -166,7 +165,7 @@ export default function DayBook() {
           <TableBody>
             {Object.entries(bills)
               .sort((c1) => {
-                if (c1[0] === 'Sri Mahaveer Bankers') return 1;
+                if (c1[0] === 'Sri Mahaveer Bankers') return -1;
                 return 0;
               })
               .map(([name, value]) => {
@@ -209,7 +208,7 @@ export default function DayBook() {
           <TableBody>
             {Object.entries(bills)
               .sort((c1) => {
-                if (c1[0] === 'Sri Mahaveer Bankers') return 1;
+                if (c1[0] === 'Sri Mahaveer Bankers') return -1;
                 return 0;
               })
               .map(([name, value]) => {
@@ -242,7 +241,7 @@ export default function DayBook() {
       </div>
       {Object.entries(bills)
         .sort((c1) => {
-          if (c1[0] === 'Sri Mahaveer Bankers') return 1;
+          if (c1[0] === 'Sri Mahaveer Bankers') return -1;
           return 0;
         })
         .map(([name, value]) => {
