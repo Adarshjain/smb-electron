@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { cn } from './utils';
+import { calculateMonths } from '@/lib/myUtils.tsx';
 
 describe('cn utility function', () => {
   it('should merge class names', () => {
@@ -37,10 +38,26 @@ describe('cn utility function', () => {
 
   it('should handle object syntax', () => {
     const result = cn({
-      'class1': true,
-      'class2': false,
-      'class3': true,
+      class1: true,
+      class2: false,
+      class3: true,
     });
     expect(result).toBe('class1 class3');
+  });
+});
+
+describe('tax month diff', () => {
+  const cases: [string, string, number][] = [
+    ['2025-02-02', '2025-02-06', 1],
+    ['2025-02-02', '2025-04-02', 2],
+    ['2025-02-02', '2025-05-07', 4],
+    ['2025-02-02', '2025-05-03', 3],
+    ['2025-02-02', '2025-05-02', 3],
+    ['2026-02-28', '2026-03-30', 2],
+  ];
+  it('solve cases', () => {
+    cases.forEach(([from, to, count]) =>
+      expect(calculateMonths(from, to)).toEqual(count)
+    );
   });
 });

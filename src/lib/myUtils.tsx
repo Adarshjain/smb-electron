@@ -218,7 +218,40 @@ export function getMonthDiff(from: string | Date, to?: string | Date): number {
 }
 
 export function getTaxedMonthDiff(from: string | Date, to?: string | Date) {
-  return getMonthDiff(from, to) + 1;
+  const start = new Date(from);
+  const end = new Date(to ?? new Date());
+
+  if (end <= start) return 0;
+
+  const startYear = start.getFullYear();
+  const startMonth = start.getMonth();
+  const startDay = start.getDate();
+
+  const endYear = end.getFullYear();
+  const endMonth = end.getMonth();
+  const endDay = end.getDate();
+
+  // Base month difference
+  let months = (endYear - startYear) * 12 + (endMonth - startMonth);
+
+  const dayDiff = endDay - startDay;
+
+  // Special case: exactly +1 day → ignore extra
+  if (dayDiff === 1) {
+    return months;
+  }
+
+  // If extra days beyond start day → count as extra month
+  if (dayDiff > 1) {
+    months += 1;
+  }
+
+  // If end day is before start day → reduce one month
+  if (dayDiff < 0) {
+    months -= 1;
+  }
+
+  return months;
 }
 
 export function adjustEndDate(startDate: Date, endDate: Date, n: number): Date {
