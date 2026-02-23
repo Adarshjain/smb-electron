@@ -114,13 +114,20 @@ export function Home() {
           <Kbd className="justify-self-start col-start-1">F8</Kbd>
           <div className="justify-self-center col-start-2">Day Book</div>
         </Button>
-        {/*<Button*/}
-        {/*  variant="outline"*/}
-        {/*  className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"*/}
-        {/*  onClick={() => void navigate('/dashboard')}*/}
-        {/*>*/}
-        {/*  <div className="justify-self-center col-start-2">Dashboard</div>*/}
-        {/*</Button>*/}
+        <Button
+          variant="outline"
+          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
+          onClick={() => openTab('Profit & Loss', <ProfitAndLoss />)}
+        >
+          <div className="justify-self-center col-start-2">Profit & Loss</div>
+        </Button>
+        <Button
+          variant="outline"
+          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
+          onClick={() => openTab('Balance Sheet', <BalanceSheet />)}
+        >
+          <div className="justify-self-center col-start-2">Balance Sheet</div>
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -132,17 +139,6 @@ export function Home() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[250px]">
-            <DropdownMenuItem
-              onClick={() => openTab('Profit & Loss', <ProfitAndLoss />)}
-            >
-              Profit & Loss
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => openTab('Balance Sheet', <BalanceSheet />)}
-            >
-              Balance Sheet
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => void navigate('/other-customers')}>
               Other Customers
             </DropdownMenuItem>
