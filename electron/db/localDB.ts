@@ -281,8 +281,9 @@ export function deleteRecord<K extends TableName>(
 ): null {
   if (!db) return null;
 
+  const recordKeys = Object.keys(record);
   const pkFields = TablesSQliteSchema[table].primary.filter(
-    (key) => key !== 'deleted'
+    (key) => key !== 'deleted' && recordKeys.includes(key)
   );
 
   if (!pkFields) {
