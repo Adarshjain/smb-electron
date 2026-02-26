@@ -49,6 +49,8 @@ contextBridge.exposeInMainWorld('api', {
   supabase: {
     sync: (): Promise<ElectronToReactResponse<void>> =>
       ipcRenderer.invoke('sync-now'),
+    syncTable: (tableName: TableName): Promise<ElectronToReactResponse<void>> =>
+      ipcRenderer.invoke('sync-table-now', tableName),
     isSyncing: (): Promise<ElectronToReactResponse<boolean>> =>
       ipcRenderer.invoke('is-syncing-now'),
     initialPull: (): Promise<ElectronToReactResponse<void | undefined>> =>

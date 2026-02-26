@@ -51,6 +51,9 @@ declare global {
       };
       supabase: {
         sync: () => Promise<ElectronToReactResponse<void>>;
+        syncTable: (
+          tableName: TableName
+        ) => Promise<ElectronToReactResponse<void>>;
         isSyncing: () => Promise<ElectronToReactResponse<boolean>>;
         initialPull: () => Promise<ElectronToReactResponse<void | undefined>>;
         getSyncInfo: () => Promise<

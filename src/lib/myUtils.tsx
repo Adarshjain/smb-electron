@@ -4,6 +4,7 @@ import type {
   FullCustomer,
   LocalTables,
   MetalType,
+  TableName,
   Tables,
 } from '../../tables';
 import MyCache from '../../MyCache.ts';
@@ -11,6 +12,19 @@ import { batchQuery, query, read } from '@/hooks/dbUtil.ts';
 import { toastStyles } from '@/constants/loanForm.ts';
 import { cn } from '@/lib/utils.ts';
 import { captureException } from '@/lib/sentry.ts';
+
+export const tables: TableName[] = [
+  'areas',
+  'companies',
+  'customers',
+  'daily_entries',
+  'account_head',
+  'bills',
+  'bill_items',
+  'releases',
+  'interest_rates',
+  'products',
+];
 
 // Native date utility functions (replacing date-fns)
 function padZero(n: number): string {

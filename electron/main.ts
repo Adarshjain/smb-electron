@@ -310,6 +310,34 @@ ipcMain.handle('sync-now', async (): Promise<ElectronToReactResponse<void>> => {
   }
 });
 
+ipcMain.handle(
+  'sync-table-now',
+  async (
+    _event: IpcMainInvokeEvent,
+    tableName: TableName
+  ): Promise<ElectronToReactResponse<void>> => {
+    try {
+      console.log({ tableName });
+      return { success: true, data: await syncManager?.pushChanges(tableName) };
+    } catch (error: unknown) {
+      Sentry.captureException(error, {
+        contexts: {
+          operation: {
+            name: 'sync-table-now',
+            type: 'ipc-handler',
+            tableName,
+          },
+        },
+      });
+      return {
+        success: false,
+        error: (error as Error).message,
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+    }
+  }
+);
+
 ipcMain.handle('is-syncing-now', (): ElectronToReactResponse<boolean> => {
   try {
     return { success: true, data: syncManager?.isRunning ?? false };

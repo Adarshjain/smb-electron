@@ -5,14 +5,22 @@ import { AlertTriangleIcon } from 'lucide-react';
 import {
   errorToast,
   successToast,
+  tables,
   toastElectronResponse,
 } from '@/lib/myUtils.tsx';
 import { useNavigate } from 'react-router-dom';
 import GoHome from '@/components/GoHome.tsx';
 import SyncStatus from '@/components/SyncStatus.tsx';
+import type { TableName } from '../../tables';
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from '@/components/ui/native-select.tsx';
+import { useState } from 'react';
 
 export default function Settings() {
   const navigate = useNavigate();
+  const [selectedTable, setSelectedTable] = useState<TableName>('bills');
 
   const sync = async () => {
     try {
@@ -27,6 +35,19 @@ export default function Settings() {
     }
   };
 
+  const syncTable = async (tableName: TableName) => {
+    try {
+      const resp = await window.api.supabase.syncTable(tableName);
+      if (!resp.success) {
+        errorToast(resp.error);
+      } else {
+        successToast(`Backup Complete: ${tableName}`);
+      }
+    } catch (error) {
+      errorToast(error);
+    }
+  };
+
   return (
     <div className="p-6 flex flex-col gap-3">
       <div className="flex">
@@ -34,7 +55,6 @@ export default function Settings() {
         <div className="text-2xl font-bold tracking-tight ml-4">Settings</div>
       </div>
       <CompanySettings />
-      <SyncStatus />
       <Button
         variant="outline"
         className="w-32"
@@ -42,9 +62,25 @@ export default function Settings() {
       >
         Customers
       </Button>
+      <SyncStatus />
       <Button variant="outline" className="w-32" onClick={() => void sync()}>
         Back Up
       </Button>
+      <div className="flex gap-3">
+        <NativeSelect
+          value={selectedTable}
+          onChange={(e) => setSelectedTable(e.target.value as TableName)}
+        >
+          {tables.map((table) => (
+            <NativeSelectOption key={table} value={table}>
+              {table}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
+        <Button variant="outline" onClick={() => void syncTable(selectedTable)}>
+          Back Up `{selectedTable}`
+        </Button>
+      </div>
       <div className="text-xl font-medium flex items-center gap-1 mt-12">
         <AlertTriangleIcon size={20} /> Danger Zone
       </div>

@@ -114,7 +114,7 @@ export class SyncManager {
     }
   }
 
-  private async pushChanges<K extends TableName>(tableName: K): Promise<void> {
+  public async pushChanges<K extends TableName>(tableName: K): Promise<void> {
     try {
       const unsynced: LocalTables<K>[] | null = fetchUnsynced(tableName);
 
