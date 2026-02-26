@@ -88,5 +88,5 @@ export function useEnterNavigation<T = string>({
     };
   }, [handleKeyDown]);
 
-  return { setFormRef, next };
+  return { setFormRef, next, formRef };
 }

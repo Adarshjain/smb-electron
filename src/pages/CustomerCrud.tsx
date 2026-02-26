@@ -20,6 +20,9 @@ import { Button } from '@/components/ui/button';
 import CustomerPicker from '@/components/CustomerPicker.tsx';
 import { Label } from '@/components/ui/label';
 import GoHome from '@/components/GoHome.tsx';
+import { PlusIcon } from 'lucide-react';
+import { useTabs } from '@/TabManager.tsx';
+import AreaCrud from '@/pages/AreaCrud.tsx';
 
 const CustomerSchema = z.object({
   id: z.string(),
@@ -45,10 +48,13 @@ type Customer = z.infer<typeof CustomerSchema>;
 export default function CustomerCrud({
   cantEdit,
   onCreate,
+  closeModal,
 }: {
   cantEdit?: boolean;
   onCreate?: (customer: LocalTables<'customers'>) => void;
+  closeModal?: () => void;
 }) {
+  const { openTab } = useTabs();
   const [areasList, setAreasList] = useState<Tables['areas'][]>([]);
   const [addressList, setAddressList] = useState<string[]>([]);
   const [nameList, setNameList] = useState<string[]>([]);
@@ -330,7 +336,7 @@ export default function CustomerCrud({
         />
       </div>
       <div className="flex gap-2">
-        <Label className="w-[70px]">Area</Label>
+        <Label className="w-[85px]">Area</Label>
         <Controller
           name="area"
           control={control}
@@ -348,6 +354,15 @@ export default function CustomerCrud({
             />
           )}
         />
+        <Button
+          variant="outline"
+          onClick={() => {
+            openTab('Area Head', <AreaCrud />);
+            closeModal?.();
+          }}
+        >
+          <PlusIcon />
+        </Button>
       </div>
       {area.name && (
         <div>

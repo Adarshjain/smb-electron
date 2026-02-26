@@ -94,6 +94,7 @@ export const LoanCustomerSection = memo(function LoanCustomerSection(
                 document.getElementsByName('metal_type')[0].focus();
               }, 100);
             }}
+            closeModal={() => setIsModalOpen(false)}
           />
         </DialogContent>
       </Dialog>
