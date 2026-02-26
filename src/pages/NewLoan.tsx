@@ -427,15 +427,27 @@ export default function NewLoan() {
         }));
       if (isEditMode && !isNumberSwitch) {
         await update('bills', formattedLoan);
-        await query(
-          `UPDATE bill_items
+        const record = await read('bill_items', {
+          loan_no: formattedLoan.loan_no,
+          serial: formattedLoan.serial,
+        });
+        if (record?.[0].synced === 0) {
+          await query(
+            `DELETE from bills WHERE loan_no = ? AND serial = ?`,
+            [formattedLoan.loan_no, formattedLoan.serial],
+            true
+          );
+        } else {
+          await query(
+            `UPDATE bill_items
            SET synced  = 0,
                deleted = 1
            WHERE loan_no = ?
              AND serial = ?`,
-          [formattedLoan.loan_no, formattedLoan.serial],
-          true
-        );
+            [formattedLoan.loan_no, formattedLoan.serial],
+            true
+          );
+        }
         for (const item of formatterProduct) {
           await create('bill_items', item);
         }

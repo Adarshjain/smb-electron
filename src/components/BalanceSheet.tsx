@@ -138,21 +138,22 @@ export default function BalanceSheet() {
         { code: number; name: string; net: number }[]
       >(
         `SELECT ah.code,
-                    ah.name,
-                    -(SUM(de.credit) - SUM(de.debit)) AS net
-             FROM account_head AS ah
-                    LEFT JOIN daily_entries AS de
-                              ON ah.code = de.main_code
-                                AND de.company = ?
-                                AND de.date >= ?
-                                AND de.date <= ?
-             WHERE ah.company = ?
-               AND ah.hisaab_group = 'Capital Account'
-             GROUP BY ah.code, ah.name, ah.hisaab_group
-             HAVING (SUM(de.debit) IS NOT NULL
-               OR SUM(de.credit) IS NOT NULL)
-                AND net != 0
-             ORDER BY ah.name;`,
+                ah.name,
+                -(SUM(de.credit) - SUM(de.debit)) AS net
+         FROM account_head AS ah
+                LEFT JOIN daily_entries AS de
+                          ON ah.code = de.main_code
+                            AND de.company = ?
+                            AND de.date >= ?
+                            AND de.date <= ?
+         WHERE ah.company = ?
+           AND ah.hisaab_group = 'Capital Account'
+           AND de.deleted IS NULL
+         GROUP BY ah.code, ah.name, ah.hisaab_group
+         HAVING (SUM(de.debit) IS NOT NULL
+           OR SUM(de.credit) IS NOT NULL)
+            AND net != 0
+         ORDER BY ah.name;`,
         [company.name, startDate, endDate, company.name]
       );
       const entriesByHisaabGroupQuery = query<
@@ -167,6 +168,7 @@ export default function BalanceSheet() {
                                 ON ah.code = de.main_code
                                   AND de.company = ?
                                   AND de.date <= ?
+                                  AND de.deleted IS NULL
                WHERE ah.company = ?
                  AND ah.hisaab_group NOT IN ('Income', 'Expenses', 'Capital Account')
                GROUP BY ah.code, ah.name, ah.hisaab_group, ah.opening_balance
