@@ -121,9 +121,11 @@ export default function Cashbook() {
       errorToast(error);
     }
   }, [company?.name, currentAccountHead?.code, date]);
+
   useEffect(() => {
     void loadAccountHeads();
   }, [loadAccountHeads]);
+
   useEffect(() => {
     void loadOpeningBalance();
   }, [loadOpeningBalance]);

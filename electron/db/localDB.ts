@@ -284,22 +284,46 @@ export function deleteRecord<K extends TableName>(
   const pkFields = TablesSQliteSchema[table].primary.filter(
     (key) => key !== 'deleted'
   );
+
   if (!pkFields) {
     throw new Error(`Primary key fields not defined for table ${table}`);
   }
 
-  const whereClauses = pkFields.map((field) => `${field} = ?`).join(' AND ');
+  const whereClause = pkFields.map((f) => `${f} = ?`).join(' AND ');
   const whereValues = pkFields.map(
     (field) => record[field as keyof TablesDelete[K]]
   );
 
-  const sql = `UPDATE ${table}
-     SET synced  = 0,
-         deleted = 1
-     WHERE ${whereClauses}`;
+  const transaction = db.transaction(() => {
+    if (!db) return null;
 
-  const stmt = db.prepare(sql);
-  stmt.run(...whereValues);
+    const selectSql = `SELECT synced FROM ${table} WHERE ${whereClause}`;
+    const existing = db.prepare(selectSql).get(...whereValues) as {
+      synced: 0 | 1;
+    } | null;
+
+    if (!existing) {
+      throw new Error(`Record not found in table ${table}`);
+    }
+
+    let sql: string;
+
+    if (existing.synced === 0) {
+      sql = `DELETE
+             FROM ${table}
+             WHERE ${whereClause}`;
+    } else {
+      sql = `UPDATE ${table}
+             SET synced  = 0,
+                 deleted = 1
+             WHERE ${whereClause}`;
+    }
+
+    db.prepare(sql).run(...whereValues);
+  });
+
+  transaction();
+
   return null;
 }
 
