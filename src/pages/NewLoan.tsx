@@ -368,6 +368,7 @@ export default function NewLoan() {
       return;
     }
     setIsCommitting(true);
+    debugger;
     data ??= getValues();
     let isNumberSwitch = false;
     if (isEditMode) {
@@ -433,7 +434,7 @@ export default function NewLoan() {
         });
         if (record?.[0].synced === 0) {
           await query(
-            `DELETE from bills WHERE loan_no = ? AND serial = ?`,
+            `DELETE from main.bill_items WHERE loan_no = ? AND serial = ?`,
             [formattedLoan.loan_no, formattedLoan.serial],
             true
           );
