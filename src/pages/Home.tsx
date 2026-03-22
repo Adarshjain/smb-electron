@@ -154,6 +154,9 @@ export function Home() {
             <DropdownMenuItem onClick={() => void navigate('/name-corrector')}>
               Name Corrector
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void navigate('/customer-crud')}>
+              Customer Editor
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => void navigate('/old-loans')}>
               Old Loans
             </DropdownMenuItem>

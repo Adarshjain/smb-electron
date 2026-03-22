@@ -55,13 +55,6 @@ export default function Settings() {
         <div className="text-2xl font-bold tracking-tight ml-4">Settings</div>
       </div>
       <CompanySettings />
-      <Button
-        variant="outline"
-        className="w-32"
-        onClick={() => void navigate('/customer-crud')}
-      >
-        Customers
-      </Button>
       <SyncStatus />
       <Button variant="outline" className="w-32" onClick={() => void sync()}>
         Back Up
