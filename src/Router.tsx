@@ -15,6 +15,7 @@ import ItemsMaster from '@/components/ItemsMaster.tsx';
 import Dashboard from '@/components/Dashboard.tsx';
 import OldLoans from '@/components/OldLoans.tsx';
 import ReleaseInterest from '@/components/ReleaseInterest.tsx';
+import NameCorrector from '@/components/NameCorrector.tsx';
 
 // Simple loading fallback
 function PageLoader() {
@@ -35,6 +36,7 @@ export function Router() {
             <Route path="/table-view" element={<TableView />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/other-customers" element={<OtherCustomer />} />
+            <Route path="/name-corrector" element={<NameCorrector />} />
             <Route path="/new-loan" element={<NewLoan />} />
             <Route path="/release-loan" element={<ReleaseLoan />} />
             <Route path="/day-book" element={<DayBook />} />

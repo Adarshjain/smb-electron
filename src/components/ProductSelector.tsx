@@ -28,6 +28,7 @@ export default memo(function ProductSelector({
   autoFocus,
   autoConvert,
   allowTempValues = false,
+  popoverWidth,
 }: ProductSelectorProps) {
   const [search, setSearch] = useState('');
 
@@ -75,6 +76,7 @@ export default memo(function ProductSelector({
       autoConvert={autoConvert}
       value={value}
       allowTempValues={allowTempValues}
+      dropdownWidth={popoverWidth}
     />
   );
 });

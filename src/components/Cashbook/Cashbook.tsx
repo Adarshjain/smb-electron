@@ -228,7 +228,7 @@ export default function Cashbook() {
       />
       {currentAccountHead?.name === 'CASH' ||
       currentAccountHead?.name === 'LOAN ACCOUNT' ? (
-        <div className="mx-auto pb-20 w-1/2">
+        <div className="mx-auto pb-20 w-1/3">
           <Table className="table-auto">
             <TableHeader>
               <TableRow>
