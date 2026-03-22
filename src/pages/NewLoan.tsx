@@ -554,6 +554,7 @@ export default function NewLoan() {
         net_weight: item.net_weight.toFixed(3),
       }))
     );
+    setValue('metal_type', loan.metal_type);
     setValue('loan_amount', loan.loan_amount.toFixed(2));
     setValue('interest_rate', loan.interest_rate.toFixed(2));
     setValue('doc_charges', loan.doc_charges.toFixed(2));
