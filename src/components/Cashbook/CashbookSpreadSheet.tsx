@@ -352,7 +352,7 @@ export default function CashbookSpreadSheet({
             return row.sort_order;
           return `${row.accountHead.code}-${row.sort_order}`;
         }}
-        className="rdg-light pb-20 !bg-transparent m-3 w-[min-content]"
+        className="rdg-light !bg-transparent m-3 w-[min-content]"
         style={{ fontSize: '14px' }}
         rowHeight={42}
         headerRowHeight={35}

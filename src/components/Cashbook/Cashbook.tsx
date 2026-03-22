@@ -4,7 +4,7 @@ import { useTabs } from '@/TabManager.tsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Tables } from '../../../tables';
 import { query, read } from '@/hooks/dbUtil.ts';
-import { errorToast } from '@/lib/myUtils.tsx';
+import { errorToast, formatCurrency } from '@/lib/myUtils.tsx';
 import {
   Select,
   SelectContent,
@@ -14,6 +14,14 @@ import {
 } from '@/components/ui/select.tsx';
 import DatePicker from '@/components/DatePicker.tsx';
 import { updateTodayLoansAndReleases } from '@/components/Cashbook/utils/cashbookUtils.ts';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table.tsx';
 
 const CASH_ACCOUNT_NAME = 'CASH';
 
@@ -36,6 +44,47 @@ export default function Cashbook() {
     () => accountHeads.filter((head) => head.code !== currentAccountHead?.code),
     [accountHeads, currentAccountHead?.code]
   );
+
+  const [dayBookValues, setDayBookValues] = useState<{
+    loanAmount: number;
+    releaseAmount: number;
+    interestAmount: number;
+  }>({
+    loanAmount: 0,
+    releaseAmount: 0,
+    interestAmount: 0,
+  });
+
+  useEffect(() => {
+    const run = async () => {
+      debugger;
+      const [loans, releases] = await Promise.all([
+        query<[{ loan_amount: number }]>(
+          `SELECT SUM(loan_amount) as loan_amount
+         from bills
+         where date = ?
+           AND company = ?
+           and deleted IS NULL;`,
+          [date, company?.name]
+        ),
+        query<[{ loan_amount: number; interest_amount: number }]>(
+          `SELECT SUM(loan_amount) as loan_amount, SUM(interest_amount) as interest_amount
+         from releases
+         where date = ?
+           AND company = ?
+           and deleted IS NULL;`,
+          [date, company?.name]
+        ),
+      ]);
+
+      setDayBookValues({
+        loanAmount: loans?.[0].loan_amount ?? 0,
+        releaseAmount: releases?.[0].loan_amount ?? 0,
+        interestAmount: releases?.[0].interest_amount ?? 0,
+      });
+    };
+    void run();
+  }, [company, date]);
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
@@ -177,6 +226,37 @@ export default function Cashbook() {
         }}
         refreshEntries={loadDailyEntries}
       />
+      {currentAccountHead?.name === 'CASH' ||
+      currentAccountHead?.name === 'LOAN ACCOUNT' ? (
+        <div className="mx-auto pb-20 w-1/2">
+          <Table className="table-auto">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="border-r text-center">
+                  Loan Amount
+                </TableHead>
+                <TableHead className="border-r text-center">
+                  Release Amount
+                </TableHead>
+                {/*<TableHead className="border-r text-center">Interest</TableHead>*/}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell className="border-r text-right">
+                  {formatCurrency(dayBookValues.loanAmount)}
+                </TableCell>
+                <TableCell className="border-r text-right">
+                  {formatCurrency(dayBookValues.releaseAmount)}
+                </TableCell>
+                {/*<TableCell className="border-r text-right">*/}
+                {/*  {formatCurrency(dayBookValues.interestAmount)}*/}
+                {/*</TableCell>*/}
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      ) : null}
     </div>
   );
 }
