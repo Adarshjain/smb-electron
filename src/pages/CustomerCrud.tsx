@@ -10,7 +10,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
 import { useCallback, useEffect, useState } from 'react';
-import { create, read, update } from '@/hooks/dbUtil.ts';
+import { create, deleteRecord, query, read, update } from '@/hooks/dbUtil.ts';
 import { errorToast, successToast, uniqueV6 } from '@/lib/myUtils.tsx';
 import ProductSelector from '@/components/ProductSelector.tsx';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import CustomerPicker from '@/components/CustomerPicker.tsx';
 import { Label } from '@/components/ui/label';
 import GoHome from '@/components/GoHome.tsx';
-import { PlusIcon } from 'lucide-react';
+import { PlusIcon, Trash2Icon } from 'lucide-react';
 import { useTabs } from '@/TabManager.tsx';
 import AreaCrud from '@/pages/AreaCrud.tsx';
 
@@ -174,6 +174,25 @@ export default function CustomerCrud({
     })();
   }, [handleSubmit, onSubmit]);
 
+  const onDelete = useCallback(async () => {
+    if (!id) return;
+    try {
+      const bills = await query<{ serial: string }[]>(
+        `SELECT serial FROM bills WHERE customer_id = ? AND deleted IS NULL LIMIT 1`,
+        [id]
+      );
+      if (bills?.length) {
+        errorToast('Cannot delete: Customer has loans');
+        return;
+      }
+      await deleteRecord('customers', { id });
+      successToast('Customer Deleted!');
+      reset(defaultValues);
+    } catch (error) {
+      errorToast(error);
+    }
+  }, [defaultValues, id, reset]);
+
   const { setFormRef, next } = useEnterNavigation<keyof Customer>({
     fields: [
       'name',
@@ -199,13 +218,26 @@ export default function CustomerCrud({
         </div>
       </div>
       {!cantEdit ? (
-        <CustomerPicker
-          inputClassName="w-[370px]"
-          placeholder="Search Customer"
-          onSelect={(customer: Tables['customers']) =>
-            void onCustomerSelect(customer)
-          }
-        />
+        <div className="flex gap-2 items-center">
+          <CustomerPicker
+            inputClassName="w-[370px]"
+            placeholder="Search Customer"
+            onSelect={(customer: Tables['customers']) =>
+              void onCustomerSelect(customer)
+            }
+          />
+          {id && (
+            <Button
+              variant="destructive"
+              onClick={(e) => {
+                e.preventDefault();
+                void onDelete();
+              }}
+            >
+              <Trash2Icon className="h-4 w-4" /> Delete
+            </Button>
+          )}
+        </div>
       ) : null}
       <div className="flex gap-2">
         <Label className="w-[70px]">Name</Label>
