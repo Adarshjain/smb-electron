@@ -226,17 +226,16 @@ export default function CustomerCrud({
               void onCustomerSelect(customer)
             }
           />
-          {id && (
-            <Button
-              variant="destructive"
-              onClick={(e) => {
-                e.preventDefault();
-                void onDelete();
-              }}
-            >
-              <Trash2Icon className="h-4 w-4" /> Delete
-            </Button>
-          )}
+          <Button
+            disabled={!id}
+            variant="destructive"
+            onClick={(e) => {
+              e.preventDefault();
+              void onDelete();
+            }}
+          >
+            <Trash2Icon className="h-4 w-4" /> Delete
+          </Button>
         </div>
       ) : null}
       <div className="flex gap-2">
