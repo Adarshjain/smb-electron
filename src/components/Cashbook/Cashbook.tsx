@@ -57,7 +57,6 @@ export default function Cashbook() {
 
   useEffect(() => {
     const run = async () => {
-      debugger;
       const [loans, releases] = await Promise.all([
         query<[{ loan_amount: number }]>(
           `SELECT SUM(loan_amount) as loan_amount

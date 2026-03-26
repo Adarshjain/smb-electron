@@ -46,11 +46,14 @@ export default function DatePicker({
       )}
     />
   );
+
+  const day = <span className="pl-2 min-w-25">{getDay(value)}</span>;
+
   if (!navigated)
     return (
       <div>
         {input}
-        {showDay ? <span className="pl-2">{getDay(value)}</span> : null}
+        {showDay ? day : null}
       </div>
     );
   return (
@@ -70,7 +73,7 @@ export default function DatePicker({
       >
         <ArrowRight />
       </Button>
-      {showDay ? <span className="pl-2">{getDay(value)}</span> : null}
+      {showDay ? day : null}
     </div>
   );
 }

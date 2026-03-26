@@ -368,7 +368,6 @@ export default function NewLoan() {
       return;
     }
     setIsCommitting(true);
-    debugger;
     data ??= getValues();
     let isNumberSwitch = false;
     if (isEditMode) {
