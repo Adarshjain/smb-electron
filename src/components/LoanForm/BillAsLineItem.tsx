@@ -86,23 +86,21 @@ export default function BillAsLineItem({
   );
 
   useEffect(() => {
-    setTotals({
-      principle: 0,
-      total: 0,
-      interest: 0,
-    });
-    setTotalsReleased({
-      principle: 0,
-      total: 0,
-      interest: 0,
-    });
-  }, [bills]);
+    let cancelled = false;
 
-  useEffect(() => {
     const run = async () => {
-      let processed: EnrichedBill[] = [];
-      // Precompute all async values before rendering
-      for (const bill of bills) {
+      // Parallel async: fire all calculateLoanAmounts at once instead of sequential await
+      const loanAmountPromises = bills.map((bill) =>
+        calculateLoanAmounts(bill.loan_amount, bill.metal_type, {
+          customInterestRate: bill.interest_rate,
+        })
+      );
+      const loanResults = await Promise.all(loanAmountPromises);
+
+      if (cancelled) return;
+
+      // Synchronous processing — no setState in the loop
+      let processed: EnrichedBill[] = bills.map((bill, i) => {
         const months = getMonthDiff(bill.date, bill.releasedEntry?.date);
         const interest = getInterest(
           bill.loan_amount,
@@ -113,29 +111,11 @@ export default function BillAsLineItem({
           bill.bill_items,
           bill.metal_type
         );
-        const { firstMonthInterest, docCharges } = (await calculateLoanAmounts(
-          bill.loan_amount,
-          bill.metal_type,
-          {
-            customInterestRate: bill.interest_rate,
-          }
-        )) ?? { firstMonthInterest: 0, docCharges: 0 };
-
-        if (bill.releasedEntry?.date !== undefined) {
-          setTotalsReleased((tempTotal) => ({
-            principle: tempTotal.principle + bill.loan_amount,
-            interest: tempTotal.interest + interest,
-            total: tempTotal.total + interest + bill.loan_amount,
-          }));
-        } else {
-          setTotals((tempTotal) => ({
-            principle: tempTotal.principle + bill.loan_amount,
-            interest: tempTotal.interest + interest,
-            total: tempTotal.total + interest + bill.loan_amount,
-          }));
-        }
-
-        processed.push({
+        const { firstMonthInterest, docCharges } = loanResults[i] ?? {
+          firstMonthInterest: 0,
+          docCharges: 0,
+        };
+        return {
           ...bill,
           months,
           interest,
@@ -144,27 +124,44 @@ export default function BillAsLineItem({
           description,
           weight,
           rowSpan: bill.billCount,
-        });
-      }
-      const unReleased: EnrichedBill[] = [];
-      const released: EnrichedBill[] = [];
+        };
+      });
+
       if (currentBillNumber) {
         processed = pullCurrentBillToTop(processed, currentBillNumber);
       }
 
-      processed.forEach((bill) => {
+      // Split and compute totals in one pass
+      const unReleased: EnrichedBill[] = [];
+      const released: EnrichedBill[] = [];
+      const newTotals = { principle: 0, interest: 0, total: 0 };
+      const newTotalsReleased = { principle: 0, interest: 0, total: 0 };
+
+      for (const bill of processed) {
         if (bill.releasedEntry?.date !== undefined) {
           released.push(bill);
+          newTotalsReleased.principle += bill.loan_amount;
+          newTotalsReleased.interest += bill.interest;
+          newTotalsReleased.total += bill.interest + bill.loan_amount;
         } else {
           unReleased.push(bill);
+          newTotals.principle += bill.loan_amount;
+          newTotals.interest += bill.interest;
+          newTotals.total += bill.interest + bill.loan_amount;
         }
-      });
+      }
 
+      // Single batch of state updates (React batches these automatically)
       setEnrichedBills(unReleased);
       setEnrichedBillsReleased(released);
+      setTotals(newTotals);
+      setTotalsReleased(newTotalsReleased);
     };
 
     void run();
+    return () => {
+      cancelled = true;
+    };
   }, [bills, calculateLoanAmounts, currentBillNumber, pullCurrentBillToTop]);
 
   const renderBillDescription = (bill: EnrichedBill) => {

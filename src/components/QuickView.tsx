@@ -23,17 +23,18 @@ export type IQuickView = z.infer<typeof QuickViewSchema>;
 
 export default memo(function QuickView() {
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [currentBillNumber, setCurrentBillNumber] = useState<
+    [string, number] | undefined
+  >(undefined);
   const defaultValues: IQuickView = {
     serial: '',
     loan_no: '',
   };
 
-  const { control, setValue, getValues, watch } = useForm<IQuickView>({
+  const { control, setValue, getValues } = useForm<IQuickView>({
     resolver: zodResolver(QuickViewSchema),
     defaultValues,
   });
-
-  const serialNumber = watch(['serial', 'loan_no']);
 
   const { setFormRef, next } = useEnterNavigation({
     fields: ['serial', 'loan_no'],
@@ -86,6 +87,7 @@ export default memo(function QuickView() {
         );
         if (readBillsResponse?.length) {
           setCustomerId(readBillsResponse[0].customer_id);
+          setCurrentBillNumber([serial, parseInt(loanNo)]);
         }
       } catch (error) {
         errorToast(error);
@@ -120,7 +122,7 @@ export default memo(function QuickView() {
           showCustomerInfo
           customerId={customerId}
           skipReleased={false}
-          currentBillNumber={[serialNumber[0], parseInt(serialNumber[1] ?? 0)]}
+          currentBillNumber={currentBillNumber}
         />
       )}
     </div>
