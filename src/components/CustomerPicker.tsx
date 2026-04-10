@@ -60,7 +60,7 @@ export default memo(function CustomerPicker({
       const run = async () => {
         // Use parameterized query to prevent SQL injection and allow caching
         const results = await query<LocalTables<'customers'>[]>(
-          `SELECT * FROM customers WHERE name LIKE ? AND deleted IS NULL ORDER BY name, area LIMIT 50`,
+          `SELECT * FROM customers WHERE name LIKE ? AND deleted IS NULL ORDER BY name, area`,
           [`${search}%`]
         );
         if (active) setCustomers(results ?? []);
