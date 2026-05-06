@@ -8,7 +8,7 @@ import type {
   Tables,
 } from '../../tables';
 import MyCache from '../../MyCache.ts';
-import { batchQuery, query, read } from '@/hooks/dbUtil.ts';
+import { batchQuery, query, read, update } from '@/hooks/dbUtil.ts';
 import { toastStyles } from '@/constants/loanForm.ts';
 import { cn } from '@/lib/utils.ts';
 import { captureException } from '@/lib/sentry.ts';
@@ -613,6 +613,47 @@ export async function getNextExistingBill(
 
   return null;
 }
+export async function backfillReleaseTaxInterest(): Promise<{
+  scanned: number;
+  updated: number;
+  failed: number;
+}> {
+  const releases = await read('releases', {});
+  if (!releases?.length) {
+    return { scanned: 0, updated: 0, failed: 0 };
+  }
+
+  const newValueByKey = new Map<string, number>();
+  const toUpdate = releases.filter((r) => {
+    const monthsDiff = getTaxedMonthDiff(r.loan_date, r.date);
+    const newVal = (r.loan_amount * monthsDiff) / 100;
+    newValueByKey.set(`${r.serial}-${r.loan_no}`, newVal);
+    return Math.abs(newVal - r.tax_interest_amount) > 0.005;
+  });
+
+  let updated = 0;
+  let failed = 0;
+  const chunkSize = 50;
+  for (let i = 0; i < toUpdate.length; i += chunkSize) {
+    const chunk = toUpdate.slice(i, i + chunkSize);
+    const results = await Promise.allSettled(
+      chunk.map((r) =>
+        update('releases', {
+          serial: r.serial,
+          loan_no: r.loan_no,
+          tax_interest_amount: newValueByKey.get(`${r.serial}-${r.loan_no}`)!,
+        })
+      )
+    );
+    for (const res of results) {
+      if (res.status === 'fulfilled') updated++;
+      else failed++;
+    }
+  }
+
+  return { scanned: releases.length, updated, failed };
+}
+
 export async function getPreviousExistingBill(
   initialSerial: string,
   initialLoanNo: number,

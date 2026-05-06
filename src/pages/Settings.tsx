@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button.tsx';
 import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
 import { AlertTriangleIcon } from 'lucide-react';
 import {
+  backfillReleaseTaxInterest,
   errorToast,
   successToast,
   tables,
@@ -21,6 +22,27 @@ import { useState } from 'react';
 export default function Settings() {
   const navigate = useNavigate();
   const [selectedTable, setSelectedTable] = useState<TableName>('bills');
+  const [backfilling, setBackfilling] = useState(false);
+
+  const runBackfillReleaseTaxInterest = async () => {
+    setBackfilling(true);
+    try {
+      const { scanned, updated, failed } = await backfillReleaseTaxInterest();
+      if (failed > 0) {
+        errorToast(
+          `Backfill finished with errors — scanned ${scanned}, updated ${updated}, failed ${failed}`
+        );
+      } else {
+        successToast(
+          `Backfill complete — scanned ${scanned}, updated ${updated}`
+        );
+      }
+    } catch (e) {
+      errorToast(e);
+    } finally {
+      setBackfilling(false);
+    }
+  };
 
   const sync = async () => {
     try {
@@ -74,6 +96,16 @@ export default function Settings() {
           Back Up `{selectedTable}`
         </Button>
       </div>
+      <ConfirmationDialog
+        trigger={
+          <Button variant="outline" className="w-min" disabled={backfilling}>
+            {backfilling ? 'Backfilling...' : 'Backfill Release Tax Interest'}
+          </Button>
+        }
+        title="Recompute tax_interest_amount for all releases?"
+        onConfirm={runBackfillReleaseTaxInterest}
+        confirmText="Run"
+      />
       <div className="text-xl font-medium flex items-center gap-1 mt-12">
         <AlertTriangleIcon size={20} /> Danger Zone
       </div>
