@@ -98,10 +98,13 @@ export class SyncManager {
 
     try {
       for (const tableName of this.tables) {
+        if (tableName === 'daily_entries') {
+          continue;
+        }
         await this.pushChanges(tableName);
       }
+      await this.pushChanges('daily_entries');
       this.lastSyncTime = new Date();
-      this.scheduleNextSync();
       this.onBackupEnd?.({ status: true, summary });
     } catch (error) {
       this.onBackupEnd?.({
@@ -111,6 +114,7 @@ export class SyncManager {
       throw error;
     } finally {
       this.running = false;
+      this.scheduleNextSync();
     }
   }
 
