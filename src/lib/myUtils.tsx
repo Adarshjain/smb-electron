@@ -240,8 +240,7 @@ export function getMonthDiff(from: string | Date, to?: string | Date): number {
 export function getTaxedMonthDiff(from: string | Date, to?: string | Date) {
   const start = new Date(from);
   const end = new Date(to ?? new Date());
-
-  const totalDays = differenceInCalendarDays(start, end);
+  const totalDays = differenceInCalendarDays(end, start);
   if (totalDays === 0) return 1;
 
   const months = differenceInMonths(end, start);
@@ -252,9 +251,11 @@ export function getTaxedMonthDiff(from: string | Date, to?: string | Date) {
   }
 
   const extraDays = differenceInCalendarDays(end, adjusted);
-
   // Relief for one day
-  return extraDays <= 1 ? months : months + 1;
+  if (extraDays <= 1) {
+    return months === 0 ? 1 : months;
+  }
+  return months + 1;
 }
 
 export function adjustEndDate(startDate: Date, endDate: Date, n: number): Date {

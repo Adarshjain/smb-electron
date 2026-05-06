@@ -56,10 +56,12 @@ describe('tax month diff', () => {
     ['2026-02-28', '2026-03-30', 2],
     ['2026-04-30', '2026-05-02', 1],
     ['2026-05-02', '2026-05-02', 1], // same day release
+    ['2026-04-30', '2026-05-01', 1],
   ];
   it('solve cases', () => {
-    cases.forEach(([from, to, count]) =>
-      expect(getTaxedMonthDiff(from, to)).toEqual(count)
-    );
+    cases.forEach(([from, to, count]) => {
+      // console.log(`From ${from} to ${to} should be ${count} months`);
+      expect(getTaxedMonthDiff(from, to)).toEqual(count);
+    });
   });
 });
