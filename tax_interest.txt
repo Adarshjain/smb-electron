@@ -1,0 +1,105 @@
+------------------------------------------------------------------ CHECK DIFF
+WITH releases_agg AS (
+   SELECT
+     date,
+     company,
+     FLOOR(SUM(tax_interest_amount)) AS releases_interest
+   FROM releases
+   WHERE deleted IS NULL
+     AND date >= '2025-12-01'
+   GROUP BY date, company
+ ),
+ entries_agg AS (
+   SELECT
+     date,
+     company,
+     SUM(debit) AS entries_debit
+   FROM daily_entries
+   WHERE main_code = 9
+     AND sub_code = 14
+     AND deleted IS NULL
+     AND date >= '2025-12-01'
+   GROUP BY date, company
+ )
+ SELECT
+   COALESCE(r.date, e.date)         AS date,
+   COALESCE(r.company, e.company)   AS company,
+   COALESCE(r.releases_interest, 0) AS releases_interest,
+   COALESCE(e.entries_debit, 0)     AS entries_debit,
+   COALESCE(r.releases_interest, 0) - COALESCE(e.entries_debit, 0) AS diff
+ FROM releases_agg r
+ FULL OUTER JOIN entries_agg e
+   ON r.date = e.date
+  AND r.company = e.company
+ WHERE ABS(COALESCE(r.releases_interest, 0) - COALESCE(e.entries_debit, 0)) > 0.005
+ ORDER BY diff DESC;
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------- Duplicate CHeck
+ SELECT date, company,
+        SUM(CASE WHEN main_code = 9  AND sub_code = 14 THEN 1 ELSE 0 END) AS debit_rows,
+        SUM(CASE WHEN main_code = 14 AND sub_code = 9  THEN 1 ELSE 0 END) AS credit_rows
+ FROM daily_entries
+ WHERE deleted IS NULL
+   AND date >= '2025-12-01'
+   AND ((main_code = 9  AND sub_code = 14)
+     OR (main_code = 14 AND sub_code = 9))
+ GROUP BY date, company
+ HAVING debit_rows > 1 OR credit_rows > 1;
+------------------------------------------------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------- Update Values
+
+BEGIN;
+
+ -- Debit side: main_code = 9, sub_code = 14
+ UPDATE daily_entries
+ SET debit = (
+       SELECT FLOOR(SUM(r.tax_interest_amount))
+       FROM releases r
+       WHERE r.date    = daily_entries.date
+         AND r.company = daily_entries.company
+         AND r.deleted IS NULL
+     ),
+     synced = 0
+ WHERE main_code = 9
+   AND sub_code  = 14
+   AND deleted IS NULL
+   AND date >= '2025-12-01'
+   AND ABS(
+         debit - COALESCE(
+           (SELECT FLOOR(SUM(r.tax_interest_amount))
+              FROM releases r
+             WHERE r.date    = daily_entries.date
+               AND r.company = daily_entries.company
+               AND r.deleted IS NULL),
+           0)
+       ) > 0.005;
+
+ -- Credit side: main_code = 14, sub_code = 9 (mirror row)
+ UPDATE daily_entries
+ SET credit = (
+       SELECT FLOOR(SUM(r.tax_interest_amount))
+       FROM releases r
+       WHERE r.date    = daily_entries.date
+         AND r.company = daily_entries.company
+         AND r.deleted IS NULL
+     ),
+     synced = 0
+ WHERE main_code = 14
+   AND sub_code  = 9
+   AND deleted IS NULL
+   AND date >= '2025-12-01'
+   AND ABS(
+         credit - COALESCE(
+           (SELECT FLOOR(SUM(r.tax_interest_amount))
+              FROM releases r
+             WHERE r.date    = daily_entries.date
+               AND r.company = daily_entries.company
+               AND r.deleted IS NULL),
+           0)
+       ) > 0.005;
+
+ COMMIT;
+------------------------------------------------------------------------------------------------------------------------------------
