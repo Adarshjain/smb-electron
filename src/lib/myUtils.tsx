@@ -12,6 +12,12 @@ import { batchQuery, query, read } from '@/hooks/dbUtil.ts';
 import { toastStyles } from '@/constants/loanForm.ts';
 import { cn } from '@/lib/utils.ts';
 import { captureException } from '@/lib/sentry.ts';
+import {
+  addMonths,
+  differenceInCalendarDays,
+  differenceInMonths,
+  isBefore,
+} from 'date-fns';
 
 export const tables: TableName[] = [
   'areas',
@@ -235,37 +241,20 @@ export function getTaxedMonthDiff(from: string | Date, to?: string | Date) {
   const start = new Date(from);
   const end = new Date(to ?? new Date());
 
-  if (end <= start) return 0;
+  const totalDays = differenceInCalendarDays(start, end);
+  if (totalDays === 0) return 1;
 
-  const startYear = start.getFullYear();
-  const startMonth = start.getMonth();
-  const startDay = start.getDate();
+  const months = differenceInMonths(end, start);
+  const adjusted = addMonths(start, months);
 
-  const endYear = end.getFullYear();
-  const endMonth = end.getMonth();
-  const endDay = end.getDate();
-
-  // Base month difference
-  let months = (endYear - startYear) * 12 + (endMonth - startMonth);
-
-  const dayDiff = endDay - startDay;
-
-  // Special case: exactly +1 day → ignore extra
-  if (dayDiff === 1) {
-    return months;
+  if (!isBefore(adjusted, end)) {
+    return months; // exact match, no remainder
   }
 
-  // If extra days beyond start day → count as extra month
-  if (dayDiff > 1) {
-    months += 1;
-  }
+  const extraDays = differenceInCalendarDays(end, adjusted);
 
-  // If end day is before start day → reduce one month
-  if (dayDiff < 0) {
-    months -= 1;
-  }
-
-  return months;
+  // Relief for one day
+  return extraDays <= 1 ? months : months + 1;
 }
 
 export function adjustEndDate(startDate: Date, endDate: Date, n: number): Date {

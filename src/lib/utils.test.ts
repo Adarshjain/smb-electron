@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cn } from './utils';
-import { calculateMonths } from '@/lib/myUtils.tsx';
+import { getTaxedMonthDiff } from '@/lib/myUtils.tsx';
 
 describe('cn utility function', () => {
   it('should merge class names', () => {
@@ -51,13 +51,15 @@ describe('tax month diff', () => {
     ['2025-02-02', '2025-02-06', 1],
     ['2025-02-02', '2025-04-02', 2],
     ['2025-02-02', '2025-05-07', 4],
-    ['2025-02-02', '2025-05-03', 3],
+    ['2025-02-02', '2025-05-03', 3], // Relief for just one day - dont change it to 4
     ['2025-02-02', '2025-05-02', 3],
     ['2026-02-28', '2026-03-30', 2],
+    ['2026-04-30', '2026-05-02', 1],
+    ['2026-05-02', '2026-05-02', 1], // same day release
   ];
   it('solve cases', () => {
     cases.forEach(([from, to, count]) =>
-      expect(calculateMonths(from, to)).toEqual(count)
+      expect(getTaxedMonthDiff(from, to)).toEqual(count)
     );
   });
 });
