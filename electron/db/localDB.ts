@@ -187,6 +187,70 @@ export function createBatched<K extends TableName>(
   }
 }
 
+export interface DailyEntryPair {
+  main_code: number;
+  sub_code: number;
+  credit: number;
+  debit: number;
+  description: string | null;
+}
+
+// Inserts each input as a main + inverted pair, sharing one sort_order.
+// Computes the next sort_order from MAX(sort_order) WHERE date+company,
+// inside the same transaction as the inserts. better-sqlite3 transactions
+// serialize, so concurrent callers cannot race on the MAX read.
+export function createDailyEntries(
+  date: string,
+  company: string,
+  pairs: DailyEntryPair[]
+): null {
+  if (!db || !pairs.length) return null;
+
+  const insertSql = `INSERT INTO daily_entries
+      (date, company, main_code, sub_code, credit, debit, description, sort_order, synced, deleted)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, NULL)`;
+
+  const transaction = db.transaction(() => {
+    if (!db) return;
+    const row = db
+      .prepare(
+        `SELECT COALESCE(MAX(sort_order), 0) AS max
+         FROM daily_entries
+         WHERE date = ? AND company = ? AND deleted IS NULL`
+      )
+      .get(date, company) as { max: number };
+    let next = row.max + 1;
+
+    const insert = db.prepare(insertSql);
+    for (const p of pairs) {
+      insert.run(
+        date,
+        company,
+        p.main_code,
+        p.sub_code,
+        p.credit,
+        p.debit,
+        p.description,
+        next
+      );
+      insert.run(
+        date,
+        company,
+        p.sub_code,
+        p.main_code,
+        p.debit,
+        p.credit,
+        p.description,
+        next
+      );
+      next += 1;
+    }
+  });
+
+  transaction();
+  return null;
+}
+
 export function markAsSynced<K extends TableName>(
   table: K,
   record: LocalTables<K>

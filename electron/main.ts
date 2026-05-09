@@ -7,6 +7,7 @@ import type { BackupEndResponse } from './db/SyncManager';
 import { SyncManager } from './db/SyncManager';
 import {
   create,
+  createDailyEntries,
   deleteRecord,
   executeBatch,
   executeSql,
@@ -15,6 +16,7 @@ import {
   tables,
   update,
 } from './db/localDB';
+import type { DailyEntryPair } from './db/localDB';
 import type {
   LocalTables,
   TableName,
@@ -525,6 +527,35 @@ ipcMain.handle(
             query,
             type: 'ipc-handler',
             arg: { query, params },
+          },
+        },
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+    }
+  }
+);
+
+ipcMain.handle(
+  'db:create-daily-entries',
+  (
+    _event: IpcMainInvokeEvent,
+    date: string,
+    company: string,
+    pairs: DailyEntryPair[]
+  ): ElectronToReactResponse<null> => {
+    try {
+      return { success: true, data: createDailyEntries(date, company, pairs) };
+    } catch (error) {
+      Sentry.captureException(error, {
+        contexts: {
+          operation: {
+            name: 'db:create-daily-entries',
+            type: 'ipc-handler',
+            arg: { date, company, count: pairs.length },
           },
         },
       });

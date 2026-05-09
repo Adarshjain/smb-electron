@@ -18,6 +18,26 @@ export const create = async <K extends TableName>(
   throw new Error(createResponse.error);
 };
 
+export interface DailyEntryPair {
+  main_code: number;
+  sub_code: number;
+  credit: number;
+  debit: number;
+  description: string | null;
+}
+
+export const createDailyEntries = async (
+  date: string,
+  company: string,
+  pairs: DailyEntryPair[]
+): Promise<null> => {
+  const response = await window.api.db.createDailyEntries(date, company, pairs);
+  if (response.success) {
+    return null;
+  }
+  throw new Error(response.error);
+};
+
 export const read = async <K extends TableName>(
   table: K,
   conditions: Partial<LocalTables<K>>,

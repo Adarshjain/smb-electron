@@ -1,12 +1,12 @@
-import {
-  errorToast,
-  jsNumberFix,
-  sortOrderPromise,
-  successToast,
-} from '@/lib/myUtils.tsx';
+import { errorToast, jsNumberFix, successToast } from '@/lib/myUtils.tsx';
 import type { CashbookRow } from '../types';
 import type { LocalTables, Tables } from '@/../tables';
-import { create, deleteRecord, query } from '@/hooks/dbUtil.ts';
+import {
+  createDailyEntries as createDailyEntriesAtomic,
+  type DailyEntryPair,
+  deleteRecord,
+  query,
+} from '@/hooks/dbUtil.ts';
 
 export const SORT_ORDER = {
   OPENING_BALANCE: -1,
@@ -127,42 +127,19 @@ export const validateRows = (rows: CashbookRow[]): boolean => {
 
 export const createDailyEntries = async (
   entries: CashbookRow[],
-  sortOrder: number,
   currentAccountHead: Tables['account_head'],
   date: string,
   company: string
 ): Promise<boolean> => {
   try {
-    const queries: PromiseLike<any>[] = [];
-    let latestSortOrder = sortOrder;
-    for (const entry of entries) {
-      const currentAccountCode = currentAccountHead.code;
-      const entryCode = (entry.accountHead as Tables['account_head']).code;
-      const main = create('daily_entries', {
-        main_code: currentAccountCode,
-        sub_code: entryCode,
-        description: entry.description,
-        credit: entry.credit ?? 0,
-        debit: entry.debit ?? 0,
-        sort_order: latestSortOrder,
-        date,
-        company,
-      });
-
-      const inverted = create('daily_entries', {
-        main_code: entryCode,
-        sub_code: currentAccountCode,
-        description: entry.description,
-        credit: entry.debit ?? 0,
-        debit: entry.credit ?? 0,
-        sort_order: latestSortOrder,
-        date,
-        company,
-      });
-      latestSortOrder += 1;
-      queries.push(main, inverted);
-    }
-    await Promise.all(queries);
+    const pairs: DailyEntryPair[] = entries.map((entry) => ({
+      main_code: currentAccountHead.code,
+      sub_code: (entry.accountHead as Tables['account_head']).code,
+      credit: entry.credit ?? 0,
+      debit: entry.debit ?? 0,
+      description: entry.description ?? null,
+    }));
+    await createDailyEntriesAtomic(date, company, pairs);
     return true;
   } catch (e) {
     errorToast(e);
@@ -240,29 +217,11 @@ const createDualEntry = async (
   debit: number,
   date: string,
   company: string,
-  description: string,
-  sort_order: number
+  description: string
 ) => {
-  await create('daily_entries', {
-    main_code: main_code,
-    sub_code: sub_code,
-    credit: credit,
-    debit: debit,
-    date,
-    company,
-    description: description,
-    sort_order: sort_order,
-  });
-  await create('daily_entries', {
-    main_code: sub_code,
-    sub_code: main_code,
-    credit: debit,
-    debit: credit,
-    date,
-    company,
-    description: description,
-    sort_order: sort_order,
-  });
+  await createDailyEntriesAtomic(date, company, [
+    { main_code, sub_code, credit, debit, description },
+  ]);
 };
 
 const updateDualEntry = async (
@@ -323,7 +282,6 @@ interface UpsertDualEntryParams {
   total: number | null;
   date: string;
   company: string;
-  sortOrder: number;
   mainAccountCode: number;
   subAccountCode: number;
   debitAmount: number;
@@ -336,7 +294,6 @@ export const upsertDualEntry = async ({
   total,
   date,
   company,
-  sortOrder,
   mainAccountCode,
   subAccountCode,
   debitAmount,
@@ -353,8 +310,7 @@ export const upsertDualEntry = async ({
       creditAmount,
       date,
       company,
-      description,
-      sortOrder
+      description
     );
     return;
   }
@@ -379,8 +335,7 @@ const updateLoan = async (
   loanEntries: LocalTables<'daily_entries'>[],
   loanTotal: number | null,
   date: string,
-  company: string,
-  sortOrder: number
+  company: string
 ) => {
   const existingLoanEntry = loanEntries.find((entry) =>
     entry.description?.toLowerCase().startsWith(LOAN_AMOUNT.toLowerCase())
@@ -395,18 +350,14 @@ const updateLoan = async (
     mainAccountCode: LOAN_ACCOUNT_CODE,
     subAccountCode: CASH_ACCOUNT_CODE,
     description: LOAN_AMOUNT,
-    sortOrder: sortOrder,
   });
-  if (!existingLoanEntry && loanTotal) sortOrder += 1;
-  return sortOrder;
 };
 
 const updateReleasesPrincipal = async (
   releaseEntries: LocalTables<'daily_entries'>[],
   releaseTotal: number | null,
   date: string,
-  company: string,
-  sortOrder: number
+  company: string
 ) => {
   const existingReleaseEntry = releaseEntries.find((entry) =>
     entry.description?.toLowerCase().startsWith(REDEMPTION_AMOUNT.toLowerCase())
@@ -421,18 +372,14 @@ const updateReleasesPrincipal = async (
     mainAccountCode: LOAN_ACCOUNT_CODE,
     subAccountCode: CASH_ACCOUNT_CODE,
     description: REDEMPTION_AMOUNT,
-    sortOrder: sortOrder,
   });
-  if (!existingReleaseEntry && releaseTotal) sortOrder += 1;
-  return sortOrder;
 };
 
 const updateReleasesInterest = async (
   releaseEntries: LocalTables<'daily_entries'>[],
   releaseTotal: number | null,
   date: string,
-  company: string,
-  sortOrder: number
+  company: string
 ) => {
   const existingReleaseEntry = releaseEntries.find((entry) =>
     entry.description
@@ -449,7 +396,6 @@ const updateReleasesInterest = async (
     mainAccountCode: INTEREST_ACCOUNT_CODE,
     subAccountCode: CASH_ACCOUNT_CODE,
     description: BEING_REDEEMED_LOAN_INTEREST,
-    sortOrder: sortOrder,
   });
 };
 
@@ -459,39 +405,18 @@ const updateTodaysEntries = async (
   releaseTotal: number | null,
   interestTotal: number | null,
   date: string,
-  company: string,
-  latestSortOrder: number
+  company: string
 ) => {
-  latestSortOrder = await updateLoan(
-    loanEntries,
-    loanTotal,
-    date,
-    company,
-    latestSortOrder
-  );
-
-  latestSortOrder = await updateReleasesPrincipal(
-    loanEntries,
-    releaseTotal,
-    date,
-    company,
-    latestSortOrder
-  );
-
-  await updateReleasesInterest(
-    loanEntries,
-    interestTotal,
-    date,
-    company,
-    latestSortOrder
-  );
+  await updateLoan(loanEntries, loanTotal, date, company);
+  await updateReleasesPrincipal(loanEntries, releaseTotal, date, company);
+  await updateReleasesInterest(loanEntries, interestTotal, date, company);
 };
 
 const fetchTodaysLoans = async (date: string, company: string) => {
   return Promise.all([
     query<[{ total: number }]>(
-      `SELECT SUM(loan_amount) as total 
-               FROM bills 
+      `SELECT SUM(loan_amount) as total
+               FROM bills
                WHERE "date" = ? AND company = ? AND deleted IS NULL`,
       [date, company]
     ),
@@ -502,7 +427,6 @@ const fetchTodaysLoans = async (date: string, company: string) => {
                WHERE company = ? AND date = ? AND deleted IS NULL`,
       [company, date]
     ),
-    sortOrderPromise(),
     query<LocalTables<'daily_entries'>[] | null>(
       `select *
            from daily_entries
@@ -527,24 +451,15 @@ export const updateTodayLoansAndReleases = async (
   company: string
 ) => {
   try {
-    const [
-      loanAmountTotal,
-      releaseTotalResponse,
-      sortOrderResponse,
-      loanEntries,
-    ] = await fetchTodaysLoans(date, company);
-    const latestSortOrder = sortOrderResponse?.[0].sort_order;
-    if (!latestSortOrder) {
-      throw Error('Something went wrong');
-    }
+    const [loanAmountTotal, releaseTotalResponse, loanEntries] =
+      await fetchTodaysLoans(date, company);
     await updateTodaysEntries(
       loanEntries ?? [],
       loanAmountTotal?.[0].total ?? null,
       releaseTotalResponse?.[0].principal ?? null,
       releaseTotalResponse?.[0].interest ?? null,
       date,
-      company,
-      latestSortOrder
+      company
     );
     successToast('Updated!');
   } catch (e) {

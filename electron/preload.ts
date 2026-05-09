@@ -7,6 +7,7 @@ import {
 } from '../tables';
 import { type ElectronToReactResponse } from '../shared-types';
 import { type BackupEndResponse } from './db/SyncManager';
+import { type DailyEntryPair } from './db/localDB';
 
 contextBridge.exposeInMainWorld('api', {
   db: {
@@ -15,6 +16,12 @@ contextBridge.exposeInMainWorld('api', {
       record: LocalTables<K>
     ): Promise<ElectronToReactResponse<null>> =>
       ipcRenderer.invoke('db:create', table, record),
+    createDailyEntries: (
+      date: string,
+      company: string,
+      pairs: DailyEntryPair[]
+    ): Promise<ElectronToReactResponse<null>> =>
+      ipcRenderer.invoke('db:create-daily-entries', date, company, pairs),
     read: <K extends TableName>(
       table: K,
       conditions: Partial<LocalTables<K>>,

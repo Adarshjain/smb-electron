@@ -21,6 +21,17 @@ declare global {
           table: K,
           record: Tables[K]
         ) => Promise<ElectronToReactResponse<null>>;
+        createDailyEntries: (
+          date: string,
+          company: string,
+          pairs: {
+            main_code: number;
+            sub_code: number;
+            credit: number;
+            debit: number;
+            description: string | null;
+          }[]
+        ) => Promise<ElectronToReactResponse<null>>;
         upsert: <K extends TableName>(
           table: K,
           record: Tables[K]

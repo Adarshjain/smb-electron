@@ -12,7 +12,10 @@ export default defineConfig({
     // Setup file for React Testing Library
     setupFiles: ['./src/test/setup.ts'],
     // Include test files
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: [
+      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'electron/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}',
+    ],
     // Exclude files
     exclude: ['node_modules', 'dist', 'dist-electron'],
     // Coverage configuration

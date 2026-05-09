@@ -581,15 +581,6 @@ export function getAccountById(
   return accountHeads.find((head) => head.code === code);
 }
 
-export function sortOrderPromise() {
-  return query<[{ sort_order: number }]>(
-    `SELECT sort_order
-               FROM daily_entries
-               ORDER BY sort_order DESC
-               LIMIT 1`
-  );
-}
-
 export async function getNextExistingBill(
   initialSerial: string,
   initialLoanNo: number,

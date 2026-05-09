@@ -1,4 +1,4 @@
-import { errorToast, sortOrderPromise } from '@/lib/myUtils.tsx';
+import { errorToast } from '@/lib/myUtils.tsx';
 import { query } from '@/hooks/dbUtil.ts';
 import type { LocalTables } from '../../../../tables';
 import { upsertDualEntry } from '@/components/Cashbook/utils/cashbookUtils.ts';
@@ -19,25 +19,6 @@ const RAPIPAY_CHARGES_CODE = 64;
 const RAPIPAY_TDS_CODE = 81;
 const CASH_CODE = 14;
 
-const fetchData = async (date: string, company: string) => {
-  return Promise.all([
-    query<LocalTables<'daily_entries'>[]>(
-      `SELECT *
-       FROM daily_entries de
-       WHERE de.company = ?
-         AND de.date = ?
-         AND de.deleted IS NULL
-         AND EXISTS (SELECT 1
-                     FROM account_head ah
-                     WHERE ah.code = de.sub_code
-                       AND ah.company = de.company
-                       AND ah.name LIKE 'RAPIPAY %')`,
-      [company, date]
-    ),
-    sortOrderPromise(),
-  ]);
-};
-
 const updateEntry = async (
   rapipayEntries: LocalTables<'daily_entries'>[] | null,
   date: string,
@@ -45,7 +26,6 @@ const updateEntry = async (
   mainCode: number,
   subCode: number,
   total: number,
-  sortOrder: number,
   isDebit: boolean
 ) => {
   const existingEntry = rapipayEntries?.find(
@@ -62,10 +42,7 @@ const updateEntry = async (
     mainAccountCode: mainCode,
     subAccountCode: subCode,
     description: '',
-    sortOrder,
   });
-  if (!existingEntry && total) sortOrder += 1;
-  return sortOrder;
 };
 
 export const loadRapipay = async (company: string, date: string) => {
@@ -82,11 +59,19 @@ export const loadRapipay = async (company: string, date: string) => {
     ) {
       throw Error('Invalid data format');
     }
-    const [rapipayEntries, sortOrderResponse] = await fetchData(date, company);
-    let latestSortOrder = sortOrderResponse?.[0].sort_order;
-    if (!latestSortOrder) {
-      throw Error('Something went wrong');
-    }
+    const rapipayEntries = await query<LocalTables<'daily_entries'>[]>(
+      `SELECT *
+       FROM daily_entries de
+       WHERE de.company = ?
+         AND de.date = ?
+         AND de.deleted IS NULL
+         AND EXISTS (SELECT 1
+                     FROM account_head ah
+                     WHERE ah.code = de.sub_code
+                       AND ah.company = de.company
+                       AND ah.name LIKE 'RAPIPAY %')`,
+      [company, date]
+    );
     const entriesMapping: {
       mainCode: number;
       subCode: number;
@@ -131,14 +116,13 @@ export const loadRapipay = async (company: string, date: string) => {
       },
     ];
     for (const entry of entriesMapping) {
-      latestSortOrder = await updateEntry(
+      await updateEntry(
         rapipayEntries,
         date,
         company,
         entry.mainCode,
         entry.subCode,
         entry.total,
-        latestSortOrder,
         entry.isDebit
       );
     }

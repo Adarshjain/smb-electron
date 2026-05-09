@@ -25,6 +25,7 @@
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+    "test:db": "npm rebuild better-sqlite3 && (vitest run electron/db; status=$?; electron-rebuild -f -w better-sqlite3; exit $status)",
     "postinstall": "electron-rebuild -f -w better-sqlite3",
     "build:win": "rmdir /s /q release && npm run build && electron-builder --dir --win --x64"
   },

@@ -11,7 +11,6 @@ import {
   errorToast,
   formatCurrency,
   getAccountById,
-  sortOrderPromise,
   successToast,
 } from '@/lib/myUtils.tsx';
 import type { CashbookRow, CashbookSpreadSheetProps } from './types';
@@ -296,16 +295,8 @@ export default function CashbookSpreadSheet({
 
     if (newEntries.length) {
       try {
-        const sortOrderResp = await sortOrderPromise();
-
-        const sortOrder = sortOrderResp?.[0]?.sort_order;
-        if (!sortOrder) {
-          errorToast('Something went wrong!');
-          return;
-        }
         const created = await createDailyEntries(
           newEntries,
-          sortOrder + 1,
           currentAccountHead,
           date,
           company.name
