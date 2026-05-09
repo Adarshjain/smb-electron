@@ -160,6 +160,9 @@ export function Home() {
             <DropdownMenuItem onClick={() => void navigate('/old-loans')}>
               Old Loans
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void navigate('/loan-verify')}>
+              Loan Verify
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => void navigate('/customer-by-area')}
             >
