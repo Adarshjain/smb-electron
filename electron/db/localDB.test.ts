@@ -44,9 +44,11 @@ const SCHEMA = `
   -- Defense-in-depth: SQLite treats NULL in PK columns as distinct, so the
   -- 'deleted' column inside the PK does not enforce uniqueness for live rows.
   -- A partial unique index on the live-row subset is what actually prevents
-  -- duplicates if anything bypasses createDailyEntries.
+  -- duplicates if anything bypasses createDailyEntries. sort_order is globally
+  -- unique per pair; (main_code, sub_code) suffix differentiates main from
+  -- inverted within a pair.
   CREATE UNIQUE INDEX daily_entries_live_unique
-  ON daily_entries (date, company, main_code, sub_code, sort_order)
+  ON daily_entries (sort_order, main_code, sub_code)
   WHERE deleted IS NULL;
 `;
 
@@ -145,7 +147,7 @@ describe('createDailyEntries', () => {
     expect(orders).toEqual([1, 2, 3]);
   });
 
-  it('scopes sort_order per (date, company) — different days reset to 1', () => {
+  it('sort_order is globally unique across all (date, company) combinations', () => {
     createDailyEntries('2026-05-09', 'CompanyA', [
       PAIR({ sub_code: 1 }),
       PAIR({ sub_code: 2 }),
@@ -153,27 +155,15 @@ describe('createDailyEntries', () => {
     createDailyEntries('2026-05-10', 'CompanyA', [PAIR({ sub_code: 1 })]);
     createDailyEntries('2026-05-09', 'CompanyB', [PAIR({ sub_code: 1 })]);
 
-    const day1A = allRows('date = ? AND company = ?', [
-      '2026-05-09',
-      'CompanyA',
-    ]);
-    expect([...new Set(day1A.map((r) => r.sort_order))].sort()).toEqual([1, 2]);
-
-    const day2A = allRows('date = ? AND company = ?', [
-      '2026-05-10',
-      'CompanyA',
-    ]);
-    expect(day2A.every((r) => r.sort_order === 1)).toBe(true);
-
-    const day1B = allRows('date = ? AND company = ?', [
-      '2026-05-09',
-      'CompanyB',
-    ]);
-    expect(day1B.every((r) => r.sort_order === 1)).toBe(true);
+    // 4 logical entries × 2 rows each = 8 rows, sort_orders 1..4 globally
+    const all = allRows();
+    expect(all).toHaveLength(8);
+    const orders = [...new Set(all.map((r) => r.sort_order))].sort();
+    expect(orders).toEqual([1, 2, 3, 4]);
   });
 
-  it('does not collide with tombstoned (deleted=1) rows', () => {
-    // First insert occupies sort_order=1
+  it('skips past tombstoned sort_orders so they cannot be reused', () => {
+    // First insert occupies sort_order=1 globally
     createDailyEntries('2026-05-09', 'CompanyA', [PAIR({ description: 'v1' })]);
     expect(allRows()).toHaveLength(2);
 
@@ -182,18 +172,18 @@ describe('createDailyEntries', () => {
       `UPDATE daily_entries SET deleted = 1, synced = 0 WHERE sort_order = 1`
     );
 
-    // Insert again — MAX of live rows is now 0, so next sort_order should be 1 again
+    // Global MAX is still 1 (includes tombstones) — next insert goes to 2
     createDailyEntries('2026-05-09', 'CompanyA', [PAIR({ description: 'v2' })]);
 
     const live = allRows('deleted IS NULL');
     expect(live).toHaveLength(2);
-    expect(live.every((r) => r.sort_order === 1)).toBe(true);
+    expect(live.every((r) => r.sort_order === 2)).toBe(true);
     expect(live.every((r) => r.description === 'v2')).toBe(true);
 
-    // Tombstones still occupy their slot; PK collision was avoided because deleted differs
+    // Tombstones still occupy their slot
     const tombstones = allRows('deleted = 1');
     expect(tombstones).toHaveLength(2);
-    expect(tombstones.every((r) => r.description === 'v1')).toBe(true);
+    expect(tombstones.every((r) => r.sort_order === 1)).toBe(true);
   });
 
   it('is a no-op for an empty pairs array', () => {
@@ -323,9 +313,8 @@ describe('createDailyEntries — negative cases', () => {
     expect(new Set(orders).size).toBe(2); // sort_orders 1 and 2
   });
 
-  it('starts at sort_order=1 when only tombstoned rows exist (MAX excludes deleted)', () => {
-    // Manually seed only tombstoned rows, simulating an offline session that
-    // soft-deleted everything for the day.
+  it('skips past tombstone sort_orders when allocating new ones', () => {
+    // Manually seed only tombstoned rows at sort_orders 5 and 6.
     const insert = dbHolder.current!.prepare(
       `INSERT INTO daily_entries
        (debit, credit, main_code, sub_code, sort_order, description, company, date, synced, deleted)
@@ -340,9 +329,10 @@ describe('createDailyEntries — negative cases', () => {
       PAIR({ description: 'new' }),
     ]);
 
+    // Global MAX includes tombstones (max=6) → next is 7
     const live = allRows('deleted IS NULL');
     expect(live).toHaveLength(2);
-    expect(live.every((r) => r.sort_order === 1)).toBe(true);
+    expect(live.every((r) => r.sort_order === 7)).toBe(true);
   });
 
   it('handles a large batch (1000 pairs) without duplicates', () => {

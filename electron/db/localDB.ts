@@ -196,9 +196,10 @@ export interface DailyEntryPair {
 }
 
 // Inserts each input as a main + inverted pair, sharing one sort_order.
-// Computes the next sort_order from MAX(sort_order) WHERE date+company,
-// inside the same transaction as the inserts. better-sqlite3 transactions
-// serialize, so concurrent callers cannot race on the MAX read.
+// sort_order is globally unique across the whole table — one sort_order = one
+// pair (2 rows). Computes the next sort_order from the global MAX inside the
+// same transaction as the inserts. better-sqlite3 transactions serialize, so
+// concurrent callers cannot race on the MAX read.
 export function createDailyEntries(
   date: string,
   company: string,
@@ -214,11 +215,9 @@ export function createDailyEntries(
     if (!db) return;
     const row = db
       .prepare(
-        `SELECT COALESCE(MAX(sort_order), 0) AS max
-         FROM daily_entries
-         WHERE date = ? AND company = ? AND deleted IS NULL`
+        `SELECT COALESCE(MAX(sort_order), 0) AS max FROM daily_entries`
       )
-      .get(date, company) as { max: number };
+      .get() as { max: number };
     let next = row.max + 1;
 
     const insert = db.prepare(insertSql);

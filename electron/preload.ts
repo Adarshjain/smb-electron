@@ -8,6 +8,7 @@ import {
 import { type ElectronToReactResponse } from '../shared-types';
 import { type BackupEndResponse } from './db/SyncManager';
 import { type DailyEntryPair } from './db/localDB';
+import { type DedupeOptions, type DedupeReport } from './db/dedup';
 
 contextBridge.exposeInMainWorld('api', {
   db: {
@@ -22,6 +23,10 @@ contextBridge.exposeInMainWorld('api', {
       pairs: DailyEntryPair[]
     ): Promise<ElectronToReactResponse<null>> =>
       ipcRenderer.invoke('db:create-daily-entries', date, company, pairs),
+    dedupeDailyEntries: (
+      opts: DedupeOptions
+    ): Promise<ElectronToReactResponse<DedupeReport>> =>
+      ipcRenderer.invoke('db:dedupe-daily-entries', opts),
     read: <K extends TableName>(
       table: K,
       conditions: Partial<LocalTables<K>>,

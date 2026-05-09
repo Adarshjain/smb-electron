@@ -32,6 +32,37 @@ declare global {
             description: string | null;
           }[]
         ) => Promise<ElectronToReactResponse<null>>;
+        dedupeDailyEntries: (opts: {
+          dryRun?: boolean;
+          addUniqueIndex?: boolean;
+        }) => Promise<
+          ElectronToReactResponse<{
+            dryRun: boolean;
+            duplicateGroups: number;
+            pairsKept: number;
+            pairsMoved: number;
+            rowsAffected: number;
+            orphans: Array<{
+              date: string;
+              company: string;
+              sort_order: number;
+              main_code: number;
+              sub_code: number;
+              description: string | null;
+            }>;
+            movedAssignments: Array<{
+              date: string;
+              company: string;
+              fromSortOrder: number;
+              toSortOrder: number;
+              description: string | null;
+              main_code: number;
+              sub_code: number;
+            }>;
+            uniqueIndexCreated: boolean;
+            uniqueIndexSkippedReason?: string;
+          }>
+        >;
         upsert: <K extends TableName>(
           table: K,
           record: Tables[K]
