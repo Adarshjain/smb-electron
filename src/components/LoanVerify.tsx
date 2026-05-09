@@ -18,7 +18,14 @@ import {
 import GoHome from '@/components/GoHome.tsx';
 import { cn } from '@/lib/utils.ts';
 
-type RangeKey = '7d' | '1m';
+type RangeKey = '7d' | '1m' | '3m' | 'all';
+
+const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
+  { key: '7d', label: 'Last 7 days' },
+  { key: '1m', label: 'Last 1 month' },
+  { key: '3m', label: 'Last 3 months' },
+  { key: 'all', label: 'All time' },
+];
 
 interface DiffRow {
   date: string;
@@ -47,14 +54,19 @@ interface DailyEntriesAggRow {
   total_debit: number;
 }
 
-const TOLERANCE = 0.005;
+const THRESHOLD = 1;
 
 function startDateFor(range: RangeKey): string {
+  if (range === 'all') {
+    return '2020-01-01';
+  }
   const d = new Date();
   if (range === '7d') {
     d.setDate(d.getDate() - 7);
-  } else {
+  } else if (range === '1m') {
     d.setMonth(d.getMonth() - 1);
+  } else {
+    d.setMonth(d.getMonth() - 3);
   }
   return d.toISOString().split('T')[0];
 }
@@ -171,9 +183,9 @@ export default function LoanVerify() {
         const interestDiff = b.releasesInt - b.de914Debit;
         const releaseDiff = b.releasesLoan - b.de114Debit;
         if (
-          Math.abs(loanDiff) <= TOLERANCE &&
-          Math.abs(interestDiff) <= TOLERANCE &&
-          Math.abs(releaseDiff) <= TOLERANCE
+          Math.abs(loanDiff) < THRESHOLD &&
+          Math.abs(interestDiff) < THRESHOLD &&
+          Math.abs(releaseDiff) < THRESHOLD
         ) {
           continue;
         }
@@ -193,28 +205,23 @@ export default function LoanVerify() {
 
   useEffect(() => {
     void runVerify();
-  }, [runVerify]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [range]);
 
   return (
     <div className="p-3 max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-4">
         <GoHome />
-        <div className="flex items-center">
-          <Button
-            variant={range === '7d' ? 'default' : 'outline'}
-            onClick={() => setRange('7d')}
-          >
-            Last 7 days
-          </Button>
-          <Button
-            variant={range === '1m' ? 'default' : 'outline'}
-            onClick={() => {
-              setRange('1m');
-              void runVerify();
-            }}
-          >
-            Last 1 month
-          </Button>
+        <div className="flex items-center gap-2">
+          {RANGE_OPTIONS.map((opt) => (
+            <Button
+              key={opt.key}
+              variant={range === opt.key ? 'default' : 'outline'}
+              onClick={() => setRange(opt.key)}
+            >
+              {opt.label}
+            </Button>
+          ))}
         </div>
         <div className="w-8" />
       </div>
@@ -264,34 +271,36 @@ export default function LoanVerify() {
                       <TableCell
                         className={cn(
                           'border-r text-right',
-                          Math.abs(r.loanDiff) > TOLERANCE ? 'text-red-600' : ''
+                          Math.abs(r.loanDiff) >= THRESHOLD
+                            ? 'text-red-600'
+                            : ''
                         )}
                       >
-                        {Math.abs(r.loanDiff) > TOLERANCE
+                        {Math.abs(r.loanDiff) >= THRESHOLD
                           ? formatCurrency(r.loanDiff, true)
                           : '0.00'}
                       </TableCell>
                       <TableCell
                         className={cn(
                           'border-r text-right',
-                          Math.abs(r.interestDiff) > TOLERANCE
+                          Math.abs(r.interestDiff) >= THRESHOLD
                             ? 'text-red-600'
                             : ''
                         )}
                       >
-                        {Math.abs(r.interestDiff) > TOLERANCE
+                        {Math.abs(r.interestDiff) >= THRESHOLD
                           ? formatCurrency(r.interestDiff, true)
                           : '0.00'}
                       </TableCell>
                       <TableCell
                         className={cn(
                           'text-right',
-                          Math.abs(r.releaseDiff) > TOLERANCE
+                          Math.abs(r.releaseDiff) >= THRESHOLD
                             ? 'text-red-600'
                             : ''
                         )}
                       >
-                        {Math.abs(r.releaseDiff) > TOLERANCE
+                        {Math.abs(r.releaseDiff) >= THRESHOLD
                           ? formatCurrency(r.releaseDiff, true)
                           : '0.00'}
                       </TableCell>
