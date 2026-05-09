@@ -15,7 +15,6 @@ import ItemsMaster from '@/components/ItemsMaster.tsx';
 import Dashboard from '@/components/Dashboard.tsx';
 import OldLoans from '@/components/OldLoans.tsx';
 import ReleaseInterest from '@/components/ReleaseInterest.tsx';
-import LoanVerify from '@/components/LoanVerify.tsx';
 import NameCorrector from '@/components/NameCorrector.tsx';
 
 // Simple loading fallback
@@ -48,7 +47,6 @@ export function Router() {
             <Route path="/items-master" element={<ItemsMaster />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/old-loans" element={<OldLoans />} />
-            <Route path="/loan-verify" element={<LoanVerify />} />
           </Routes>
         </Suspense>
       </HashRouter>

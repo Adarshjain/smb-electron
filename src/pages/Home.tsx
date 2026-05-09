@@ -17,6 +17,7 @@ import {
 import { ChevronDown } from 'lucide-react';
 import { useCompany } from '@/context/CompanyProvider.tsx';
 import Cashbook from '@/components/Cashbook/Cashbook.tsx';
+import LoanVerify from '@/components/LoanVerify.tsx';
 
 const shortCutMapping: {
   shortcutKey: string;
@@ -160,7 +161,9 @@ export function Home() {
             <DropdownMenuItem onClick={() => void navigate('/old-loans')}>
               Old Loans
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => void navigate('/loan-verify')}>
+            <DropdownMenuItem
+              onClick={() => openTab('Loan Verify', <LoanVerify />)}
+            >
               Loan Verify
             </DropdownMenuItem>
             <DropdownMenuItem

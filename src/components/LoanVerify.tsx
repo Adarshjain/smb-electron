@@ -13,17 +13,19 @@ import {
   currentIsoDate,
   errorToast,
   formatCurrency,
+  getFinancialYearRange,
   viewableDate,
 } from '@/lib/myUtils.tsx';
-import GoHome from '@/components/GoHome.tsx';
 import { cn } from '@/lib/utils.ts';
 
-type RangeKey = '7d' | '1m' | '3m' | 'all';
+type RangeKey = '7d' | '1m' | '3m' | 'current_fy' | 'last_fy' | 'all';
 
 const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
   { key: '7d', label: 'Last 7 days' },
   { key: '1m', label: 'Last 1 month' },
   { key: '3m', label: 'Last 3 months' },
+  { key: 'current_fy', label: 'Current FY' },
+  { key: 'last_fy', label: 'Last FY' },
   { key: 'all', label: 'All time' },
 ];
 
@@ -56,9 +58,20 @@ interface DailyEntriesAggRow {
 
 const THRESHOLD = 1;
 
-function startDateFor(range: RangeKey): string {
+function dateRangeFor(range: RangeKey): { start: string; end: string } {
+  const today = currentIsoDate();
   if (range === 'all') {
-    return '2020-01-01';
+    return { start: '2020-01-01', end: today };
+  }
+  if (range === 'current_fy') {
+    const [start, end] = getFinancialYearRange(new Date());
+    return { start, end: end < today ? end : today };
+  }
+  if (range === 'last_fy') {
+    const lastFyDate = new Date();
+    lastFyDate.setFullYear(lastFyDate.getFullYear() - 1);
+    const [start, end] = getFinancialYearRange(lastFyDate);
+    return { start, end };
   }
   const d = new Date();
   if (range === '7d') {
@@ -68,7 +81,7 @@ function startDateFor(range: RangeKey): string {
   } else {
     d.setMonth(d.getMonth() - 3);
   }
-  return d.toISOString().split('T')[0];
+  return { start: d.toISOString().split('T')[0], end: today };
 }
 
 export default function LoanVerify() {
@@ -83,8 +96,7 @@ export default function LoanVerify() {
 
   const runVerify = async () => {
     try {
-      const start = startDateFor(range);
-      const end = currentIsoDate();
+      const { start, end } = dateRangeFor(range);
 
       const [billsAgg, releasesAgg, de114, de914] = await batchQuery<
         [
@@ -210,20 +222,16 @@ export default function LoanVerify() {
 
   return (
     <div className="p-3 max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-4">
-        <GoHome />
-        <div className="flex items-center gap-2">
-          {RANGE_OPTIONS.map((opt) => (
-            <Button
-              key={opt.key}
-              variant={range === opt.key ? 'default' : 'outline'}
-              onClick={() => setRange(opt.key)}
-            >
-              {opt.label}
-            </Button>
-          ))}
-        </div>
-        <div className="w-8" />
+      <div className="flex justify-center items-center gap-2 mb-4 flex-wrap">
+        {RANGE_OPTIONS.map((opt) => (
+          <Button
+            key={opt.key}
+            variant={range === opt.key ? 'default' : 'outline'}
+            onClick={() => setRange(opt.key)}
+          >
+            {opt.label}
+          </Button>
+        ))}
       </div>
 
       {verifiedRange ? (
