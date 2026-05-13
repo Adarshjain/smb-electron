@@ -15,6 +15,7 @@ import {
 } from '@/lib/myUtils.tsx';
 import type { CashbookRow, CashbookSpreadSheetProps } from './types';
 import {
+  BEING_REDEEMED_LOAN_INTEREST,
   calculateBalance,
   createBalanceRow,
   createDailyEntries,
@@ -25,6 +26,8 @@ import {
   isFullyEmpty,
   isRowEmpty,
   isSpecialRow,
+  LOAN_AMOUNT,
+  REDEMPTION_AMOUNT,
   SORT_ORDER,
   updateDailyEntries,
   validateRows,
@@ -157,6 +160,21 @@ export default function CashbookSpreadSheet({
       sort_order: entry.sort_order,
     }));
 
+    const pinnedPrefixes = [
+      LOAN_AMOUNT,
+      REDEMPTION_AMOUNT,
+      BEING_REDEEMED_LOAN_INTEREST,
+    ];
+    const descStartsWith = (description: string | null, prefix: string) =>
+      description?.toLowerCase().startsWith(prefix.toLowerCase()) ?? false;
+
+    const pinnedRows: CashbookRow[] = [];
+    for (const prefix of pinnedPrefixes) {
+      const match = dataRows.find((r) => descStartsWith(r.description, prefix));
+      if (match) pinnedRows.push(match);
+    }
+    const restRows = dataRows.filter((r) => !pinnedRows.includes(r));
+
     const closingBalance = calculateBalance(dataRows, openingBalance);
 
     const emptyRowSortOrder = nextEmptyRowSortOrderRef.current--;
@@ -167,7 +185,8 @@ export default function CashbookSpreadSheet({
         SORT_ORDER.OPENING_BALANCE,
         openingBalance
       ),
-      ...dataRows,
+      ...pinnedRows,
+      ...restRows,
       createEmptyRow(emptyRowSortOrder),
       createBalanceRow(
         'Closing Balance',
