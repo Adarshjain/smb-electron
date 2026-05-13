@@ -4,7 +4,9 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { Toaster } from '@/components/ui/sonner';
@@ -54,6 +56,18 @@ export const TabManager: React.FC = () => {
   const [activeTabId, setActiveTabId] = useState('main');
   const [isSyncing, setIsSyncing] = useState(false);
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollPositionsRef = useRef<Map<string, number>>(new Map());
+
+  useLayoutEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    el.scrollTop = scrollPositionsRef.current.get(activeTabId) ?? 0;
+    return () => {
+      scrollPositionsRef.current.set(activeTabId, el.scrollTop);
+    };
+  }, [activeTabId]);
+
   useEffect(() => {
     window.api.supabase.onSyncStatus((data) => {
       setIsSyncing(data.state === 'started');
@@ -80,6 +94,7 @@ export const TabManager: React.FC = () => {
         );
       }
       setTabs((prev) => prev.filter((t) => t.id !== id));
+      scrollPositionsRef.current.delete(id);
     },
     [activeTabId, tabs]
   );
@@ -152,6 +167,7 @@ export const TabManager: React.FC = () => {
   return (
     <TabContext.Provider value={{ openTab, switchToMain, closeTab }}>
       <div
+        ref={scrollContainerRef}
         className={cn(
           'flex flex-col h-screen overflow-auto',
           companyColor === 'yellow' ? 'bg-yellow-100' : 'bg-blue-100'
