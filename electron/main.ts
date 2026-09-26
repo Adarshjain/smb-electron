@@ -2,7 +2,6 @@ import dotenv from 'dotenv';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import path from 'path';
 import { closeDatabase, initDatabase } from './db/database';
-import { createClient } from '@supabase/supabase-js';
 import type { BackupEndResponse } from './db/SyncManager';
 import { SyncManager } from './db/SyncManager';
 import {
@@ -29,8 +28,7 @@ import type {
   TablesUpdate,
 } from '../tables';
 import type { ElectronToReactResponse } from '../shared-types';
-import { initAllSeedData } from './seed';
-import * as Sentry from '@sentry/electron/main';
+import { captureException, initSentry } from './sentry';
 import fs from 'fs';
 
 // Load environment variables from the correct location
@@ -57,45 +55,6 @@ const loadEnvFile = () => {
 
 // Load environment variables immediately
 loadEnvFile();
-
-// Initialize Sentry for the main process
-if (process.env.SENTRY_DSN) {
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    environment:
-      process.env.SENTRY_ENVIRONMENT ??
-      (process.env.VITE_DEV_SERVER_URL ? 'development' : 'production'),
-
-    // Performance Monitoring
-    tracesSampleRate: 1,
-
-    // Additional configuration
-    beforeSend(event, hint) {
-      // Log errors in development
-      if (process.env.VITE_DEV_SERVER_URL) {
-        console.error(
-          'Sentry Error:',
-          hint.originalException ?? hint.syntheticException
-        );
-      }
-      return event;
-    },
-
-    // Enable debug mode in development
-    debug: !!process.env.VITE_DEV_SERVER_URL,
-
-    // Capture additional context
-    initialScope: {
-      tags: {
-        'electron.process': 'main',
-      },
-    },
-  });
-
-  console.log('✅ Sentry initialized for main process');
-} else {
-  console.warn('⚠️ Sentry DSN not found. Error tracking disabled.');
-}
 
 type IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
 
@@ -159,7 +118,8 @@ const createWindow = () => {
   });
 };
 
-const initSupabase = () => {
+const initSupabase = async () => {
+  const { createClient } = await import('@supabase/supabase-js');
   const supabase = createClient(
     process.env.SUPABASE_URL ?? '',
     process.env.SUPABASE_KEY ?? ''
@@ -215,9 +175,18 @@ void app.whenReady().then(() => {
   initDatabase();
   migrateSchema();
   createWindow();
-  if (process.env.SYNC_TO_SUPABASE) {
-    initSupabase();
-  }
+
+  // Heavier, non-essential modules are loaded once the window is up so they
+  // don't delay it appearing.
+  setTimeout(() => {
+    void initSentry();
+    if (process.env.SYNC_TO_SUPABASE) {
+      initSupabase().catch((error: unknown) => {
+        console.error('Failed to initialise Supabase sync:', error);
+        captureException(error);
+      });
+    }
+  }, 1500);
 });
 
 app.on('window-all-closed', () => {
@@ -246,11 +215,13 @@ ipcMain.handle(
         if (!filePath.endsWith('.mdb')) {
           throw Error('Invalid File');
         }
+        // Loaded on demand: mdb-reader is only needed for this rare action
+        const { initAllSeedData } = await import('./seed');
         initAllSeedData(filePath);
       }
       return { success: true };
     } catch (error) {
-      Sentry.captureException(error, {
+      captureException(error, {
         contexts: {
           operation: {
             name: 'init-seed',
@@ -301,7 +272,7 @@ ipcMain.handle('sync-now', async (): Promise<ElectronToReactResponse<void>> => {
   try {
     return { success: true, data: await syncManager?.pushAll() };
   } catch (error: unknown) {
-    Sentry.captureException(error, {
+    captureException(error, {
       contexts: {
         operation: {
           name: 'sync-now',
@@ -327,7 +298,7 @@ ipcMain.handle(
       console.log({ tableName });
       return { success: true, data: await syncManager?.pushChanges(tableName) };
     } catch (error: unknown) {
-      Sentry.captureException(error, {
+      captureException(error, {
         contexts: {
           operation: {
             name: 'sync-table-now',
@@ -349,7 +320,7 @@ ipcMain.handle('is-syncing-now', (): ElectronToReactResponse<boolean> => {
   try {
     return { success: true, data: syncManager?.isRunning ?? false };
   } catch (error) {
-    Sentry.captureException(error, {
+    captureException(error, {
       contexts: {
         operation: {
           name: 'is-syncing-now',
@@ -371,7 +342,7 @@ ipcMain.handle(
     try {
       return { success: true, data: await syncManager?.initialPull() };
     } catch (error) {
-      Sentry.captureException(error, {
+      captureException(error, {
         contexts: {
           operation: {
             name: 'initial-pull',
@@ -398,7 +369,7 @@ ipcMain.handle(
     try {
       return { success: true, data: create(table, record) };
     } catch (error) {
-      Sentry.captureException(error, {
+      captureException(error, {
         contexts: {
           operation: {
             name: 'db:create',
@@ -432,7 +403,7 @@ ipcMain.handle(
         data: read(table, conditions, fields, isLikeQuery),
       };
     } catch (error) {
-      Sentry.captureException(error, {
+      captureException(error, {
         contexts: {
           operation: {
             name: 'db:read',
@@ -462,7 +433,7 @@ ipcMain.handle(
       const result = update(table, record);
       return { success: true, data: result };
     } catch (error) {
-      Sentry.captureException(error, {
+      captureException(error, {
         contexts: {
           operation: {
             name: 'db:update',
@@ -492,7 +463,7 @@ ipcMain.handle(
       deleteRecord(table, record);
       return { success: true };
     } catch (error) {
-      Sentry.captureException(error, {
+      captureException(error, {
         contexts: {
           operation: {
             name: 'db:delete',
@@ -525,7 +496,7 @@ ipcMain.handle(
         data: executeSql(query, params, justRun as boolean),
       };
     } catch (error) {
-      Sentry.captureException(error, {
+      captureException(error, {
         contexts: {
           operation: {
             name: 'db:query',
@@ -555,7 +526,7 @@ ipcMain.handle(
     try {
       return { success: true, data: createDailyEntries(date, company, pairs) };
     } catch (error) {
-      Sentry.captureException(error, {
+      captureException(error, {
         contexts: {
           operation: {
             name: 'db:create-daily-entries',
@@ -582,7 +553,7 @@ ipcMain.handle(
     try {
       return { success: true, data: dedupeDailyEntriesSortOrder(opts) };
     } catch (error) {
-      Sentry.captureException(error, {
+      captureException(error, {
         contexts: {
           operation: {
             name: 'db:dedupe-daily-entries',
@@ -613,7 +584,7 @@ ipcMain.handle(
         data: executeBatch(queries),
       };
     } catch (error) {
-      Sentry.captureException(error, {
+      captureException(error, {
         contexts: {
           operation: {
             name: 'db:batch',
