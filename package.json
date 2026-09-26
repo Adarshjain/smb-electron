@@ -39,6 +39,7 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
+      "!dist-electron/.env",
       "package.json",
       "!node_modules/better-sqlite3/deps/**",
       "!node_modules/better-sqlite3/src/**",
@@ -52,11 +53,8 @@
         "to": "electron/build"
       },
       {
-        "from": ".env",
-        "to": ".env",
-        "filter": [
-          "**/*"
-        ]
+        "from": "dist-electron/.env",
+        "to": ".env"
       }
     ],
     "asarUnpack": [

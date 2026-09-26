@@ -6,6 +6,7 @@
 //
 // Usage: node scripts/build-electron.mjs [--watch]
 import { context, build } from 'esbuild';
+import dotenv from 'dotenv';
 import fs from 'fs';
 
 const watch = process.argv.includes('--watch');
@@ -51,6 +52,27 @@ require('./app.js');
 `
   );
 
+// Only these keys are read by the packaged app. Anything else in .env
+// (e.g. SENTRY_AUTH_TOKEN, used to upload source maps at build time) must
+// not ship inside the installer, so the build writes a filtered copy that
+// electron-builder packages as resources/.env.
+const RUNTIME_ENV_KEYS = [
+  'SENTRY_DSN',
+  'SENTRY_ENVIRONMENT',
+  'SYNC_TO_SUPABASE',
+  'SUPABASE_URL',
+  'SUPABASE_KEY',
+];
+
+const writeRuntimeEnv = () => {
+  if (!fs.existsSync('.env')) return;
+  const env = dotenv.parse(fs.readFileSync('.env'));
+  const lines = RUNTIME_ENV_KEYS.filter((key) => key in env).map((key) =>
+    env[key].includes("'") ? `${key}=${env[key]}` : `${key}='${env[key]}'`
+  );
+  fs.writeFileSync('dist-electron/.env', lines.join('\n') + '\n');
+};
+
 if (watch) {
   const ctx = await context(options);
   await ctx.rebuild();
@@ -59,4 +81,5 @@ if (watch) {
 } else {
   await build(options);
   writeEntry();
+  writeRuntimeEnv();
 }
