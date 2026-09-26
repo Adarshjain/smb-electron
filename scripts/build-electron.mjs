@@ -13,7 +13,8 @@ const watch = process.argv.includes('--watch');
 /** @type {import('esbuild').BuildOptions} */
 const options = {
   entryPoints: {
-    'electron/main': 'electron/main.ts',
+    // Loaded by the generated electron/main.js entry below
+    'electron/app': 'electron/main.ts',
     'electron/preload': 'electron/preload.ts',
   },
   outdir: 'dist-electron',
@@ -37,9 +38,25 @@ fs.rmSync('dist-electron', { recursive: true, force: true });
 fs.mkdirSync('dist-electron', { recursive: true });
 fs.copyFileSync('electron/package.json', 'dist-electron/package.json');
 
+// package.json "main" points at this tiny entry. It turns on Node's on-disk
+// compile cache before loading the large bundle, so later launches skip
+// recompiling it. Written after the first build so dev's `wait-on` doesn't
+// start Electron before app.js exists.
+const writeEntry = () =>
+  fs.writeFileSync(
+    'dist-electron/electron/main.js',
+    `'use strict';
+require('node:module').enableCompileCache?.();
+require('./app.js');
+`
+  );
+
 if (watch) {
   const ctx = await context(options);
+  await ctx.rebuild();
+  writeEntry();
   await ctx.watch();
 } else {
   await build(options);
+  writeEntry();
 }
