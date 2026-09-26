@@ -1,21 +1,47 @@
-import { Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { Home } from './pages/Home.tsx';
 import { ErrorBoundary } from '@/components/ErrorBoundary.tsx';
-import { TableView } from '@/pages/TableView.tsx';
-import Settings from '@/pages/Settings.tsx';
-import OtherCustomer from '@/components/OtherCustomer.tsx';
-import NewLoan from '@/pages/NewLoan.tsx';
-import ReleaseLoan from '@/pages/ReleaseLoan.tsx';
-import DayBook from '@/pages/DayBook.tsx';
-import CustomerCrud from '@/pages/CustomerCrud.tsx';
-import CustomersByArea from '@/components/CustomersByArea.tsx';
-import AccountHead from '@/components/AccountHead.tsx';
-import ItemsMaster from '@/components/ItemsMaster.tsx';
-import Dashboard from '@/components/Dashboard.tsx';
-import OldLoans from '@/components/OldLoans.tsx';
-import ReleaseInterest from '@/components/ReleaseInterest.tsx';
-import NameCorrector from '@/components/NameCorrector.tsx';
+
+// Everything except Home is loaded on demand so it isn't parsed at startup.
+const loadNewLoan = () => import('@/pages/NewLoan.tsx');
+const loadReleaseLoan = () => import('@/pages/ReleaseLoan.tsx');
+const loadDayBook = () => import('@/pages/DayBook.tsx');
+
+const TableView = lazy(() =>
+  import('@/pages/TableView.tsx').then((m) => ({ default: m.TableView }))
+);
+const Settings = lazy(() => import('@/pages/Settings.tsx'));
+const OtherCustomer = lazy(() => import('@/components/OtherCustomer.tsx'));
+const NewLoan = lazy(loadNewLoan);
+const ReleaseLoan = lazy(loadReleaseLoan);
+const DayBook = lazy(loadDayBook);
+const CustomerCrud = lazy(() => import('@/pages/CustomerCrud.tsx'));
+const CustomersByArea = lazy(() => import('@/components/CustomersByArea.tsx'));
+const AccountHead = lazy(() => import('@/components/AccountHead.tsx'));
+const ItemsMaster = lazy(() => import('@/components/ItemsMaster.tsx'));
+const Dashboard = lazy(() => import('@/components/Dashboard.tsx'));
+const OldLoans = lazy(() => import('@/components/OldLoans.tsx'));
+const ReleaseInterest = lazy(() => import('@/components/ReleaseInterest.tsx'));
+const NameCorrector = lazy(() => import('@/components/NameCorrector.tsx'));
+
+// Warm up the screens behind the F2/F3/F8 shortcuts once the app is idle,
+// so opening them stays instant.
+function usePreloadCommonScreens() {
+  useEffect(() => {
+    const preload = () => {
+      void loadNewLoan();
+      void loadReleaseLoan();
+      void loadDayBook();
+    };
+    if ('requestIdleCallback' in window) {
+      const id = requestIdleCallback(preload, { timeout: 3000 });
+      return () => cancelIdleCallback(id);
+    }
+    const id = setTimeout(preload, 1500);
+    return () => clearTimeout(id);
+  }, []);
+}
 
 // Simple loading fallback
 function PageLoader() {
@@ -27,6 +53,8 @@ function PageLoader() {
 }
 
 export function Router() {
+  usePreloadCommonScreens();
+
   return (
     <ErrorBoundary>
       <HashRouter>

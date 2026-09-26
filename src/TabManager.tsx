@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useLayoutEffect,
   useMemo,
+  Suspense,
   useRef,
   useState,
 } from 'react';
@@ -31,6 +32,14 @@ interface TabContextType {
   openTab: (title: string, component: ReactNode) => void;
   switchToMain: () => void;
   closeTab: (id?: string) => void;
+}
+
+function TabLoader() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+    </div>
+  );
 }
 
 const TabContext = createContext<TabContextType | null>(null);
@@ -186,7 +195,7 @@ export const TabManager: React.FC = () => {
                   : 'opacity-0 z-0 pointer-events-none'
               }`}
             >
-              {tab.content}
+              <Suspense fallback={<TabLoader />}>{tab.content}</Suspense>
             </div>
           ))}
         </div>

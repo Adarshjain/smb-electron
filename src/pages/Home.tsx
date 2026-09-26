@@ -1,12 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button.tsx';
-import { useEffect } from 'react';
+import { lazy, useEffect } from 'react';
 import { Kbd } from '@/components/ui/kbd';
 import QuickView from '@/components/QuickView.tsx';
 import { useTabs } from '@/TabManager.tsx';
 import CurrentDateCrud from '@/components/CurrentDateCrud.tsx';
-import ProfitAndLoss from '@/components/ProfitAndLoss.tsx';
-import BalanceSheet from '@/components/BalanceSheet.tsx';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,8 +14,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { useCompany } from '@/context/CompanyProvider.tsx';
-import Cashbook from '@/components/Cashbook/Cashbook.tsx';
-import LoanVerify from '@/components/LoanVerify.tsx';
+
+// Screens opened in tabs are loaded on demand (TabManager wraps them in
+// Suspense). Cash Book is warmed up once idle since F5 opens it.
+const loadCashbook = () => import('@/components/Cashbook/Cashbook.tsx');
+const Cashbook = lazy(loadCashbook);
+const ProfitAndLoss = lazy(() => import('@/components/ProfitAndLoss.tsx'));
+const BalanceSheet = lazy(() => import('@/components/BalanceSheet.tsx'));
+const LoanVerify = lazy(() => import('@/components/LoanVerify.tsx'));
 
 const shortCutMapping: {
   shortcutKey: string;
@@ -41,6 +45,17 @@ export function Home() {
   const { cycleCompany } = useCompany();
   const navigate = useNavigate();
   const { openTab } = useTabs();
+
+  useEffect(() => {
+    if ('requestIdleCallback' in window) {
+      const id = requestIdleCallback(() => void loadCashbook(), {
+        timeout: 3000,
+      });
+      return () => cancelIdleCallback(id);
+    }
+    const id = setTimeout(() => void loadCashbook(), 1500);
+    return () => clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
