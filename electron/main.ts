@@ -170,13 +170,12 @@ app.commandLine.appendSwitch(
 
 void app.whenReady().then(() => {
   if (process.platform === 'darwin' && app.dock) {
-    const dockIconPath = path.join(
-      process.cwd(),
-      'electron',
-      'build',
-      'logo.png'
-    );
-    app.dock.setIcon(dockIconPath);
+    // setIcon throws if the file is missing; that must not stop startup
+    try {
+      app.dock.setIcon(getIconPath());
+    } catch (error) {
+      console.warn('Could not set dock icon:', error);
+    }
   }
   initDatabase();
   migrateSchema();
