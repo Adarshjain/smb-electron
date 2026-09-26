@@ -152,6 +152,21 @@ const initSupabase = async () => {
 // Set app name before app is ready (important for macOS)
 app.name = 'Sri Mahaveer Bankers';
 
+// Only one instance may run: a second one would write to the same SQLite
+// database and stall on Chromium's storage locks. A second launch focuses
+// the existing window and quits before touching the database.
+const isPrimaryInstance = app.requestSingleInstanceLock();
+if (!isPrimaryInstance) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (!win) return;
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+  });
+}
+
 // Allow local file URLs to load other local file resources in production
 app.commandLine.appendSwitch('allow-file-access-from-files');
 
@@ -168,6 +183,8 @@ app.commandLine.appendSwitch(
 );
 
 void app.whenReady().then(() => {
+  if (!isPrimaryInstance) return;
+
   if (process.platform === 'darwin' && app.dock) {
     // setIcon throws if the file is missing; that must not stop startup
     try {
