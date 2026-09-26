@@ -1,6 +1,4 @@
-import * as z from 'zod';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import CustomerPicker from '@/components/CustomerPicker.tsx';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation.ts';
 import {
@@ -15,11 +13,12 @@ import { SerialNumber } from '@/components/LoanForm/SerialNumber.tsx';
 import { read } from '@/hooks/dbUtil';
 import { errorToast } from '@/lib/myUtils.tsx';
 
-export const QuickViewSchema = z.object({
-  serial: z.string().length(1),
-  loan_no: z.string(),
-});
-export type IQuickView = z.infer<typeof QuickViewSchema>;
+// Plain type rather than a zod schema: this form is never submitted, and
+// keeping zod out of the Home screen keeps it out of the startup bundle.
+export interface IQuickView {
+  serial: string;
+  loan_no: string;
+}
 
 export default memo(function QuickView() {
   const [customerId, setCustomerId] = useState<string | null>(null);
@@ -32,7 +31,6 @@ export default memo(function QuickView() {
   };
 
   const { control, setValue, getValues } = useForm<IQuickView>({
-    resolver: zodResolver(QuickViewSchema),
     defaultValues,
   });
 

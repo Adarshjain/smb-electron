@@ -54,7 +54,9 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             'react-vendor': ['react', 'react-dom'],
-            'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
+            // zod and @hookform/resolvers are left out on purpose: only lazily
+            // loaded screens use them, so they shouldn't be in the startup chunk.
+            'form-vendor': ['react-hook-form'],
             'radix-vendor': [
               '@radix-ui/react-dialog',
               '@radix-ui/react-popover',
