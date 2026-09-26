@@ -6,7 +6,9 @@ import { ThanglishProvider } from '@/context/ThanglishProvider.tsx';
 import { TabManager } from '@/TabManager.tsx';
 import * as Sentry from '@sentry/react';
 
-// Initialize Sentry for the renderer process
+// Initialize Sentry for the renderer process.
+// Kept light so it doesn't slow down startup: no always-on session replay,
+// no profiling, and the replay integration is fetched lazily after first paint.
 if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -15,40 +17,31 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     environment:
       import.meta.env.VITE_SENTRY_ENVIRONMENT ?? import.meta.env.MODE,
 
-    // Performance Monitoring
-    integrations: [
-      // Session Replay - captures user sessions for debugging
-      Sentry.replayIntegration({
-        maskAllText: false, // Mask all text to protect PII
-        blockAllMedia: false, // Block all media (images, videos) to protect PII
-        maskAllInputs: false, // Mask all input fields
-      }),
-      // Additional integrations
-      Sentry.browserProfilingIntegration(),
-    ],
+    tracesSampleRate: 0.1,
 
-    // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
-    // We recommend adjusting this value in production (0.1 = 10%)
-    tracesSampleRate: 1,
-
-    // Set `tracePropagationTargets` to control for which URLs distributed tracing should be enabled
-    tracePropagationTargets: [/./],
-
-    // Capture Replay for 10% of all sessions,
-    // plus 100% of sessions with an error
-    replaysSessionSampleRate: 1.0,
+    // Only record a replay when an error happens
+    replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: 1.0,
 
-    // Additional configuration
-    beforeSend(event) {
-      // Filter out errors if needed
-      // You can modify or drop events here
-      return event;
-    },
-
-    // Enable debug mode in development
-    debug: true,
+    debug: false,
   });
+
+  const loadReplay = () => {
+    void import('@/lib/sentryReplay.ts').then(({ replayIntegration }) =>
+      Sentry.addIntegration(
+        replayIntegration({
+          maskAllText: false,
+          blockAllMedia: false,
+          maskAllInputs: false,
+        })
+      )
+    );
+  };
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(loadReplay, { timeout: 5000 });
+  } else {
+    setTimeout(loadReplay, 3000);
+  }
 }
 
 createRoot(document.getElementById('root')!).render(
