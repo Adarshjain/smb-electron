@@ -16,6 +16,7 @@ import ProductSelector from '@/components/ProductSelector.tsx';
 import { Input } from '@/components/ui/input';
 import type { LocalTables, Tables } from '../../tables';
 import AreaSelector from '@/components/AreaSelector.tsx';
+import IdProofSelector from '@/components/IdProofSelector.tsx';
 import { Button } from '@/components/ui/button';
 import CustomerPicker from '@/components/CustomerPicker.tsx';
 import { Label } from '@/components/ui/label';
@@ -426,15 +427,15 @@ export default function CustomerCrud({
           name="id_proof"
           control={control}
           render={({ field }) => (
-            <Input
-              {...field}
-              onFocus={(e) => {
-                e.currentTarget.select();
+            <IdProofSelector
+              value={field.value === '' ? undefined : field.value}
+              onChange={(value: string) => {
+                field.onChange(value);
+                setTimeout(() => next('id_proof_value'), 50);
               }}
-              id="id_proof"
-              name="id_proof"
+              inputName="id_proof"
               placeholder="ID Proof Type"
-              className="w-[370px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              triggerWidth="w-[370px]"
             />
           )}
         />
