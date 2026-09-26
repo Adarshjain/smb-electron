@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { RefreshCcw } from 'lucide-react';
-import GoHome from '@/components/GoHome.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useCompany } from '@/context/CompanyProvider.tsx';
@@ -99,7 +98,6 @@ export default function Analytics() {
     <AnalyticsProvider value={context}>
       <div className="min-h-full bg-[#f9f9f7] p-3 flex flex-col gap-3">
         <div className="flex items-center gap-3">
-          <GoHome />
           <h1 className="text-lg font-semibold text-[#0b0b0b]">Analytics</h1>
           {asOf ? (
             <span className="text-sm text-[#52514e]">

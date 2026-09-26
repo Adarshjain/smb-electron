@@ -22,6 +22,7 @@ const Cashbook = lazy(loadCashbook);
 const ProfitAndLoss = lazy(() => import('@/components/ProfitAndLoss.tsx'));
 const BalanceSheet = lazy(() => import('@/components/BalanceSheet.tsx'));
 const LoanVerify = lazy(() => import('@/components/LoanVerify.tsx'));
+const Analytics = lazy(() => import('@/components/Analytics/Analytics.tsx'));
 
 const shortCutMapping: {
   shortcutKey: string;
@@ -156,7 +157,7 @@ export function Home() {
         <Button
           variant="outline"
           className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
-          onClick={() => void navigate('/analytics')}
+          onClick={() => openTab('Analytics', <Analytics />)}
         >
           <div className="justify-self-center col-start-2">Analytics</div>
         </Button>

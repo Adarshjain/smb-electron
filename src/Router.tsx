@@ -20,7 +20,6 @@ const CustomerCrud = lazy(() => import('@/pages/CustomerCrud.tsx'));
 const CustomersByArea = lazy(() => import('@/components/CustomersByArea.tsx'));
 const AccountHead = lazy(() => import('@/components/AccountHead.tsx'));
 const ItemsMaster = lazy(() => import('@/components/ItemsMaster.tsx'));
-const Analytics = lazy(() => import('@/components/Analytics/Analytics.tsx'));
 const OldLoans = lazy(() => import('@/components/OldLoans.tsx'));
 const ReleaseInterest = lazy(() => import('@/components/ReleaseInterest.tsx'));
 const NameCorrector = lazy(() => import('@/components/NameCorrector.tsx'));
@@ -73,7 +72,6 @@ export function Router() {
             <Route path="/customer-by-area" element={<CustomersByArea />} />
             <Route path="/account-head" element={<AccountHead />} />
             <Route path="/items-master" element={<ItemsMaster />} />
-            <Route path="/analytics" element={<Analytics />} />
             <Route path="/old-loans" element={<OldLoans />} />
           </Routes>
         </Suspense>
