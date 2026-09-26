@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, screen } from 'electron';
 import path from 'path';
 import { closeDatabase, initDatabase } from './db/database';
 import type { BackupEndResponse } from './db/SyncManager';
@@ -81,12 +81,18 @@ const getIconPath = () => {
 
 const createWindow = () => {
   const iconPath = getIconPath();
+  // Start at the full work area so maximizing on show doesn't trigger a
+  // second resize and layout.
+  const { workArea } = screen.getPrimaryDisplay();
 
   win = new BrowserWindow({
     title: 'Sri Mahaveer Bankers',
     autoHideMenuBar: true,
     show: false,
-    backgroundColor: '#ffffff',
+    ...workArea,
+    // Matches the splash in index.html and the default tab bar colour, so
+    // there's no white flash while the renderer loads.
+    backgroundColor: '#dbeafe',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       webSecurity: false,
@@ -101,7 +107,7 @@ const createWindow = () => {
   });
 
   win.once('ready-to-show', () => {
-    win?.show();
+    // maximize() also shows the window
     win?.maximize();
   });
 

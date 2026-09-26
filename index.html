@@ -4,9 +4,30 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sri Mahaveer Bankers</title>
+    <style>
+      /* Splash shown until React renders over it. Kept inline so it paints
+         before any JS or CSS bundle has loaded. */
+      html,
+      body {
+        margin: 0;
+        background: #dbeafe;
+      }
+      #splash {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font:
+          600 24px system-ui,
+          sans-serif;
+        color: #1e3a8a;
+      }
+    </style>
   </head>
   <body class="tabular-nums">
-    <div id="root" style="height: 100vh"></div>
+    <div id="root" style="height: 100vh">
+      <div id="splash">Sri Mahaveer Bankers</div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
