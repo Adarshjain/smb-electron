@@ -52,17 +52,10 @@ require('./app.js');
 `
   );
 
-// Only these keys are read by the packaged app. Anything else in .env
-// (e.g. SENTRY_AUTH_TOKEN, used to upload source maps at build time) must
+// Only these keys are read by the packaged app. Anything else in .env must
 // not ship inside the installer, so the build writes a filtered copy that
 // electron-builder packages as resources/.env.
-const RUNTIME_ENV_KEYS = [
-  'SENTRY_DSN',
-  'SENTRY_ENVIRONMENT',
-  'SYNC_TO_SUPABASE',
-  'SUPABASE_URL',
-  'SUPABASE_KEY',
-];
+const RUNTIME_ENV_KEYS = ['SYNC_TO_SUPABASE', 'SUPABASE_URL', 'SUPABASE_KEY'];
 
 const writeRuntimeEnv = () => {
   if (!fs.existsSync('.env')) return;

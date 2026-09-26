@@ -28,7 +28,6 @@ import type {
   TablesUpdate,
 } from '../tables';
 import type { ElectronToReactResponse } from '../shared-types';
-import { captureException, initSentry } from './sentry';
 import fs from 'fs';
 
 // Load environment variables from the correct location
@@ -184,11 +183,9 @@ void app.whenReady().then(() => {
   // Heavier, non-essential modules are loaded once the window is up so they
   // don't delay it appearing.
   setTimeout(() => {
-    void initSentry();
     if (process.env.SYNC_TO_SUPABASE) {
       initSupabase().catch((error: unknown) => {
         console.error('Failed to initialise Supabase sync:', error);
-        captureException(error);
       });
     }
   }, 1500);
@@ -226,14 +223,6 @@ ipcMain.handle(
       }
       return { success: true };
     } catch (error) {
-      captureException(error, {
-        contexts: {
-          operation: {
-            name: 'init-seed',
-            type: 'ipc-handler',
-          },
-        },
-      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -277,14 +266,6 @@ ipcMain.handle('sync-now', async (): Promise<ElectronToReactResponse<void>> => {
   try {
     return { success: true, data: await syncManager?.pushAll() };
   } catch (error: unknown) {
-    captureException(error, {
-      contexts: {
-        operation: {
-          name: 'sync-now',
-          type: 'ipc-handler',
-        },
-      },
-    });
     return {
       success: false,
       error: (error as Error).message,
@@ -303,15 +284,6 @@ ipcMain.handle(
       console.log({ tableName });
       return { success: true, data: await syncManager?.pushChanges(tableName) };
     } catch (error: unknown) {
-      captureException(error, {
-        contexts: {
-          operation: {
-            name: 'sync-table-now',
-            type: 'ipc-handler',
-            tableName,
-          },
-        },
-      });
       return {
         success: false,
         error: (error as Error).message,
@@ -325,14 +297,6 @@ ipcMain.handle('is-syncing-now', (): ElectronToReactResponse<boolean> => {
   try {
     return { success: true, data: syncManager?.isRunning ?? false };
   } catch (error) {
-    captureException(error, {
-      contexts: {
-        operation: {
-          name: 'is-syncing-now',
-          type: 'ipc-handler',
-        },
-      },
-    });
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error),
@@ -347,14 +311,6 @@ ipcMain.handle(
     try {
       return { success: true, data: await syncManager?.initialPull() };
     } catch (error) {
-      captureException(error, {
-        contexts: {
-          operation: {
-            name: 'initial-pull',
-            type: 'ipc-handler',
-          },
-        },
-      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -374,16 +330,6 @@ ipcMain.handle(
     try {
       return { success: true, data: create(table, record) };
     } catch (error) {
-      captureException(error, {
-        contexts: {
-          operation: {
-            name: 'db:create',
-            table,
-            type: 'ipc-handler',
-            arg: record,
-          },
-        },
-      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -408,16 +354,6 @@ ipcMain.handle(
         data: read(table, conditions, fields, isLikeQuery),
       };
     } catch (error) {
-      captureException(error, {
-        contexts: {
-          operation: {
-            name: 'db:read',
-            table,
-            type: 'ipc-handler',
-            arg: conditions,
-          },
-        },
-      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -438,16 +374,6 @@ ipcMain.handle(
       const result = update(table, record);
       return { success: true, data: result };
     } catch (error) {
-      captureException(error, {
-        contexts: {
-          operation: {
-            name: 'db:update',
-            table,
-            type: 'ipc-handler',
-            arg: record,
-          },
-        },
-      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -468,16 +394,6 @@ ipcMain.handle(
       deleteRecord(table, record);
       return { success: true };
     } catch (error) {
-      captureException(error, {
-        contexts: {
-          operation: {
-            name: 'db:delete',
-            table,
-            type: 'ipc-handler',
-            arg: record,
-          },
-        },
-      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -501,16 +417,6 @@ ipcMain.handle(
         data: executeSql(query, params, justRun as boolean),
       };
     } catch (error) {
-      captureException(error, {
-        contexts: {
-          operation: {
-            name: 'db:query',
-            query,
-            type: 'ipc-handler',
-            arg: { query, params },
-          },
-        },
-      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -531,15 +437,6 @@ ipcMain.handle(
     try {
       return { success: true, data: createDailyEntries(date, company, pairs) };
     } catch (error) {
-      captureException(error, {
-        contexts: {
-          operation: {
-            name: 'db:create-daily-entries',
-            type: 'ipc-handler',
-            arg: { date, company, count: pairs.length },
-          },
-        },
-      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -558,15 +455,6 @@ ipcMain.handle(
     try {
       return { success: true, data: dedupeDailyEntriesSortOrder(opts) };
     } catch (error) {
-      captureException(error, {
-        contexts: {
-          operation: {
-            name: 'db:dedupe-daily-entries',
-            type: 'ipc-handler',
-            arg: opts,
-          },
-        },
-      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -589,15 +477,6 @@ ipcMain.handle(
         data: executeBatch(queries),
       };
     } catch (error) {
-      captureException(error, {
-        contexts: {
-          operation: {
-            name: 'db:batch',
-            type: 'ipc-handler',
-            queryCount: queries.length,
-          },
-        },
-      });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),

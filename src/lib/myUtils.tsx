@@ -11,7 +11,6 @@ import MyCache from '../../MyCache.ts';
 import { batchQuery, query, read, update } from '@/hooks/dbUtil.ts';
 import { toastStyles } from '@/constants/loanForm.ts';
 import { cn } from '@/lib/utils.ts';
-import { captureException } from '@/lib/sentry.ts';
 import {
   addMonths,
   differenceInCalendarDays,
@@ -174,7 +173,6 @@ export function errorToast(msg: string | Error | unknown) {
   } else {
     toast.error(msg as string, { className: toastStyles.error });
   }
-  captureException(msg as string | Error);
 }
 
 export function toastElectronResponse<T>(
