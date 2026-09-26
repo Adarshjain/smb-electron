@@ -153,6 +153,13 @@ export function Home() {
             Release Interest
           </div>
         </Button>
+        <Button
+          variant="outline"
+          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
+          onClick={() => void navigate('/analytics')}
+        >
+          <div className="justify-self-center col-start-2">Analytics</div>
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

@@ -26,7 +26,7 @@
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "test:db": "npm rebuild better-sqlite3 && (vitest run electron/db; status=$?; electron-rebuild -f -w better-sqlite3; exit $status)",
+    "test:db": "npm rebuild better-sqlite3 && (vitest run electron/db src/lib/analytics/facts.db.test.ts; status=$?; electron-rebuild -f -w better-sqlite3; exit $status)",
     "postinstall": "electron-rebuild -f -w better-sqlite3",
     "build:win": "rmdir /s /q release && npm run build && electron-builder --dir --win --x64"
   },
@@ -127,6 +127,7 @@
     "cross-env": "^10.1.0",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
+    "echarts": "^6.1.0",
     "electron": "^38.3.0",
     "electron-builder": "^26.0.12",
     "esbuild": "^0.25.11",
