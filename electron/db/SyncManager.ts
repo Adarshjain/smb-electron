@@ -172,7 +172,7 @@ export class SyncManager {
           .upsert(upsertRecords);
         if (upsertError) throw upsertError;
 
-        upsertRecords.forEach((record) => markAsSynced(tableName, record));
+        markAsSynced(tableName, upsertRecords);
       }
     } catch (error) {
       console.error(`Error syncing ${tableName}:`, error);

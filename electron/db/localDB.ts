@@ -250,11 +250,13 @@ export function createDailyEntries(
   return null;
 }
 
+// Marks all records as synced in one transaction with a single prepared
+// statement, instead of one auto-committed UPDATE per record.
 export function markAsSynced<K extends TableName>(
   table: K,
-  record: LocalTables<K>
+  records: LocalTables<K>[]
 ): null {
-  if (!db) return null;
+  if (!db || !records.length) return null;
 
   const pkFields = TablesSQliteSchema[table].primary.filter(
     (key) => key !== 'deleted'
@@ -264,15 +266,17 @@ export function markAsSynced<K extends TableName>(
   }
 
   const whereClauses = pkFields.map((field) => `${field} = ?`).join(' AND ');
-  const whereValues = pkFields.map(
-    (field) => record[field as keyof LocalTables<K>]
-  );
-
-  const sql = `UPDATE ${table}
+  const stmt = db.prepare(`UPDATE ${table}
      SET synced = 1
-     WHERE ${whereClauses}`;
+     WHERE ${whereClauses}`);
 
-  db.prepare(sql).run(...whereValues);
+  db.transaction(() => {
+    for (const record of records) {
+      stmt.run(
+        ...pkFields.map((field) => record[field as keyof LocalTables<K>])
+      );
+    }
+  })();
   return null;
 }
 

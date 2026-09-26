@@ -22,10 +22,25 @@ vi.mock('./database', () => ({
 }));
 
 vi.mock('../../tableSchema', () => ({
-  TablesSQliteSchema: {},
+  TablesSQliteSchema: {
+    daily_entries: {
+      primary: [
+        'date',
+        'company',
+        'main_code',
+        'sub_code',
+        'sort_order',
+        'deleted',
+      ],
+    },
+  },
 }));
 
-import { createDailyEntries, type DailyEntryPair } from './localDB';
+import {
+  createDailyEntries,
+  markAsSynced,
+  type DailyEntryPair,
+} from './localDB';
 
 const SCHEMA = `
   CREATE TABLE daily_entries (
@@ -378,6 +393,33 @@ describe('createDailyEntries — negative cases', () => {
       ...new Set(helperRows.map((r) => r.sort_order)),
     ].sort();
     expect(helperOrders).toEqual([5, 6]);
+  });
+});
+
+describe('markAsSynced', () => {
+  it('marks only the given records as synced', () => {
+    createDailyEntries('2026-05-09', 'CompanyA', [
+      PAIR({ sub_code: 1 }),
+      PAIR({ sub_code: 2 }),
+    ]);
+    const rows = allRows();
+    expect(rows.every((r) => r.synced === 0)).toBe(true);
+
+    const [first, second] = rows;
+    markAsSynced('daily_entries', [first, second] as never);
+
+    const after = allRows();
+    expect(after.filter((r) => r.synced === 1)).toEqual([
+      { ...first, synced: 1 },
+      { ...second, synced: 1 },
+    ]);
+    expect(after.filter((r) => r.synced === 0)).toHaveLength(2);
+  });
+
+  it('is a no-op for an empty list', () => {
+    createDailyEntries('2026-05-09', 'CompanyA', [PAIR()]);
+    expect(() => markAsSynced('daily_entries', [])).not.toThrow();
+    expect(allRows().every((r) => r.synced === 0)).toBe(true);
   });
 });
 
