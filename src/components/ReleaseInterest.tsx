@@ -104,6 +104,28 @@ export default function ReleaseInterest() {
                         </TableCell>
                       </TableRow>
                     ))}
+                    <TableRow>
+                      <TableCell className="border-r">Total</TableCell>
+                      <TableCell className="border-r" />
+                      <TableCell className="border-r text-right">
+                        {formatCurrency(
+                          value.reduce((sum, r) => sum + r.loan_amount, 0)
+                        )}
+                      </TableCell>
+                      <TableCell className="border-r text-right">
+                        {formatCurrency(
+                          value.reduce(
+                            (sum, r) => sum + r.tax_interest_amount,
+                            0
+                          )
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(
+                          value.reduce((sum, r) => sum + r.total_amount, 0)
+                        )}
+                      </TableCell>
+                    </TableRow>
                   </TableBody>
                 </Table>
               </div>
