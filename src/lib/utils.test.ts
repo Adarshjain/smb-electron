@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cn } from './utils';
-import { getTaxedMonthDiff } from '@/lib/myUtils.tsx';
+import { getMonthDiff, getTaxedMonthDiff } from '@/lib/myUtils.tsx';
 
 describe('cn utility function', () => {
   it('should merge class names', () => {
@@ -63,5 +63,31 @@ describe('tax month diff', () => {
       // console.log(`From ${from} to ${to} should be ${count} months`);
       expect(getTaxedMonthDiff(from, to)).toEqual(count);
     });
+  });
+});
+
+describe('month diff', () => {
+  const cases: [string, string, number][] = [
+    ['2026-01-15', '2026-01-15', 0], // same day release
+    ['2026-01-15', '2026-01-20', 0],
+    ['2026-01-15', '2026-02-14', 0],
+    ['2026-01-15', '2026-02-15', 0], // anniversary doesn't add a month
+    ['2026-01-15', '2026-02-16', 1],
+    ['2026-01-31', '2026-02-28', 0],
+    ['2026-01-31', '2026-03-01', 1],
+    ['2026-01-31', '2026-04-30', 2],
+    ['2026-01-15', '2026-01-10', 0], // release before loan date
+  ];
+  it('solve cases', () => {
+    cases.forEach(([from, to, count]) => {
+      expect(getMonthDiff(from, to)).toEqual(count);
+    });
+  });
+
+  it('is 0 for a loan dated today with no end date', () => {
+    const today = new Date();
+    const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    expect(getMonthDiff(todayIso)).toEqual(0);
+    expect(getMonthDiff(todayIso, new Date())).toEqual(0);
   });
 });

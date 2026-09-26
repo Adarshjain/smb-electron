@@ -225,7 +225,7 @@ export function getInterest(principal: number, intRate: number, months = 1) {
 export function getMonthDiff(from: string | Date, to?: string | Date): number {
   const now = to ? new Date(to) : new Date();
   const start = new Date(from);
-  if (+start === +now) {
+  if (differenceInCalendarDays(now, start) <= 0) {
     return 0;
   }
   let months =
