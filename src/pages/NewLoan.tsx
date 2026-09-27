@@ -370,11 +370,29 @@ export default function NewLoan() {
     setIsCommitting(true);
     data ??= getValues();
     let isNumberSwitch = false;
+    let movedRelease: TablesInsert['releases'] | null = null;
     if (isEditMode) {
       if (
         `${loadedLoan?.serial}-${loadedLoan?.loan_no}` !==
         `${data.serial}-${data.loan_no}`
       ) {
+        const releaseResp = await read('releases', {
+          serial: loadedLoan?.serial,
+          loan_no: loadedLoan?.loan_no,
+        });
+        if (releaseResp?.length) {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { synced, deleted, ...release } = releaseResp[0];
+          movedRelease = {
+            ...release,
+            serial: data.serial,
+            loan_no: parseInt(data.loan_no),
+          };
+          await deleteRecord('releases', {
+            serial: loadedLoan?.serial,
+            loan_no: loadedLoan?.loan_no,
+          });
+        }
         await deleteRecord('bill_items', {
           serial: loadedLoan?.serial,
           loan_no: loadedLoan?.loan_no,
@@ -397,7 +415,7 @@ export default function NewLoan() {
         first_month_interest: parseFloat(data.first_month_interest || '0'),
         doc_charges: parseFloat(data.doc_charges || '0'),
         metal_type: data.metal_type,
-        released: 0,
+        released: loadedLoan?.released ?? 0,
         company: data.company,
       };
       const sortOrderResp = await query<
@@ -461,6 +479,9 @@ export default function NewLoan() {
         await create('bills', formattedLoan);
         for (const item of formatterProduct) {
           await create('bill_items', item);
+        }
+        if (movedRelease) {
+          await create('releases', movedRelease);
         }
         await createProductsIfNotExist(data.billing_items, data.metal_type);
         if (
