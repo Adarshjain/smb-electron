@@ -10,7 +10,7 @@ import type {
 } from '../../shared-types';
 import { executeSql } from './localDB';
 
-type Row = Record<string, unknown>;
+export type Row = Record<string, unknown>;
 
 const PAGE_SIZE = 1000;
 // Cap on how many example rows per category are sent back to the UI.
@@ -25,7 +25,7 @@ interface TableShape {
   primary: string[];
 }
 
-function tableShape(table: TableName): TableShape {
+export function tableShape(table: TableName): TableShape {
   const schema = TablesSQliteSchema[table];
   const columns = Object.keys(schema.columns)
     .filter((c) => !LOCAL_ONLY_COLUMNS.includes(c))
@@ -164,7 +164,7 @@ export function compareTable(
 
 // PostgREST caps each response (1000 rows by default), so page through the
 // table in a stable order and check the total against an exact count.
-async function fetchAllRemote(
+export async function fetchAllRemote(
   supabase: SupabaseClient,
   table: TableName,
   primary: string[]
@@ -203,7 +203,7 @@ async function fetchAllRemote(
   return rows;
 }
 
-function readLocal(table: TableName) {
+export function readLocal(table: TableName) {
   const rows = executeSql(`SELECT * FROM ${table} WHERE deleted IS NULL`);
   const pending = executeSql(
     `SELECT COUNT(*) AS n FROM ${table} WHERE synced = 0 OR deleted IS NOT NULL`

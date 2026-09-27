@@ -12,6 +12,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import GoHome from '@/components/GoHome.tsx';
 import SyncStatus from '@/components/SyncStatus.tsx';
+import RestoreFromSupabase from '@/components/RestoreFromSupabase.tsx';
 import type { TableName } from '../../tables';
 import {
   NativeSelect,
@@ -283,6 +284,7 @@ export default function Settings() {
         confirmText="Delete"
         isDestructive
       />
+      <RestoreFromSupabase />
     </div>
   );
 }

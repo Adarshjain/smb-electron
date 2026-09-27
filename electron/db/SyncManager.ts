@@ -1,5 +1,5 @@
 import { type SupabaseClient } from '@supabase/supabase-js';
-import { create, deleteSynced, fetchUnsynced, markAsSynced } from './localDB';
+import { deleteSynced, fetchUnsynced, markAsSynced } from './localDB';
 import type { LocalTables, TableName } from '../../tables';
 import { TablesSQliteSchema } from '../../tableSchema';
 
@@ -184,23 +184,17 @@ export class SyncManager {
     }
   }
 
-  async initialPull() {
-    console.log('⬇️ Performing initial pull from Supabase...');
-    for (const tableName of this.tables) {
-      const { data, error } = await this.supabase.from(tableName).select('*');
-      if (error) throw error;
-
-      if (!data?.length) {
-        console.warn(`No data fetched for table ${tableName}`);
-        continue;
-      }
-      data.forEach((record) =>
-        create(tableName, {
-          ...record,
-          synced: 1,
-        } as unknown as LocalTables<TableName>)
-      );
+  // Holds the sync lock while `task` runs, so neither the timer nor the
+  // Back Up button can push half-written data.
+  async withSyncPaused<T>(task: () => Promise<T>): Promise<T> {
+    if (this.running) {
+      throw new Error('A backup is running. Try again once it finishes.');
     }
-    console.log('✅ Initial data pull complete.');
+    this.running = true;
+    try {
+      return await task();
+    } finally {
+      this.running = false;
+    }
   }
 }

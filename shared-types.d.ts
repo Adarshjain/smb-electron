@@ -53,6 +53,17 @@ export type BackupVerifyProgress =
   | { step: 'backup' }
   | { step: 'table'; table: TableName; index: number; total: number };
 
+export type RestoreProgress =
+  | { step: 'check' | 'write' | 'verify' }
+  | { step: 'download'; table: TableName; index: number; total: number };
+
+export interface RestoreReport {
+  rowsRestored: number;
+  // Written rows compared against the downloaded Supabase rows.
+  tables: VerifyTableReport[];
+  inSync: boolean;
+}
+
 declare global {
   interface Window {
     api: {
@@ -137,7 +148,10 @@ declare global {
           tableName: TableName
         ) => Promise<ElectronToReactResponse<void>>;
         isSyncing: () => Promise<ElectronToReactResponse<boolean>>;
-        initialPull: () => Promise<ElectronToReactResponse<void | undefined>>;
+        restore: () => Promise<ElectronToReactResponse<RestoreReport>>;
+        onRestoreProgress: (
+          callback: (progress: RestoreProgress) => void
+        ) => () => void;
         verifyBackup: () => Promise<
           ElectronToReactResponse<BackupVerifyReport>
         >;

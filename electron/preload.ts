@@ -9,6 +9,8 @@ import {
   type BackupVerifyProgress,
   type BackupVerifyReport,
   type ElectronToReactResponse,
+  type RestoreProgress,
+  type RestoreReport,
 } from '../shared-types';
 import { type BackupEndResponse } from './db/SyncManager';
 import { type DailyEntryPair } from './db/localDB';
@@ -69,8 +71,16 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('sync-table-now', tableName),
     isSyncing: (): Promise<ElectronToReactResponse<boolean>> =>
       ipcRenderer.invoke('is-syncing-now'),
-    initialPull: (): Promise<ElectronToReactResponse<void | undefined>> =>
-      ipcRenderer.invoke('initial-pull'),
+    restore: (): Promise<ElectronToReactResponse<RestoreReport>> =>
+      ipcRenderer.invoke('restore-from-supabase'),
+    onRestoreProgress: (callback: (progress: RestoreProgress) => void) => {
+      const listener = (_: unknown, progress: RestoreProgress) =>
+        callback(progress);
+      ipcRenderer.on('restore-progress', listener);
+      return () => {
+        ipcRenderer.removeListener('restore-progress', listener);
+      };
+    },
     verifyBackup: (): Promise<ElectronToReactResponse<BackupVerifyReport>> =>
       ipcRenderer.invoke('verify-backup'),
     onVerifyProgress: (callback: (progress: BackupVerifyProgress) => void) => {

@@ -30,8 +30,10 @@ import type {
 import type {
   BackupVerifyReport,
   ElectronToReactResponse,
+  RestoreReport,
 } from '../shared-types';
 import { verifyBackup } from './db/verifyBackup';
+import { restoreFromSupabase } from './db/restore';
 import fs from 'fs';
 
 // Load environment variables from the correct location
@@ -327,10 +329,25 @@ ipcMain.handle('is-syncing-now', (): ElectronToReactResponse<boolean> => {
 });
 
 ipcMain.handle(
-  'initial-pull',
-  async (): Promise<ElectronToReactResponse<void | undefined>> => {
+  'restore-from-supabase',
+  async (
+    event: IpcMainInvokeEvent
+  ): Promise<ElectronToReactResponse<RestoreReport>> => {
     try {
-      return { success: true, data: await syncManager?.initialPull() };
+      if (!syncManager) {
+        throw new Error(
+          'Supabase sync is not set up on this machine, or has not started yet'
+        );
+      }
+      const manager = syncManager;
+      return {
+        success: true,
+        data: await manager.withSyncPaused(() =>
+          restoreFromSupabase(manager.client, tables, (progress) =>
+            event.sender.send('restore-progress', progress)
+          )
+        ),
+      };
     } catch (error) {
       return {
         success: false,
