@@ -154,13 +154,6 @@ export function Home() {
             Release Interest
           </div>
         </Button>
-        <Button
-          variant="outline"
-          className="w-full grid grid-cols-[1fr_auto_1fr] px-3 border-input font-normal"
-          onClick={() => openTab('Analytics', <Analytics />)}
-        >
-          <div className="justify-self-center col-start-2">Analytics</div>
-        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -188,6 +181,11 @@ export function Home() {
               onClick={() => openTab('Loan Verify', <LoanVerify />)}
             >
               Loan Verify
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => openTab('Analytics', <Analytics />)}
+            >
+              Analytics
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => void navigate('/customer-by-area')}
