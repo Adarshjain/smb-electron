@@ -26,6 +26,19 @@ interface SyncConfig {
   onBackupEnd?: (response: BackupEndResponse) => void;
 }
 
+// Supabase errors are plain objects, not Error instances.
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  const { message, details } = (error ?? {}) as {
+    message?: unknown;
+    details?: unknown;
+  };
+  if (typeof message !== 'string') return JSON.stringify(error);
+  return typeof details === 'string' && details
+    ? `${message} (${details})`
+    : message;
+}
+
 export class SyncManager {
   private static instance: SyncManager | null = null;
   private supabase: SupabaseClient;
@@ -91,7 +104,11 @@ export class SyncManager {
   private scheduleNextSync() {
     if (this.timer) clearInterval(this.timer);
     this.nextSyncTime = new Date(Date.now() + this.interval);
-    this.timer = setInterval(() => void this.pushAll(), this.interval);
+    // Failures are already reported through onBackupEnd.
+    this.timer = setInterval(
+      () => void this.pushAll().catch(() => undefined),
+      this.interval
+    );
   }
 
   stop() {
@@ -104,24 +121,36 @@ export class SyncManager {
     this.onBackupStart?.();
 
     const summary: Record<string, number> = {};
+    // One table failing (a bad row, say) must not stop the others from
+    // being backed up, so each step's failure is collected and reported
+    // together at the end.
+    const errors: string[] = [];
+    const attempt = async (label: string, task: () => Promise<void>) => {
+      try {
+        await task();
+      } catch (error) {
+        errors.push(`${label}: ${errorMessage(error)}`);
+      }
+    };
 
     try {
-      await this.refreshSortOrderFloor();
+      await attempt('reading the highest entry number', () =>
+        this.refreshSortOrderFloor()
+      );
       for (const tableName of this.tables) {
         if (tableName === 'daily_entries') {
           continue;
         }
-        await this.pushChanges(tableName);
+        await attempt(tableName, () => this.pushChanges(tableName));
       }
-      await this.pushChanges('daily_entries');
+      await attempt('daily_entries', () => this.pushChanges('daily_entries'));
+
+      if (errors.length) {
+        this.onBackupEnd?.({ status: false, error: errors });
+        throw new Error(errors.join('\n'));
+      }
       this.lastSyncTime = new Date();
       this.onBackupEnd?.({ status: true, summary });
-    } catch (error) {
-      this.onBackupEnd?.({
-        status: false,
-        error: error instanceof Error ? [error.message] : ['Unknown error'],
-      });
-      throw error;
     } finally {
       this.running = false;
       this.scheduleNextSync();
