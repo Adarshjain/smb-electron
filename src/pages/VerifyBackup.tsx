@@ -174,13 +174,8 @@ export default function VerifyBackup() {
   const failing = report?.tables.filter((t) => t.status !== 'match') ?? [];
 
   return (
-    <div className="p-6 flex flex-col gap-4">
+    <div className="p-6 flex flex-row gap-4">
       <div className="text-2xl font-bold tracking-tight">Verify Backup</div>
-      <div className="text-sm text-muted-foreground max-w-3xl">
-        Backs up any pending changes, then downloads every table from Supabase
-        and compares a hash of each row with the local database. Avoid entering
-        data while it runs, or new entries will show up as differences.
-      </div>
       <div className="flex items-center gap-3">
         <Button className="w-min" disabled={running} onClick={() => void run()}>
           {running ? 'Verifying...' : 'Run Verification'}
@@ -241,20 +236,28 @@ export default function VerifyBackup() {
             <TableBody>
               {report.tables.map((t) => (
                 <TableRow key={t.table} className="align-top">
-                  <TableCell className="font-medium">{t.table}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-medium align-baseline">
+                    {t.table}
+                  </TableCell>
+                  <TableCell className=" align-baseline">
                     <StatusBadge status={t.status} />
                   </TableCell>
-                  <TableCell className="text-right">{t.localCount}</TableCell>
-                  <TableCell className="text-right">{t.remoteCount}</TableCell>
-                  <TableCell className="text-right">{t.pendingCount}</TableCell>
-                  <TableCell className="font-mono text-xs">
+                  <TableCell className="text-right align-baseline">
+                    {t.localCount}
+                  </TableCell>
+                  <TableCell className="text-right align-baseline">
+                    {t.remoteCount}
+                  </TableCell>
+                  <TableCell className="text-right align-baseline">
+                    {t.pendingCount}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs align-baseline">
                     {t.localHash.slice(0, 12)}
                   </TableCell>
-                  <TableCell className="font-mono text-xs">
+                  <TableCell className="font-mono text-xs align-baseline">
                     {t.remoteHash.slice(0, 12)}
                   </TableCell>
-                  <TableCell className="whitespace-normal">
+                  <TableCell className="whitespace-normal align-baseline">
                     <TableDetails report={t} />
                   </TableCell>
                 </TableRow>
