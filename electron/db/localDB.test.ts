@@ -50,6 +50,7 @@ import {
   markAsSynced,
   releaseLoan,
   setRemoteSortOrderFloor,
+  updateDailyEntry,
   unreleaseLoan,
   update,
   type DailyEntryPair,
@@ -530,6 +531,102 @@ describe('deleteRecord', () => {
       'Record not found in table daily_entries'
     );
     expect(pending()).toHaveLength(2);
+  });
+});
+
+describe('updateDailyEntry', () => {
+  const DATE = '2026-09-01';
+  const CO = 'SMB';
+  const rows = () =>
+    allRows().map((r) => [
+      r.main_code,
+      r.sub_code,
+      r.credit,
+      r.debit,
+      r.deleted,
+    ]);
+
+  beforeEach(() => {
+    createDailyEntries(DATE, CO, [
+      PAIR({ main_code: 14, sub_code: 46, credit: 9500 }),
+    ]);
+    markAsSynced('daily_entries', allRows() as never);
+  });
+
+  it('updates both rows of the pair in place', () => {
+    updateDailyEntry(DATE, CO, 1, 46, {
+      main_code: 14,
+      sub_code: 46,
+      credit: 11070,
+      debit: 0,
+      description: '9500+1570',
+    });
+    expect(rows()).toEqual([
+      [14, 46, 11070, 0, null],
+      [46, 14, 0, 11070, null],
+    ]);
+    expect(allRows().every((r) => r.synced === 0)).toBe(true);
+  });
+
+  it('fails instead of reporting success when the entry is not there', () => {
+    expect(() =>
+      updateDailyEntry(DATE, CO, 2, 46, {
+        main_code: 14,
+        sub_code: 46,
+        credit: 1,
+        debit: 0,
+        description: null,
+      })
+    ).toThrow('Entry 2 (14 → 46) on 2026-09-01 not found');
+    expect(allRows().every((r) => r.synced === 1)).toBe(true);
+  });
+
+  it('moves the entry to a new account under the same sort_order', () => {
+    updateDailyEntry(DATE, CO, 1, 46, {
+      main_code: 14,
+      sub_code: 76,
+      credit: 9500,
+      debit: 0,
+      description: null,
+    });
+    expect(
+      allRows('deleted IS NULL').map((r) => [
+        r.main_code,
+        r.sub_code,
+        r.sort_order,
+      ])
+    ).toEqual([
+      [14, 76, 1],
+      [76, 14, 1],
+    ]);
+    expect(
+      allRows('deleted = 1').map((r) => [r.main_code, r.sub_code])
+    ).toEqual([
+      [14, 46],
+      [46, 14],
+    ]);
+  });
+
+  it('handles switching the account back before a backup', () => {
+    const to = (sub_code: number, old: number) =>
+      updateDailyEntry(DATE, CO, 1, old, {
+        main_code: 14,
+        sub_code,
+        credit: 9500,
+        debit: 0,
+        description: null,
+      });
+    to(76, 46);
+    to(46, 76);
+    expect(
+      allRows('deleted IS NULL').map((r) => [r.main_code, r.sub_code])
+    ).toEqual([
+      [14, 46],
+      [46, 14],
+    ]);
+    // Old keys stay queued for deletion on Supabase; the live pair is
+    // uploaded after them.
+    expect(fetchUnsynced('daily_entries')).toHaveLength(6);
   });
 });
 

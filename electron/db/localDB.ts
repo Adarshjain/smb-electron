@@ -258,6 +258,100 @@ export function createDailyEntries(
   return null;
 }
 
+// Rewrites one main + inverted pair in place, keeping its sort_order so the
+// entry stays where it was in the day's list. The account (sub_code) is part
+// of the key, so changing it can't be an UPDATE: Supabase would keep the row
+// under the old key. Instead the old pair is tombstoned and the new pair
+// inserted under the same sort_order, and the next backup deletes the old
+// key and uploads the new one.
+export function updateDailyEntry(
+  date: string,
+  company: string,
+  sort_order: number,
+  old_sub_code: number,
+  pair: DailyEntryPair
+): null {
+  if (!db) return null;
+  const { main_code, sub_code, credit, debit, description } = pair;
+
+  db.transaction(() => {
+    if (!db) return;
+
+    if (sub_code !== old_sub_code) {
+      for (const [main, sub] of [
+        [main_code, old_sub_code],
+        [old_sub_code, main_code],
+      ]) {
+        deleteRecord('daily_entries', {
+          date,
+          company,
+          main_code: main,
+          sub_code: sub,
+          sort_order,
+        });
+      }
+      const insert = db.prepare(`INSERT INTO daily_entries
+        (date, company, main_code, sub_code, credit, debit, description, sort_order, synced, deleted)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, NULL)`);
+      insert.run(
+        date,
+        company,
+        main_code,
+        sub_code,
+        credit,
+        debit,
+        description,
+        sort_order
+      );
+      insert.run(
+        date,
+        company,
+        sub_code,
+        main_code,
+        debit,
+        credit,
+        description,
+        sort_order
+      );
+      return;
+    }
+
+    const updateRow = db.prepare(`UPDATE daily_entries
+      SET credit      = ?,
+          debit       = ?,
+          description = ?,
+          synced      = 0
+      WHERE date = ?
+        AND company = ?
+        AND main_code = ?
+        AND sub_code = ?
+        AND sort_order = ?
+        AND deleted IS NULL`);
+    for (const [main, sub, cr, dr] of [
+      [main_code, sub_code, credit, debit],
+      [sub_code, main_code, debit, credit],
+    ]) {
+      const { changes } = updateRow.run(
+        cr,
+        dr,
+        description,
+        date,
+        company,
+        main,
+        sub,
+        sort_order
+      );
+      if (changes !== 1) {
+        throw new Error(
+          `Entry ${sort_order} (${main} → ${sub}) on ${date} not found`
+        );
+      }
+    }
+  })();
+
+  return null;
+}
+
 // Marks all records as synced in one transaction with a single prepared
 // statement, instead of one auto-committed UPDATE per record.
 export function markAsSynced<K extends TableName>(

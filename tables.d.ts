@@ -153,7 +153,13 @@ export interface TablesDelete {
 
   account_head: { code: number };
 
-  daily_entries: { code: number };
+  daily_entries: {
+    date: string;
+    company: string;
+    main_code: number;
+    sub_code: number;
+    sort_order: number;
+  };
 
   bills: { serial: string; loan_no: number };
 

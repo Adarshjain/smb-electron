@@ -29,6 +29,21 @@ contextBridge.exposeInMainWorld('api', {
       pairs: DailyEntryPair[]
     ): Promise<ElectronToReactResponse<null>> =>
       ipcRenderer.invoke('db:create-daily-entries', date, company, pairs),
+    updateDailyEntry: (
+      date: string,
+      company: string,
+      sort_order: number,
+      old_sub_code: number,
+      pair: DailyEntryPair
+    ): Promise<ElectronToReactResponse<null>> =>
+      ipcRenderer.invoke(
+        'db:update-daily-entry',
+        date,
+        company,
+        sort_order,
+        old_sub_code,
+        pair
+      ),
     releaseLoan: (
       release: Tables['releases']
     ): Promise<ElectronToReactResponse<null>> =>

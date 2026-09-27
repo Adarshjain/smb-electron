@@ -7,6 +7,7 @@ import { SyncManager } from './db/SyncManager';
 import {
   create,
   createDailyEntries,
+  updateDailyEntry,
   deleteRecord,
   executeBatch,
   executeSql,
@@ -515,6 +516,31 @@ ipcMain.handle(
   ): ElectronToReactResponse<null> => {
     try {
       return { success: true, data: createDailyEntries(date, company, pairs) };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+    }
+  }
+);
+
+ipcMain.handle(
+  'db:update-daily-entry',
+  (
+    _event: IpcMainInvokeEvent,
+    date: string,
+    company: string,
+    sort_order: number,
+    old_sub_code: number,
+    pair: DailyEntryPair
+  ): ElectronToReactResponse<null> => {
+    try {
+      return {
+        success: true,
+        data: updateDailyEntry(date, company, sort_order, old_sub_code, pair),
+      };
     } catch (error) {
       return {
         success: false,

@@ -6,6 +6,7 @@ import {
   type DailyEntryPair,
   deleteRecord,
   query,
+  updateDailyEntry,
 } from '@/hooks/dbUtil.ts';
 
 export const SORT_ORDER = {
@@ -71,28 +72,36 @@ export const getInitialInputValue = (
   return val?.name ?? '';
 };
 
+const hasAccount = (
+  row: CashbookRow
+): row is CashbookRow & { accountHead: Tables['account_head'] } =>
+  !!row.accountHead && typeof row.accountHead !== 'string';
+
+// Saved entries whose row is gone or was cleared. A row whose account was
+// changed is still there and is handled as a modification.
 export const fetchDeletedRecords = (
   oldEntries: Tables['daily_entries'][],
   newEntries: CashbookRow[]
 ): Tables['daily_entries'][] => {
-  const arr2SortOrders = new Set(
-    newEntries.map((item) => {
-      if (!item.accountHead || typeof item.accountHead === 'string')
-        return item.sort_order;
-      return `${item.sort_order}-${item.accountHead.code}`;
-    })
+  const kept = new Set(
+    newEntries.filter(hasAccount).map((item) => item.sort_order)
   );
-  return oldEntries.filter(
-    (item) => !arr2SortOrders.has(`${item.sort_order}-${item.sub_code}`)
-  );
+  return oldEntries.filter((item) => !kept.has(item.sort_order));
 };
+
+export interface ModifiedEntry {
+  entry: CashbookRow & { accountHead: Tables['account_head'] };
+  oldSubCode: number;
+}
 
 export const fetchModifiedEntries = (
   oldEntries: Tables['daily_entries'][],
   newEntries: CashbookRow[]
-): CashbookRow[] => {
-  const existingEntries = newEntries.filter((entry) => entry.sort_order > 0);
-  const updatedRows: CashbookRow[] = [];
+): ModifiedEntry[] => {
+  const existingEntries = newEntries
+    .filter(hasAccount)
+    .filter((entry) => entry.sort_order > 0);
+  const updatedRows: ModifiedEntry[] = [];
   for (const entry of existingEntries) {
     const matched = oldEntries.find(
       (oldEntry) => oldEntry.sort_order === entry.sort_order
@@ -100,13 +109,12 @@ export const fetchModifiedEntries = (
     if (!matched) {
       continue;
     }
-    const accountChanged =
-      matched.sub_code !== (entry.accountHead as Tables['account_head']).code;
+    const accountChanged = matched.sub_code !== entry.accountHead.code;
     const descriptionChanged = matched.description !== entry.description;
     const creditChanged = matched.credit !== entry.credit;
     const debitChanged = matched.debit !== entry.debit;
     if (accountChanged || descriptionChanged || creditChanged || debitChanged) {
-      updatedRows.push(entry);
+      updatedRows.push({ entry, oldSubCode: matched.sub_code });
     }
   }
   return updatedRows;
@@ -182,26 +190,20 @@ export const deleteDailyEntries = async (
 };
 
 export const updateDailyEntries = async (
-  entries: CashbookRow[],
+  entries: ModifiedEntry[],
   currentAccountHead: Tables['account_head'],
   date: string,
   company: string
 ): Promise<boolean> => {
   try {
-    for (const entry of entries) {
-      const currentAccountCode = currentAccountHead.code;
-      const entryCode = (entry.accountHead as Tables['account_head']).code;
-
-      await updateDualEntry(
-        currentAccountCode,
-        entryCode,
-        entry.credit ?? 0,
-        entry.debit ?? 0,
-        date,
-        company,
-        entry.description ?? '',
-        entry.sort_order
-      );
+    for (const { entry, oldSubCode } of entries) {
+      await updateDailyEntry(date, company, entry.sort_order, oldSubCode, {
+        main_code: currentAccountHead.code,
+        sub_code: entry.accountHead.code,
+        credit: entry.credit ?? 0,
+        debit: entry.debit ?? 0,
+        description: entry.description ?? '',
+      });
     }
     return true;
   } catch (e) {
@@ -234,47 +236,13 @@ const updateDualEntry = async (
   description: string,
   sort_order: number
 ) => {
-  const updateQuery = `UPDATE daily_entries
-       SET credit      = ?,
-           debit       = ?,
-           description = ?,
-           synced      = 0
-       WHERE company = ?
-         AND date = ?
-         AND main_code = ?
-         AND sub_code = ?
-         AND sort_order = ?
-         AND deleted IS NULL`;
-  const main = query(
-    updateQuery,
-    [
-      credit,
-      debit,
-      description,
-      company,
-      date,
-      main_code,
-      sub_code,
-      sort_order,
-    ],
-    true
-  );
-
-  const inverted = query(
-    updateQuery,
-    [
-      debit,
-      credit,
-      description,
-      company,
-      date,
-      sub_code,
-      main_code,
-      sort_order,
-    ],
-    true
-  );
-  await Promise.all([main, inverted]);
+  await updateDailyEntry(date, company, sort_order, sub_code, {
+    main_code,
+    sub_code,
+    credit,
+    debit,
+    description,
+  });
 };
 
 interface UpsertDualEntryParams {

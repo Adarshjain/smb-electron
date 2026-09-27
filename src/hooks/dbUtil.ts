@@ -38,6 +38,26 @@ export const createDailyEntries = async (
   throw new Error(response.error);
 };
 
+export const updateDailyEntry = async (
+  date: string,
+  company: string,
+  sort_order: number,
+  old_sub_code: number,
+  pair: DailyEntryPair
+): Promise<null> => {
+  const response = await window.api.db.updateDailyEntry(
+    date,
+    company,
+    sort_order,
+    old_sub_code,
+    pair
+  );
+  if (response.success) {
+    return null;
+  }
+  throw new Error(response.error);
+};
+
 export const releaseLoan = async (
   release: Tables['releases']
 ): Promise<null> => {

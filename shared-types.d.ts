@@ -79,6 +79,19 @@ declare global {
             description: string | null;
           }[]
         ) => Promise<ElectronToReactResponse<null>>;
+        updateDailyEntry: (
+          date: string,
+          company: string,
+          sort_order: number,
+          old_sub_code: number,
+          pair: {
+            main_code: number;
+            sub_code: number;
+            credit: number;
+            debit: number;
+            description: string | null;
+          }
+        ) => Promise<ElectronToReactResponse<null>>;
         releaseLoan: (
           release: Tables['releases']
         ) => Promise<ElectronToReactResponse<null>>;
