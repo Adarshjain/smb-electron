@@ -10,8 +10,10 @@ import {
   type BackupVerifyProgress,
   type BackupVerifyReport,
   type ElectronToReactResponse,
+  type LoanKey,
   type RestoreProgress,
   type RestoreReport,
+  type SaveLoanInput,
   type SyncStatusEvent,
 } from '../shared-types';
 import { type DailyEntryPair } from './db/localDB';
@@ -53,6 +55,10 @@ contextBridge.exposeInMainWorld('api', {
       loan_no: number
     ): Promise<ElectronToReactResponse<null>> =>
       ipcRenderer.invoke('db:unrelease-loan', serial, loan_no),
+    saveLoan: (input: SaveLoanInput): Promise<ElectronToReactResponse<null>> =>
+      ipcRenderer.invoke('db:save-loan', input),
+    deleteLoan: (loan: LoanKey): Promise<ElectronToReactResponse<null>> =>
+      ipcRenderer.invoke('db:delete-loan', loan),
     read: <K extends TableName>(
       table: K,
       conditions: Partial<LocalTables<K>>,

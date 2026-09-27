@@ -16,6 +16,8 @@ import {
   releaseLoan,
   tables,
   unreleaseLoan,
+  saveLoan,
+  deleteLoan,
   update,
 } from './db/localDB';
 import type { DailyEntryPair } from './db/localDB';
@@ -29,7 +31,9 @@ import type {
 import type {
   BackupVerifyReport,
   ElectronToReactResponse,
+  LoanKey,
   RestoreReport,
+  SaveLoanInput,
   SyncStatusEvent,
 } from '../shared-types';
 import { verifyBackup } from './db/verifyBackup';
@@ -581,6 +585,42 @@ ipcMain.handle(
   ): ElectronToReactResponse<null> => {
     try {
       return { success: true, data: unreleaseLoan(serial, loan_no) };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+    }
+  }
+);
+
+ipcMain.handle(
+  'db:save-loan',
+  (
+    _event: IpcMainInvokeEvent,
+    input: SaveLoanInput
+  ): ElectronToReactResponse<null> => {
+    try {
+      return { success: true, data: saveLoan(input) };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+    }
+  }
+);
+
+ipcMain.handle(
+  'db:delete-loan',
+  (
+    _event: IpcMainInvokeEvent,
+    loan: LoanKey
+  ): ElectronToReactResponse<null> => {
+    try {
+      return { success: true, data: deleteLoan(loan) };
     } catch (error) {
       return {
         success: false,

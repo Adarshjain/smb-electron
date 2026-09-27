@@ -13,6 +13,19 @@ export type ElectronToReactResponse<T> =
       stack: string | undefined;
     };
 
+export interface LoanKey {
+  serial: string;
+  loan_no: number;
+}
+
+export interface SaveLoanInput {
+  // The loan being edited, or null for a new loan.
+  original: LoanKey | null;
+  // released is kept from the loan being edited (0 for a new loan).
+  bill: Omit<Tables['bills'], 'released'>;
+  items: Omit<Tables['bill_items'], 'serial' | 'loan_no' | 'sort_order'>[];
+}
+
 // Sent to the renderer when a backup starts and ends. `errors` is empty when
 // every table was backed up.
 export type SyncStatusEvent =
@@ -105,6 +118,10 @@ declare global {
           serial: string,
           loan_no: number
         ) => Promise<ElectronToReactResponse<null>>;
+        saveLoan: (
+          input: SaveLoanInput
+        ) => Promise<ElectronToReactResponse<null>>;
+        deleteLoan: (loan: LoanKey) => Promise<ElectronToReactResponse<null>>;
         upsert: <K extends TableName>(
           table: K,
           record: Tables[K]

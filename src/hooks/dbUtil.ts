@@ -4,7 +4,11 @@ import type {
   Tables,
   TablesUpdate,
 } from '../../tables';
-import type { ElectronToReactResponse } from '../../shared-types';
+import type {
+  ElectronToReactResponse,
+  LoanKey,
+  SaveLoanInput,
+} from '../../shared-types';
 
 export const create = async <K extends TableName>(
   table: K,
@@ -73,6 +77,22 @@ export const unreleaseLoan = async (
   loan_no: number
 ): Promise<null> => {
   const response = await window.api.db.unreleaseLoan(serial, loan_no);
+  if (response.success) {
+    return null;
+  }
+  throw new Error(response.error);
+};
+
+export const saveLoan = async (input: SaveLoanInput): Promise<null> => {
+  const response = await window.api.db.saveLoan(input);
+  if (response.success) {
+    return null;
+  }
+  throw new Error(response.error);
+};
+
+export const deleteLoan = async (loan: LoanKey): Promise<null> => {
+  const response = await window.api.db.deleteLoan(loan);
   if (response.success) {
     return null;
   }

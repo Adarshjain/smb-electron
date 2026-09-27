@@ -6,6 +6,7 @@ import type {
   TablesDelete,
   TablesUpdate,
 } from '../../tables';
+import type { LoanKey, SaveLoanInput } from '../../shared-types';
 import { db } from './database';
 import { TablesSQliteSchema } from '../../tableSchema';
 
@@ -682,6 +683,113 @@ export function unreleaseLoan(serial: string, loan_no: number): null {
   db.transaction(() => {
     deleteRecord('releases', { serial, loan_no });
     update('bills', { serial, loan_no, released: 0 });
+  })();
+
+  return null;
+}
+
+const loanLabel = ({ serial, loan_no }: LoanKey) => `Loan ${serial}${loan_no}`;
+
+function liveBill({ serial, loan_no }: LoanKey) {
+  return db
+    ?.prepare(
+      `SELECT released FROM bills
+       WHERE serial = ? AND loan_no = ? AND deleted IS NULL`
+    )
+    .get(serial, loan_no) as { released: 0 | 1 } | undefined;
+}
+
+function liveRelease({ serial, loan_no }: LoanKey) {
+  return db
+    ?.prepare(
+      `SELECT * FROM releases
+       WHERE serial = ? AND loan_no = ? AND deleted IS NULL`
+    )
+    .get(serial, loan_no) as LocalTables<'releases'> | undefined;
+}
+
+function deleteLoanItems({ serial, loan_no }: LoanKey) {
+  const hasItems = db
+    ?.prepare(
+      `SELECT 1 FROM bill_items
+       WHERE serial = ? AND loan_no = ? AND deleted IS NULL`
+    )
+    .get(serial, loan_no);
+  if (hasItems) deleteRecord('bill_items', { serial, loan_no });
+}
+
+// Saves a new loan, an edited one, or one moved to a new number, in one
+// transaction. These used to be up to six separate calls from the screen,
+// so a failure part way could, say, delete the old loan without ever
+// creating it under its new number, and the next backup would then delete
+// it from Supabase too.
+export function saveLoan({ original, bill, items }: SaveLoanInput): null {
+  if (!db) return null;
+  const target = { serial: bill.serial, loan_no: bill.loan_no };
+
+  db.transaction(() => {
+    if (!db) return;
+    const renumbered =
+      original !== null &&
+      (original.serial !== target.serial ||
+        original.loan_no !== target.loan_no);
+
+    let released: 0 | 1 = 0;
+    if (original) {
+      const existing = liveBill(original);
+      if (!existing) throw new Error(`${loanLabel(original)} does not exist`);
+      released = existing.released;
+    }
+    if ((!original || renumbered) && liveBill(target)) {
+      throw new Error(`${loanLabel(target)} already exists`);
+    }
+
+    if (original && !renumbered) {
+      update('bills', { ...bill, released });
+      deleteLoanItems(original);
+    } else {
+      let movedRelease: Tables['releases'] | null = null;
+      if (original) {
+        const release = liveRelease(original);
+        if (release) {
+          const { synced: _s, deleted: _d, ...rest } = release;
+          movedRelease = { ...rest, ...target };
+          deleteRecord('releases', original);
+        }
+        deleteLoanItems(original);
+        deleteRecord('bills', original);
+      }
+      create('bills', { ...bill, released });
+      if (movedRelease) create('releases', movedRelease);
+    }
+
+    const { max } = db
+      .prepare(`SELECT COALESCE(MAX(sort_order), 0) AS max FROM bill_items`)
+      .get() as { max: number };
+    items.forEach((item, i) => {
+      create('bill_items', { ...item, ...target, sort_order: max + i + 1 });
+    });
+  })();
+
+  return null;
+}
+
+// Deletes a loan and its items together. A released loan is refused:
+// deleting it used to leave its release behind, and releasing a new loan
+// under the same number then gave that number two live releases.
+export function deleteLoan(loan: LoanKey): null {
+  if (!db) return null;
+
+  db.transaction(() => {
+    const existing = liveBill(loan);
+    if (!existing) throw new Error(`${loanLabel(loan)} does not exist`);
+    if (existing.released || liveRelease(loan)) {
+      throw new Error(
+        `${loanLabel(loan)} is released. Unrelease it first, then delete.`
+      );
+    }
+    deleteLoanItems(loan);
+    deleteRecord('bills', loan);
   })();
 
   return null;

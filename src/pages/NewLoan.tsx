@@ -16,12 +16,8 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FieldGroup } from '@/components/ui/field';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
-import type {
-  FullCustomer,
-  MetalType,
-  Tables,
-  TablesInsert,
-} from '../../tables';
+import type { FullCustomer, MetalType, Tables } from '../../tables';
+import type { SaveLoanInput } from '../../shared-types';
 import { useLoanCalculations } from '@/hooks/useLoanCalculations';
 import { LoanCustomerSection } from '@/components/LoanForm/LoanCustomerSection';
 import { LoanAmountSection } from '@/components/LoanForm/LoanAmountSection';
@@ -46,7 +42,12 @@ import '@/styles/NewLoan.css';
 import { MetalTypeSelector } from '@/components/LoanForm/MetalTypeSelector.tsx';
 import { LoanNumber } from '@/components/LoanForm/LoanNumber.tsx';
 import DatePicker from '@/components/DatePicker.tsx';
-import { create, deleteRecord, query, read, update } from '@/hooks/dbUtil.ts';
+import {
+  create,
+  deleteLoan as deleteLoanAtomic,
+  read,
+  saveLoan,
+} from '@/hooks/dbUtil.ts';
 import BottomBar from '@/components/LoanForm/BottomBar.tsx';
 import ConfirmationDialog from '@/components/ConfirmationDialog.tsx';
 import {
@@ -261,14 +262,15 @@ export default function NewLoan() {
       errorToast('Loaded incorrect loan');
       return;
     }
-    await deleteRecord('bill_items', {
-      loan_no: parseInt(enteredNumber),
-      serial: enteredSerial,
-    });
-    await deleteRecord('bills', {
-      loan_no: parseInt(enteredNumber),
-      serial: enteredSerial,
-    });
+    try {
+      await deleteLoanAtomic({
+        serial: enteredSerial,
+        loan_no: parseInt(enteredNumber),
+      });
+    } catch (error) {
+      errorToast(error);
+      return;
+    }
     const [nextSerial, nextNumber] = getNextSerial(
       enteredSerial,
       enteredNumber
@@ -393,43 +395,8 @@ export default function NewLoan() {
     }
     setIsCommitting(true);
     data ??= getValues();
-    let isNumberSwitch = false;
-    let movedRelease: TablesInsert['releases'] | null = null;
-    if (isEditMode) {
-      if (
-        `${loadedLoan?.serial}-${loadedLoan?.loan_no}` !==
-        `${data.serial}-${data.loan_no}`
-      ) {
-        const releaseResp = await read('releases', {
-          serial: loadedLoan?.serial,
-          loan_no: loadedLoan?.loan_no,
-        });
-        if (releaseResp?.length) {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { synced, deleted, ...release } = releaseResp[0];
-          movedRelease = {
-            ...release,
-            serial: data.serial,
-            loan_no: parseInt(data.loan_no),
-          };
-          await deleteRecord('releases', {
-            serial: loadedLoan?.serial,
-            loan_no: loadedLoan?.loan_no,
-          });
-        }
-        await deleteRecord('bill_items', {
-          serial: loadedLoan?.serial,
-          loan_no: loadedLoan?.loan_no,
-        });
-        await deleteRecord('bills', {
-          serial: loadedLoan?.serial,
-          loan_no: loadedLoan?.loan_no,
-        });
-        isNumberSwitch = true;
-      }
-    }
     try {
-      const formattedLoan: TablesInsert['bills'] = {
+      const bill: SaveLoanInput['bill'] = {
         serial: data.serial,
         loan_no: parseInt(data.loan_no),
         customer_id: data.customer?.customer.id ?? '',
@@ -439,48 +406,31 @@ export default function NewLoan() {
         first_month_interest: parseFloat(data.first_month_interest || '0'),
         doc_charges: parseFloat(data.doc_charges || '0'),
         metal_type: data.metal_type,
-        released: loadedLoan?.released ?? 0,
         company: data.company,
       };
-      const sortOrderResp = await query<
-        [{ sort_order: number }]
-      >(`SELECT sort_order
-         FROM bill_items
-         ORDER BY sort_order DESC
-         LIMIT 1`);
-      let sortOrder = sortOrderResp?.[0].sort_order ?? 0;
-      if (sortOrder === 0) {
-        throw Error('Sort Order for bill items is undefined');
-      }
-      const formatterProduct: TablesInsert['bill_items'][] =
-        data.billing_items.map((item): TablesInsert['bill_items'] => ({
-          serial: data.serial,
-          loan_no: parseInt(data.loan_no),
-          gross_weight: parseFloat(item.gross_weight || '0'),
-          ignore_weight: parseFloat(item.ignore_weight || '0'),
-          net_weight: parseFloat(item.net_weight || '0'),
-          product: item.product,
-          quantity: item.quantity,
-          quality: item.quality,
-          extra: item.extra,
-          sort_order: ++sortOrder,
-        }));
+      const items: SaveLoanInput['items'] = data.billing_items.map((item) => ({
+        gross_weight: parseFloat(item.gross_weight || '0'),
+        ignore_weight: parseFloat(item.ignore_weight || '0'),
+        net_weight: parseFloat(item.net_weight || '0'),
+        product: item.product,
+        quantity: item.quantity,
+        quality: item.quality,
+        extra: item.extra,
+      }));
+      const original =
+        isEditMode && loadedLoan
+          ? { serial: loadedLoan.serial, loan_no: loadedLoan.loan_no }
+          : null;
+      const isNumberSwitch =
+        original !== null &&
+        `${original.serial}-${original.loan_no}` !==
+          `${bill.serial}-${bill.loan_no}`;
+
+      // Bill, items and any release move happen in one transaction.
+      await saveLoan({ original, bill, items });
+      await createProductsIfNotExist(data.billing_items, data.metal_type);
+
       if (isEditMode && !isNumberSwitch) {
-        await update('bills', formattedLoan);
-        const record = await read('bill_items', {
-          loan_no: formattedLoan.loan_no,
-          serial: formattedLoan.serial,
-        });
-        if (record?.length) {
-          await deleteRecord('bill_items', {
-            loan_no: formattedLoan.loan_no,
-            serial: formattedLoan.serial,
-          });
-        }
-        for (const item of formatterProduct) {
-          await create('bill_items', item);
-        }
-        await createProductsIfNotExist(data.billing_items, data.metal_type);
         const reloadedLoan = await loadBillWithDeps(
           enteredSerial,
           parseInt(enteredNumber)
@@ -489,18 +439,7 @@ export default function NewLoan() {
           handleEditLoan(reloadedLoan);
         }
       } else {
-        await create('bills', formattedLoan);
-        for (const item of formatterProduct) {
-          await create('bill_items', item);
-        }
-        if (movedRelease) {
-          await create('releases', movedRelease);
-        }
-        await createProductsIfNotExist(data.billing_items, data.metal_type);
-        if (
-          `${formattedLoan.serial}-${formattedLoan.loan_no}` ===
-          company?.next_serial
-        ) {
+        if (`${bill.serial}-${bill.loan_no}` === company?.next_serial) {
           await setNextSerial();
         }
         reset(defaultValues);
