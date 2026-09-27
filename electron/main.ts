@@ -8,6 +8,7 @@ import {
   create,
   createDailyEntries,
   updateDailyEntry,
+  deleteDailyEntry,
   deleteRecord,
   executeBatch,
   executeSql,
@@ -523,6 +524,31 @@ ipcMain.handle(
   ): ElectronToReactResponse<null> => {
     try {
       return { success: true, data: createDailyEntries(date, company, pairs) };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+    }
+  }
+);
+
+ipcMain.handle(
+  'db:delete-daily-entry',
+  (
+    _event: IpcMainInvokeEvent,
+    date: string,
+    company: string,
+    sort_order: number,
+    main_code: number,
+    sub_code: number
+  ): ElectronToReactResponse<null> => {
+    try {
+      return {
+        success: true,
+        data: deleteDailyEntry(date, company, sort_order, main_code, sub_code),
+      };
     } catch (error) {
       return {
         success: false,

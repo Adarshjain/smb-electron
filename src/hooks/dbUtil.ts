@@ -42,6 +42,26 @@ export const createDailyEntries = async (
   throw new Error(response.error);
 };
 
+export const deleteDailyEntry = async (
+  date: string,
+  company: string,
+  sort_order: number,
+  main_code: number,
+  sub_code: number
+): Promise<null> => {
+  const response = await window.api.db.deleteDailyEntry(
+    date,
+    company,
+    sort_order,
+    main_code,
+    sub_code
+  );
+  if (response.success) {
+    return null;
+  }
+  throw new Error(response.error);
+};
+
 export const updateDailyEntry = async (
   date: string,
   company: string,

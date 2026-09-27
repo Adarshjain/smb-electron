@@ -45,6 +45,7 @@ vi.mock('../../tableSchema', () => ({
 
 import {
   createDailyEntries,
+  deleteDailyEntry,
   deleteRecord,
   fetchUnsynced,
   markAsSynced,
@@ -531,6 +532,25 @@ describe('deleteRecord', () => {
       'Record not found in table daily_entries'
     );
     expect(pending()).toHaveLength(2);
+  });
+});
+
+describe('deleteDailyEntry', () => {
+  beforeEach(() => {
+    createDailyEntries('2026-09-01', 'SMB', [PAIR()]);
+  });
+
+  it('deletes both rows of the pair', () => {
+    deleteDailyEntry('2026-09-01', 'SMB', 1, 14, 1);
+    expect(allRows().map((r) => r.deleted)).toEqual([1, 1]);
+  });
+
+  it('deletes neither row when the other half is missing', () => {
+    dbHolder.current!.exec(`DELETE FROM daily_entries WHERE main_code = 1`);
+    expect(() => deleteDailyEntry('2026-09-01', 'SMB', 1, 14, 1)).toThrow(
+      'Record not found in table daily_entries'
+    );
+    expect(allRows().map((r) => r.deleted)).toEqual([null]);
   });
 });
 

@@ -4,7 +4,7 @@ import type { LocalTables, Tables } from '@/../tables';
 import {
   createDailyEntries as createDailyEntriesAtomic,
   type DailyEntryPair,
-  deleteRecord,
+  deleteDailyEntry,
   query,
   updateDailyEntry,
 } from '@/hooks/dbUtil.ts';
@@ -161,27 +161,15 @@ export const deleteDailyEntries = async (
   date: string
 ): Promise<boolean> => {
   try {
-    const queries: PromiseLike<any>[] = [];
     for (const entry of entries) {
-      const currentAccountCode = entry.main_code;
-      const entryCode = entry.sub_code;
-      const main = deleteRecord('daily_entries', {
-        main_code: currentAccountCode,
-        sub_code: entryCode,
-        sort_order: entry.sort_order,
-        company,
+      await deleteDailyEntry(
         date,
-      });
-      const inverted = deleteRecord('daily_entries', {
-        main_code: entryCode,
-        sub_code: currentAccountCode,
-        sort_order: entry.sort_order,
         company,
-        date,
-      });
-      queries.push(main, inverted);
+        entry.sort_order,
+        entry.main_code,
+        entry.sub_code
+      );
     }
-    await Promise.all(queries);
     return true;
   } catch (e) {
     errorToast(e);

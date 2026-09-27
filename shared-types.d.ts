@@ -98,6 +98,13 @@ declare global {
             description: string | null;
           }[]
         ) => Promise<ElectronToReactResponse<null>>;
+        deleteDailyEntry: (
+          date: string,
+          company: string,
+          sort_order: number,
+          main_code: number,
+          sub_code: number
+        ) => Promise<ElectronToReactResponse<null>>;
         updateDailyEntry: (
           date: string,
           company: string,

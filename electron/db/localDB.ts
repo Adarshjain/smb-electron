@@ -343,6 +343,35 @@ export function createDailyEntries(
   return null;
 }
 
+// Deletes both rows of a main + inverted pair together, so a failure can't
+// leave half an entry behind.
+export function deleteDailyEntry(
+  date: string,
+  company: string,
+  sort_order: number,
+  main_code: number,
+  sub_code: number
+): null {
+  if (!db) return null;
+
+  db.transaction(() => {
+    for (const [main, sub] of [
+      [main_code, sub_code],
+      [sub_code, main_code],
+    ]) {
+      deleteRecord('daily_entries', {
+        date,
+        company,
+        main_code: main,
+        sub_code: sub,
+        sort_order,
+      });
+    }
+  })();
+
+  return null;
+}
+
 // Rewrites one main + inverted pair in place, keeping its sort_order so the
 // entry stays where it was in the day's list. The account (sub_code) is part
 // of the key, so changing it can't be an UPDATE: Supabase would keep the row
