@@ -625,10 +625,13 @@ export function update<K extends TableName>(
     .filter((key) => !pkFields.includes(key))
     .map((key) => record[key as keyof TablesUpdate[K]]);
 
+  // Live rows only: a tombstone is waiting to be deleted on Supabase, and
+  // editing it would make an edit of a deleted record look like it worked.
   const sql = `UPDATE ${table}
      SET ${updateFields},
          synced = 0
-     WHERE ${whereClauses}`;
+     WHERE ${whereClauses}
+       AND deleted IS NULL`;
 
   const stmt = db.prepare(sql);
   const { changes } = stmt.run(...updateValues, ...whereValues);

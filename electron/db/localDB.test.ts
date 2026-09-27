@@ -631,6 +631,18 @@ describe('updateDailyEntry', () => {
 });
 
 describe('update', () => {
+  it('does not edit a deleted record', () => {
+    dbHolder.current!.exec(
+      `INSERT INTO bills (serial, loan_no, released, synced, deleted) VALUES ('F', 1, 0, 0, 1)`
+    );
+    expect(() =>
+      update('bills', { serial: 'F', loan_no: 1, released: 1 } as never)
+    ).toThrow('Record not found in table bills');
+    expect(
+      dbHolder.current!.prepare(`SELECT released FROM bills`).get()
+    ).toEqual({ released: 0 });
+  });
+
   it('throws when no row matches the primary key', () => {
     expect(() =>
       update('bills', { serial: 'F', loan_no: 8243, released: 1 } as never)
