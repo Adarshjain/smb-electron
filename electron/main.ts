@@ -27,7 +27,11 @@ import type {
   TablesDelete,
   TablesUpdate,
 } from '../tables';
-import type { ElectronToReactResponse } from '../shared-types';
+import type {
+  BackupVerifyReport,
+  ElectronToReactResponse,
+} from '../shared-types';
+import { verifyBackup } from './db/verifyBackup';
 import fs from 'fs';
 
 // Load environment variables from the correct location
@@ -327,6 +331,37 @@ ipcMain.handle(
   async (): Promise<ElectronToReactResponse<void | undefined>> => {
     try {
       return { success: true, data: await syncManager?.initialPull() };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+    }
+  }
+);
+
+ipcMain.handle(
+  'verify-backup',
+  async (
+    event: IpcMainInvokeEvent
+  ): Promise<ElectronToReactResponse<BackupVerifyReport>> => {
+    try {
+      if (!syncManager) {
+        throw new Error('Supabase sync is not enabled on this machine');
+      }
+      if (syncManager.isRunning) {
+        throw new Error('A backup is running. Try again once it finishes.');
+      }
+      const manager = syncManager;
+      return {
+        success: true,
+        data: await verifyBackup(
+          { client: manager.client, pushAll: () => manager.pushAll() },
+          tables,
+          (progress) => event.sender.send('verify-backup-progress', progress)
+        ),
+      };
     } catch (error) {
       return {
         success: false,

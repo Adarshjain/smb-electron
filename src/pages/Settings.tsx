@@ -151,9 +151,17 @@ export default function Settings() {
       </div>
       <CompanySettings />
       <SyncStatus />
-      <Button variant="outline" className="w-32" onClick={() => void sync()}>
-        Back Up
-      </Button>
+      <div className="flex gap-3">
+        <Button variant="outline" className="w-32" onClick={() => void sync()}>
+          Back Up
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => void navigate('/verify-backup')}
+        >
+          Verify Backup
+        </Button>
+      </div>
       <div className="flex gap-3">
         <NativeSelect
           value={selectedTable}

@@ -13,6 +13,46 @@ export type ElectronToReactResponse<T> =
       stack: string | undefined;
     };
 
+export interface VerifyRowDiff {
+  key: string;
+  columns: { column: string; local: unknown; remote: unknown }[];
+}
+
+export interface VerifyTableReport {
+  table: TableName;
+  status: 'match' | 'mismatch' | 'error';
+  error?: string;
+  localCount: number;
+  remoteCount: number;
+  // Rows still waiting to be backed up after the backup step ran.
+  pendingCount: number;
+  localHash: string;
+  remoteHash: string;
+  missingOnSupabase: number;
+  missingLocally: number;
+  different: number;
+  duplicateLocalKeys: number;
+  duplicateRemoteKeys: number;
+  missingRemoteColumns: string[];
+  samples: {
+    missingOnSupabase: string[];
+    missingLocally: string[];
+    different: VerifyRowDiff[];
+  };
+}
+
+export interface BackupVerifyReport {
+  startedAt: string;
+  finishedAt: string;
+  backup: { ok: true } | { ok: false; error: string };
+  tables: VerifyTableReport[];
+  inSync: boolean;
+}
+
+export type BackupVerifyProgress =
+  | { step: 'backup' }
+  | { step: 'table'; table: TableName; index: number; total: number };
+
 declare global {
   interface Window {
     api: {
@@ -98,6 +138,12 @@ declare global {
         ) => Promise<ElectronToReactResponse<void>>;
         isSyncing: () => Promise<ElectronToReactResponse<boolean>>;
         initialPull: () => Promise<ElectronToReactResponse<void | undefined>>;
+        verifyBackup: () => Promise<
+          ElectronToReactResponse<BackupVerifyReport>
+        >;
+        onVerifyProgress: (
+          callback: (progress: BackupVerifyProgress) => void
+        ) => () => void;
         getSyncInfo: () => Promise<
           ElectronToReactResponse<{
             syncInfo: {

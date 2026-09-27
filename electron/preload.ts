@@ -5,7 +5,11 @@ import {
   type TablesDelete,
   type TablesUpdate,
 } from '../tables';
-import { type ElectronToReactResponse } from '../shared-types';
+import {
+  type BackupVerifyProgress,
+  type BackupVerifyReport,
+  type ElectronToReactResponse,
+} from '../shared-types';
 import { type BackupEndResponse } from './db/SyncManager';
 import { type DailyEntryPair } from './db/localDB';
 import { type DedupeOptions, type DedupeReport } from './db/dedup';
@@ -67,6 +71,16 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('is-syncing-now'),
     initialPull: (): Promise<ElectronToReactResponse<void | undefined>> =>
       ipcRenderer.invoke('initial-pull'),
+    verifyBackup: (): Promise<ElectronToReactResponse<BackupVerifyReport>> =>
+      ipcRenderer.invoke('verify-backup'),
+    onVerifyProgress: (callback: (progress: BackupVerifyProgress) => void) => {
+      const listener = (_: unknown, progress: BackupVerifyProgress) =>
+        callback(progress);
+      ipcRenderer.on('verify-backup-progress', listener);
+      return () => {
+        ipcRenderer.removeListener('verify-backup-progress', listener);
+      };
+    },
     getSyncInfo: (): Promise<
       ElectronToReactResponse<{
         syncInfo: {

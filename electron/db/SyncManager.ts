@@ -62,6 +62,10 @@ export class SyncManager {
     return this.running;
   }
 
+  get client() {
+    return this.supabase;
+  }
+
   getSyncInfo() {
     return {
       lastSyncTime: this.lastSyncTime,

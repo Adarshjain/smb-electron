@@ -12,6 +12,7 @@ const TableView = lazy(() =>
   import('@/pages/TableView.tsx').then((m) => ({ default: m.TableView }))
 );
 const Settings = lazy(() => import('@/pages/Settings.tsx'));
+const VerifyBackup = lazy(() => import('@/pages/VerifyBackup.tsx'));
 const OtherCustomer = lazy(() => import('@/components/OtherCustomer.tsx'));
 const NewLoan = lazy(loadNewLoan);
 const ReleaseLoan = lazy(loadReleaseLoan);
@@ -62,6 +63,7 @@ export function Router() {
             <Route path="/" element={<Home />} />
             <Route path="/table-view" element={<TableView />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/verify-backup" element={<VerifyBackup />} />
             <Route path="/other-customers" element={<OtherCustomer />} />
             <Route path="/name-corrector" element={<NameCorrector />} />
             <Route path="/new-loan" element={<NewLoan />} />
