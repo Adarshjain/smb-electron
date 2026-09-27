@@ -15,7 +15,6 @@ import {
 } from '../shared-types';
 import { type BackupEndResponse } from './db/SyncManager';
 import { type DailyEntryPair } from './db/localDB';
-import { type DedupeOptions, type DedupeReport } from './db/dedup';
 
 contextBridge.exposeInMainWorld('api', {
   db: {
@@ -39,10 +38,6 @@ contextBridge.exposeInMainWorld('api', {
       loan_no: number
     ): Promise<ElectronToReactResponse<null>> =>
       ipcRenderer.invoke('db:unrelease-loan', serial, loan_no),
-    dedupeDailyEntries: (
-      opts: DedupeOptions
-    ): Promise<ElectronToReactResponse<DedupeReport>> =>
-      ipcRenderer.invoke('db:dedupe-daily-entries', opts),
     read: <K extends TableName>(
       table: K,
       conditions: Partial<LocalTables<K>>,

@@ -18,11 +18,6 @@ import {
   update,
 } from './db/localDB';
 import type { DailyEntryPair } from './db/localDB';
-import {
-  dedupeDailyEntriesSortOrder,
-  type DedupeOptions,
-  type DedupeReport,
-} from './db/dedup';
 import type {
   LocalTables,
   TableName,
@@ -557,24 +552,6 @@ ipcMain.handle(
   ): ElectronToReactResponse<null> => {
     try {
       return { success: true, data: unreleaseLoan(serial, loan_no) };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      };
-    }
-  }
-);
-
-ipcMain.handle(
-  'db:dedupe-daily-entries',
-  (
-    _event: IpcMainInvokeEvent,
-    opts: DedupeOptions
-  ): ElectronToReactResponse<DedupeReport> => {
-    try {
-      return { success: true, data: dedupeDailyEntriesSortOrder(opts) };
     } catch (error) {
       return {
         success: false,
