@@ -416,9 +416,7 @@ export default function NewLoan() {
           loan_no: parseInt(data.loan_no),
           gross_weight: parseFloat(item.gross_weight || '0'),
           ignore_weight: parseFloat(item.ignore_weight || '0'),
-          net_weight:
-            parseFloat(item.net_weight || '0') +
-            parseFloat(item.ignore_weight || '0'),
+          net_weight: parseFloat(item.net_weight || '0'),
           product: item.product,
           quantity: item.quantity,
           quality: item.quality,
