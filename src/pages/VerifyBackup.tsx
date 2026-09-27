@@ -174,7 +174,7 @@ export default function VerifyBackup() {
   const failing = report?.tables.filter((t) => t.status !== 'match') ?? [];
 
   return (
-    <div className="p-6 flex flex-row gap-4">
+    <div className="p-6 flex flex-col gap-4">
       <div className="text-2xl font-bold tracking-tight">Verify Backup</div>
       <div className="flex items-center gap-3">
         <Button className="w-min" disabled={running} onClick={() => void run()}>
