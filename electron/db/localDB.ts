@@ -120,6 +120,90 @@ export function migrateSchema() {
       }
     }
   }
+
+  ensureLiveKeyIndexes();
+}
+
+// The UNIQUE(..., deleted) constraints never stopped two live copies of a
+// record: SQLite treats every NULL as distinct, and live rows have
+// deleted = NULL. Two live copies make Supabase reject the table's whole
+// backup batch and make the record impossible to delete, so each table gets
+// a unique index over its key for live rows only.
+//
+// Exact duplicates already in the table (release F1871 got saved twice) are
+// removed first, keeping the oldest copy and queueing it for upload. If
+// copies with the same key differ, nothing is removed and the index is left
+// out for that table, since picking the right copy needs a person.
+function ensureLiveKeyIndexes() {
+  if (!db) return;
+  const localDb = db;
+  const indexes = Object.values(TablesSQliteSchema).map((table) => ({
+    table: table.name,
+    name: `${table.name}_live_key`,
+    columns: table.primary.filter((c) => c !== 'deleted'),
+    dataColumns: Object.keys(table.columns).filter(
+      (c) => c !== 'synced' && c !== 'deleted'
+    ),
+  }));
+  // sort_order is unique per pair across the whole table, not just per day.
+  indexes.push({
+    table: 'daily_entries',
+    name: 'daily_entries_live_unique',
+    columns: ['sort_order', 'main_code', 'sub_code'],
+    dataColumns: [],
+  });
+
+  for (const index of indexes) {
+    const exists = localDb
+      .prepare(`SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?`)
+      .get(index.name);
+    if (exists) continue;
+
+    try {
+      localDb.transaction(() => {
+        if (index.dataColumns.length) {
+          const sameData = index.dataColumns.join(', ');
+          const kept = localDb
+            .prepare(
+              `UPDATE ${index.table}
+               SET synced = 0
+               WHERE rowid IN (SELECT MIN(rowid)
+                               FROM ${index.table}
+                               WHERE deleted IS NULL
+                               GROUP BY ${sameData}
+                               HAVING COUNT(*) > 1)`
+            )
+            .run().changes;
+          if (kept) {
+            const { changes } = localDb
+              .prepare(
+                `DELETE
+                 FROM ${index.table}
+                 WHERE deleted IS NULL
+                   AND rowid NOT IN (SELECT MIN(rowid)
+                                     FROM ${index.table}
+                                     WHERE deleted IS NULL
+                                     GROUP BY ${sameData})`
+              )
+              .run();
+            console.log(
+              `Removed ${changes} exact duplicate row(s) from ${index.table}`
+            );
+          }
+        }
+        localDb.exec(
+          `CREATE UNIQUE INDEX ${index.name}
+           ON ${index.table} (${index.columns.join(', ')})
+           WHERE deleted IS NULL`
+        );
+      })();
+    } catch (error) {
+      console.error(
+        `Could not add ${index.name}: ${index.table} has live rows that share a key but differ.`,
+        error
+      );
+    }
+  }
 }
 
 export function create<K extends TableName>(table: K, record: Tables[K]): null {
