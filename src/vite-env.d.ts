@@ -1,5 +1,8 @@
 import { type LocalTables, type TableName, type Tables } from '../tables';
-import { type ElectronToReactResponse } from '../shared-types';
+import {
+  type ElectronToReactResponse,
+  type SyncStatusEvent,
+} from '../shared-types';
 
 /// <reference types="vite/client" />
 
@@ -47,17 +50,7 @@ declare global {
       supabase: {
         sync: () => Promise<ElectronToReactResponse<void>>;
         isSyncing: () => Promise<ElectronToReactResponse<boolean>>;
-        onSyncStatus: (
-          callback: (
-            data:
-              | { status: 'started' }
-              | {
-                  status: 'ended';
-                  lastSync: number;
-                  errors: string[];
-                }
-          ) => void
-        ) => void;
+        onSyncStatus: (callback: (data: SyncStatusEvent) => void) => void;
       };
     };
   }

@@ -13,6 +13,12 @@ export type ElectronToReactResponse<T> =
       stack: string | undefined;
     };
 
+// Sent to the renderer when a backup starts and ends. `errors` is empty when
+// every table was backed up.
+export type SyncStatusEvent =
+  | { state: 'started' }
+  | { state: 'ended'; lastSync: number; errors: string[] };
+
 export interface VerifyRowDiff {
   key: string;
   columns: { column: string; local: unknown; remote: unknown }[];
@@ -153,18 +159,7 @@ declare global {
             isSyncEnabled: string;
           }>
         >;
-        onSyncStatus: (
-          callback: (
-            data:
-              | { state: 'started' }
-              | {
-                  state: 'ended';
-                  success: boolean;
-                  message?: string;
-                  error?: string;
-                }
-          ) => void
-        ) => void;
+        onSyncStatus: (callback: (data: SyncStatusEvent) => void) => void;
       };
     };
   }

@@ -30,6 +30,7 @@ import type {
   BackupVerifyReport,
   ElectronToReactResponse,
   RestoreReport,
+  SyncStatusEvent,
 } from '../shared-types';
 import { verifyBackup } from './db/verifyBackup';
 import { restoreFromSupabase } from './db/restore';
@@ -147,14 +148,16 @@ const initSupabase = async () => {
     tables,
     interval: intervalMs,
     onBackupStart: () => {
-      win?.webContents.send('sync-status', { state: 'started' });
+      const event: SyncStatusEvent = { state: 'started' };
+      win?.webContents.send('sync-status', event);
     },
     onBackupEnd: (summary: BackupEndResponse) => {
-      win?.webContents.send('sync-status', {
+      const event: SyncStatusEvent = {
         state: 'ended',
         lastSync: Date.now(),
-        errors: summary.status ? [] : JSON.stringify(summary.error),
-      });
+        errors: summary.status ? [] : summary.error,
+      };
+      win?.webContents.send('sync-status', event);
     },
   });
   syncManager.nextSyncTime = new Date(Date.now() + intervalMs);

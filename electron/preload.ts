@@ -12,8 +12,8 @@ import {
   type ElectronToReactResponse,
   type RestoreProgress,
   type RestoreReport,
+  type SyncStatusEvent,
 } from '../shared-types';
-import { type BackupEndResponse } from './db/SyncManager';
 import { type DailyEntryPair } from './db/localDB';
 
 contextBridge.exposeInMainWorld('api', {
@@ -121,12 +121,9 @@ contextBridge.exposeInMainWorld('api', {
         isSyncEnabled: string;
       }>
     > => ipcRenderer.invoke('get-sync-info'),
-    onSyncStatus: (
-      callback: (data: { state: 'started' } | BackupEndResponse) => void
-    ) => {
-      ipcRenderer.on(
-        'sync-status',
-        (_, data: { state: 'started' } | BackupEndResponse) => callback(data)
+    onSyncStatus: (callback: (data: SyncStatusEvent) => void) => {
+      ipcRenderer.on('sync-status', (_, data: SyncStatusEvent) =>
+        callback(data)
       );
     },
   },

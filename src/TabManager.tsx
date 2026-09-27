@@ -18,6 +18,7 @@ import { useCompany } from '@/context/CompanyProvider.tsx';
 import { isToday, viewableDate } from '@/lib/myUtils.tsx';
 import { Badge } from '@/components/ui/badge.tsx';
 import { Button } from '@/components/ui/button.tsx';
+import BackupFailedBanner from '@/components/BackupFailedBanner.tsx';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
 import { Kbd } from '@/components/ui/kbd.tsx';
 
@@ -64,6 +65,7 @@ export const TabManager: React.FC = () => {
 
   const [activeTabId, setActiveTabId] = useState('main');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [backupErrors, setBackupErrors] = useState<string[]>([]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollPositionsRef = useRef<Map<string, number>>(new Map());
@@ -80,6 +82,7 @@ export const TabManager: React.FC = () => {
   useEffect(() => {
     window.api.supabase.onSyncStatus((data) => {
       setIsSyncing(data.state === 'started');
+      if (data.state === 'ended') setBackupErrors(data.errors);
     });
   }, []);
 
@@ -183,6 +186,9 @@ export const TabManager: React.FC = () => {
         )}
       >
         {tabBar}
+        {backupErrors.length ? (
+          <BackupFailedBanner errors={backupErrors} />
+        ) : null}
 
         {/* Keep all tabs mounted; just hide inactive ones */}
         <div className="flex-1 relative z-1">
