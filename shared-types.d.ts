@@ -28,17 +28,13 @@ export interface VerifyTableReport {
   pendingCount: number;
   localHash: string;
   remoteHash: string;
-  missingOnSupabase: number;
-  missingLocally: number;
-  different: number;
+  // Keys of the affected rows, e.g. "serial=A, loan_no=12".
+  missingOnSupabase: string[];
+  missingLocally: string[];
+  different: VerifyRowDiff[];
   duplicateLocalKeys: number;
   duplicateRemoteKeys: number;
   missingRemoteColumns: string[];
-  samples: {
-    missingOnSupabase: string[];
-    missingLocally: string[];
-    different: VerifyRowDiff[];
-  };
 }
 
 export interface BackupVerifyReport {

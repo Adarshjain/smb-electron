@@ -31,6 +31,17 @@ describe('canonicalValue', () => {
     expect(canonicalValue(null, false)).toBe(canonicalValue(undefined, false));
     expect(canonicalValue(null, false)).not.toBe(canonicalValue('', false));
   });
+
+  it('ignores float noise from JS arithmetic but not real differences', () => {
+    expect(canonicalValue(2.1 + 0.2, true)).toBe(canonicalValue(2.3, true));
+    expect(canonicalValue(8926.000000000002, true)).toBe(
+      canonicalValue(8926, true)
+    );
+    expect(canonicalValue(295800.01, true)).not.toBe(
+      canonicalValue(295800, true)
+    );
+    expect(canonicalValue(2.31, true)).not.toBe(canonicalValue(2.3, true));
+  });
 });
 
 describe('compareTable', () => {
@@ -45,14 +56,28 @@ describe('compareTable', () => {
     expect(report.localHash).toBe(report.remoteHash);
   });
 
+  it('matches rows whose numbers differ only by float noise', () => {
+    const local = [bill(1, { loan_amount: 5130.000000000001 })];
+    const remote = [bill(1, { loan_amount: 5130 })];
+    const report = compareTable('bills', local, remote, 0);
+    expect(report.status).toBe('match');
+    expect(report.different).toEqual([]);
+  });
+
+  it('lists every affected row, however many there are', () => {
+    const local = Array.from({ length: 250 }, (_, i) => bill(i + 1));
+    const report = compareTable('bills', local, [], 0);
+    expect(report.missingOnSupabase).toHaveLength(250);
+  });
+
   it('reports missing, extra and changed rows', () => {
     const local = [bill(1), bill(2, { loan_amount: 1500 }), bill(3)];
     const remote = [bill(1), bill(2), bill(4)];
     const report = compareTable('bills', local, remote, 0);
     expect(report.status).toBe('mismatch');
-    expect(report.samples.missingOnSupabase).toEqual(['serial=A, loan_no=3']);
-    expect(report.samples.missingLocally).toEqual(['serial=A, loan_no=4']);
-    expect(report.samples.different).toEqual([
+    expect(report.missingOnSupabase).toEqual(['serial=A, loan_no=3']);
+    expect(report.missingLocally).toEqual(['serial=A, loan_no=4']);
+    expect(report.different).toEqual([
       {
         key: 'serial=A, loan_no=2',
         columns: [{ column: 'loan_amount', local: 1500, remote: 1000 }],
@@ -134,7 +159,7 @@ describe('verifyBackup', () => {
     expect(report.tables[0]).toMatchObject({
       status: 'mismatch',
       pendingCount: 1,
-      missingOnSupabase: 1,
+      missingOnSupabase: ['serial=A, loan_no=2'],
     });
     expect(report.inSync).toBe(false);
   });

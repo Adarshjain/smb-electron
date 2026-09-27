@@ -13,8 +13,11 @@ import { executeSql } from './localDB';
 export type Row = Record<string, unknown>;
 
 const PAGE_SIZE = 1000;
-// Cap on how many example rows per category are sent back to the UI.
-const SAMPLE_LIMIT = 50;
+// Numbers computed in JS pick up float noise (2.1 + 0.2 is stored as
+// 2.3000000000000003) that Supabase hands back as 2.3. Comparing at 12
+// significant digits drops that noise; amounts and weights here carry at most
+// ~9, so a real change is never hidden.
+const SIGNIFICANT_DIGITS = 12;
 const NULL_MARKER = '␀';
 const FIELD_SEPARATOR = '\u001f';
 const LOCAL_ONLY_COLUMNS = ['synced', 'deleted'];
@@ -48,7 +51,9 @@ export function canonicalValue(value: unknown, numeric: boolean): string {
   const scalar = value as string | number | boolean;
   if (numeric) {
     const n = Number(scalar);
-    return Number.isNaN(n) ? `NaN(${String(scalar)})` : String(n);
+    return Number.isNaN(n)
+      ? `NaN(${String(scalar)})`
+      : String(Number(n.toPrecision(SIGNIFICANT_DIGITS)));
   }
   return String(scalar);
 }
@@ -148,17 +153,12 @@ export function compareTable(
     pendingCount,
     localHash,
     remoteHash,
-    missingOnSupabase: missingOnSupabase.length,
-    missingLocally: missingLocally.length,
-    different: different.length,
+    missingOnSupabase,
+    missingLocally,
+    different,
     duplicateLocalKeys: localIndex.duplicates,
     duplicateRemoteKeys: remoteIndex.duplicates,
     missingRemoteColumns,
-    samples: {
-      missingOnSupabase: missingOnSupabase.slice(0, SAMPLE_LIMIT),
-      missingLocally: missingLocally.slice(0, SAMPLE_LIMIT),
-      different: different.slice(0, SAMPLE_LIMIT),
-    },
   };
 }
 
@@ -223,13 +223,12 @@ const emptyReport = (table: TableName, error: string): VerifyTableReport => ({
   pendingCount: 0,
   localHash: '',
   remoteHash: '',
-  missingOnSupabase: 0,
-  missingLocally: 0,
-  different: 0,
+  missingOnSupabase: [],
+  missingLocally: [],
+  different: [],
   duplicateLocalKeys: 0,
   duplicateRemoteKeys: 0,
   missingRemoteColumns: [],
-  samples: { missingOnSupabase: [], missingLocally: [], different: [] },
 });
 
 // Backs up pending changes, then hashes every table on both sides and diffs

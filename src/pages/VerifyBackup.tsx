@@ -53,26 +53,17 @@ function StatusBadge({ status }: { status: VerifyTableReport['status'] }) {
   );
 }
 
-function SampleList({
-  title,
-  total,
-  items,
-}: {
-  title: string;
-  total: number;
-  items: string[];
-}) {
-  if (!total) return null;
+function KeyList({ title, items }: { title: string; items: string[] }) {
+  if (!items.length) return null;
   return (
     <div>
       <div className="font-medium">
-        {title} ({total})
+        {title} ({items.length})
       </div>
       <ul className="list-disc pl-5 font-mono text-xs">
         {items.map((item) => (
           <li key={item}>{item}</li>
         ))}
-        {total > items.length && <li>…and {total - items.length} more</li>}
       </ul>
     </div>
   );
@@ -105,23 +96,15 @@ function TableDetails({ report }: { report: VerifyTableReport }) {
           {report.duplicateRemoteKeys} on Supabase
         </div>
       )}
-      <SampleList
-        title="Missing on Supabase"
-        total={report.missingOnSupabase}
-        items={report.samples.missingOnSupabase}
-      />
-      <SampleList
-        title="Only on Supabase"
-        total={report.missingLocally}
-        items={report.samples.missingLocally}
-      />
-      {report.different > 0 && (
+      <KeyList title="Missing on Supabase" items={report.missingOnSupabase} />
+      <KeyList title="Only on Supabase" items={report.missingLocally} />
+      {report.different.length > 0 && (
         <div>
           <div className="font-medium">
-            Different values ({report.different})
+            Different values ({report.different.length})
           </div>
           <ul className="list-disc pl-5 font-mono text-xs">
-            {report.samples.different.map((diff) => (
+            {report.different.map((diff) => (
               <li key={diff.key}>
                 {diff.key}
                 <ul className="pl-4">
@@ -134,11 +117,6 @@ function TableDetails({ report }: { report: VerifyTableReport }) {
                 </ul>
               </li>
             ))}
-            {report.different > report.samples.different.length && (
-              <li>
-                …and {report.different - report.samples.different.length} more
-              </li>
-            )}
           </ul>
         </div>
       )}
