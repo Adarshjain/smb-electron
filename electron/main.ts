@@ -19,6 +19,7 @@ import {
   unreleaseLoan,
   saveLoan,
   deleteLoan,
+  renameArea,
   update,
 } from './db/localDB';
 import type { DailyEntryPair } from './db/localDB';
@@ -611,6 +612,25 @@ ipcMain.handle(
   ): ElectronToReactResponse<null> => {
     try {
       return { success: true, data: unreleaseLoan(serial, loan_no) };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+    }
+  }
+);
+
+ipcMain.handle(
+  'db:rename-area',
+  (
+    _event: IpcMainInvokeEvent,
+    oldName: string,
+    newName: string
+  ): ElectronToReactResponse<null> => {
+    try {
+      return { success: true, data: renameArea(oldName, newName) };
     } catch (error) {
       return {
         success: false,

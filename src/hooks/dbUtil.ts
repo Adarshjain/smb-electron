@@ -103,6 +103,17 @@ export const unreleaseLoan = async (
   throw new Error(response.error);
 };
 
+export const renameArea = async (
+  oldName: string,
+  newName: string
+): Promise<null> => {
+  const response = await window.api.db.renameArea(oldName, newName);
+  if (response.success) {
+    return null;
+  }
+  throw new Error(response.error);
+};
+
 export const saveLoan = async (input: SaveLoanInput): Promise<null> => {
   const response = await window.api.db.saveLoan(input);
   if (response.success) {

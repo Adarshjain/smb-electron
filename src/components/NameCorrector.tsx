@@ -1,7 +1,7 @@
 import GoHome from '@/components/GoHome.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { useEffect, useState } from 'react';
-import { deleteRecord, query, read } from '@/hooks/dbUtil.ts';
+import { query, read, renameArea } from '@/hooks/dbUtil.ts';
 import { errorToast, successToast } from '@/lib/myUtils.tsx';
 import ProductSelector from '@/components/ProductSelector.tsx';
 import { Label } from '@/components/ui/label.tsx';
@@ -63,45 +63,7 @@ export default function NameCorrector() {
 
   const saveArea = async () => {
     try {
-      // Update post and town in areas table
-      await query(
-        `UPDATE areas SET post = ?, synced = 0 WHERE post = ?`,
-        [newArea, oldArea],
-        true
-      );
-      await query(
-        `UPDATE areas SET town = ?, synced = 0 WHERE town = ?`,
-        [newArea, oldArea],
-        true
-      );
-      // Update customers.area where matches
-      await query(
-        `UPDATE customers SET area = ?, synced = 0 WHERE area = ?`,
-        [newArea, oldArea],
-        true
-      );
-      // Handle areas.name (primary key) update
-      const existing = await query<{ name: string }[]>(
-        `SELECT name FROM areas WHERE name = ? AND deleted IS NULL`,
-        [newArea]
-      );
-      const oldExists = await query<{ name: string }[]>(
-        `SELECT name FROM areas WHERE name = ? AND deleted IS NULL`,
-        [oldArea]
-      );
-      if (oldExists?.length) {
-        if (existing?.length) {
-          // New name already exists, soft-delete old row
-          await deleteRecord('areas', { name: oldArea });
-        } else {
-          // Rename the area
-          await query(
-            `UPDATE areas SET name = ?, synced = 0 WHERE name = ?`,
-            [newArea, oldArea],
-            true
-          );
-        }
-      }
+      await renameArea(oldArea, newArea);
       successToast('Updated!');
       setOldArea('');
       setNewArea('');

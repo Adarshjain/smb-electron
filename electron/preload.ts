@@ -70,6 +70,11 @@ contextBridge.exposeInMainWorld('api', {
       loan_no: number
     ): Promise<ElectronToReactResponse<null>> =>
       ipcRenderer.invoke('db:unrelease-loan', serial, loan_no),
+    renameArea: (
+      oldName: string,
+      newName: string
+    ): Promise<ElectronToReactResponse<null>> =>
+      ipcRenderer.invoke('db:rename-area', oldName, newName),
     saveLoan: (input: SaveLoanInput): Promise<ElectronToReactResponse<null>> =>
       ipcRenderer.invoke('db:save-loan', input),
     deleteLoan: (loan: LoanKey): Promise<ElectronToReactResponse<null>> =>

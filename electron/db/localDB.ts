@@ -824,6 +824,39 @@ export function deleteLoan(loan: LoanKey): null {
   return null;
 }
 
+// Renames an area everywhere it is used, in one transaction. The name is
+// the area's key, so the row itself is re-created under the new name and the
+// old one tombstoned. Renaming it in place with an UPDATE left the old name
+// on Supabase for good.
+export function renameArea(oldName: string, newName: string): null {
+  if (!db) return null;
+  const localDb = db;
+
+  localDb.transaction(() => {
+    for (const sql of [
+      `UPDATE areas SET post = ?, synced = 0 WHERE post = ? AND deleted IS NULL`,
+      `UPDATE areas SET town = ?, synced = 0 WHERE town = ? AND deleted IS NULL`,
+      `UPDATE customers SET area = ?, synced = 0 WHERE area = ? AND deleted IS NULL`,
+    ]) {
+      localDb.prepare(sql).run(newName, oldName);
+    }
+
+    const live = (name: string) =>
+      localDb
+        .prepare(`SELECT * FROM areas WHERE name = ? AND deleted IS NULL`)
+        .get(name) as LocalTables<'areas'> | undefined;
+    const old = live(oldName);
+    if (!old) return;
+    if (!live(newName)) {
+      const { synced: _s, deleted: _d, ...fields } = old;
+      create('areas', { ...fields, name: newName });
+    }
+    deleteRecord('areas', { name: oldName });
+  })();
+
+  return null;
+}
+
 export function executeSql(
   sql: string,
   params: unknown[] = [],

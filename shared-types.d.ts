@@ -125,6 +125,10 @@ declare global {
           serial: string,
           loan_no: number
         ) => Promise<ElectronToReactResponse<null>>;
+        renameArea: (
+          oldName: string,
+          newName: string
+        ) => Promise<ElectronToReactResponse<null>>;
         saveLoan: (
           input: SaveLoanInput
         ) => Promise<ElectronToReactResponse<null>>;
