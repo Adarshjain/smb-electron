@@ -6,7 +6,13 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
+import {
+  Controller,
+  type FieldErrors,
+  useFieldArray,
+  useForm,
+  useWatch,
+} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FieldGroup } from '@/components/ui/field';
 import { useEnterNavigation } from '@/hooks/useEnterNavigation';
@@ -56,6 +62,24 @@ import BillsByCustomer from '@/components/LoanForm/BillsByCustomer.tsx';
 import { cn } from '@/lib/utils.ts';
 import GoHome from '@/components/GoHome.tsx';
 import { useThanglish } from '@/context/ThanglishProvider.tsx';
+
+// The first message in react-hook-form's nested error tree. `ref` holds the
+// input element, so it's skipped rather than walked.
+const firstErrorMessage = (errors: object): string | undefined => {
+  for (const [key, value] of Object.entries(errors)) {
+    if (key === 'ref' || !value || typeof value !== 'object') continue;
+    const { message } = value as { message?: unknown };
+    if (typeof message === 'string' && message) return message;
+    const nested = firstErrorMessage(value as object);
+    if (nested) return nested;
+  }
+  return undefined;
+};
+
+// Without this, a value the schema rejects makes Save do nothing at all.
+const onInvalid = (errors: FieldErrors<Loan>) => {
+  errorToast(firstErrorMessage(errors) ?? 'Please fill in all required fields');
+};
 
 export default function NewLoan() {
   const { company, setNextSerial } = useCompany();
@@ -492,7 +516,7 @@ export default function NewLoan() {
   };
 
   const handleFormSubmit = useCallback(() => {
-    void handleSubmit(onSubmit)();
+    void handleSubmit(onSubmit, onInvalid)();
   }, [handleSubmit, onSubmit]);
 
   const billingItemsNames: FormFieldName[] = useMemo(() => {
@@ -695,7 +719,7 @@ export default function NewLoan() {
         onNextClick={() => void onNextClick()}
         onLastClick={() => void onLastClick()}
         onPrevClick={() => void onPrevClick()}
-        onSaveClick={() => void handleSubmit(onSubmit)()}
+        onSaveClick={() => void handleSubmit(onSubmit, onInvalid)()}
         onDeleteClick={() => {
           setIsConfirmDialogOpen(true);
           setIsDeleteConfirmation(true);

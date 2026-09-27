@@ -195,11 +195,14 @@ export const BillingItemRow = memo(function BillingItemRow({
             }}
             onChange={(e) => {
               const val = e.target.value;
-              field.onChange(val ? parseFloat(val) : 0);
+              // A count of pieces; Supabase stores it as an integer and
+              // rejects the whole backup batch on a decimal.
+              field.onChange(val ? parseInt(val, 10) || 0 : 0);
             }}
             id={`billing_items.${index}.quantity`}
             name={`billing_items.${index}.quantity`}
             type="number"
+            step={1}
             placeholder=""
             className="w-16 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />

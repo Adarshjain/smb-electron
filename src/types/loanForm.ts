@@ -22,7 +22,7 @@ export const newLoanSchema = z.object({
         product: z.string(),
         quality: z.string().nullable(),
         extra: z.string().nullable(),
-        quantity: z.number(),
+        quantity: z.number().int('Quantity must be a whole number'),
         gross_weight: z.string(),
         net_weight: z.string(),
         ignore_weight: z.string(),
