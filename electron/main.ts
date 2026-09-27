@@ -66,6 +66,13 @@ type IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
 let win: BrowserWindow | null = null;
 let syncManager: SyncManager | null;
 
+// Env values are strings, so a plain truthiness check treated
+// SYNC_TO_SUPABASE=false as enabled.
+const isSyncEnabled = () =>
+  ['true', '1', 'yes'].includes(
+    (process.env.SYNC_TO_SUPABASE ?? '').trim().toLowerCase()
+  );
+
 export type { ElectronToReactResponse };
 
 const getIconPath = () => {
@@ -206,7 +213,7 @@ void app.whenReady().then(() => {
   // Heavier, non-essential modules are loaded once the window is up so they
   // don't delay it appearing.
   setTimeout(() => {
-    if (process.env.SYNC_TO_SUPABASE) {
+    if (isSyncEnabled()) {
       initSupabase().catch((error: unknown) => {
         console.error('Failed to initialise Supabase sync:', error);
       });
@@ -270,7 +277,7 @@ ipcMain.handle(
       return {
         success: true,
         data: {
-          isSyncEnabled: process.env.SYNC_TO_SUPABASE ?? 'false',
+          isSyncEnabled: String(isSyncEnabled()),
           syncInfo: syncInfo,
         },
       };
