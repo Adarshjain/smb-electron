@@ -49,6 +49,9 @@ export class SyncManager {
   private readonly onBackupStart?: () => void;
   private readonly onBackupEnd?: (response: BackupEndResponse) => void;
   private lastSyncTime: Date | null = null;
+  // Failures from the last backup, one "table: message" per table, so a
+  // single-table backup can report the others as still failing.
+  private lastErrors: string[] = [];
   nextSyncTime: Date | null = null;
 
   private constructor(config: SyncConfig) {
@@ -145,6 +148,7 @@ export class SyncManager {
       }
       await attempt('daily_entries', () => this.pushChanges('daily_entries'));
 
+      this.lastErrors = errors;
       if (errors.length) {
         this.onBackupEnd?.({ status: false, error: errors });
         throw new Error(errors.join('\n'));
@@ -154,6 +158,34 @@ export class SyncManager {
     } finally {
       this.running = false;
       this.scheduleNextSync();
+    }
+  }
+
+  // Backs up one table, holding the same lock (and so showing the same
+  // "please wait" screen) as a full backup. Without it, an edit made while
+  // the table was uploading could be marked backed up without being sent.
+  async pushTable(tableName: TableName) {
+    if (this.running) {
+      throw new Error('A backup is running. Try again once it finishes.');
+    }
+    this.running = true;
+    this.onBackupStart?.();
+    const others = this.lastErrors.filter(
+      (e) => !e.startsWith(`${tableName}: `)
+    );
+    try {
+      await this.pushChanges(tableName);
+      this.lastErrors = others;
+    } catch (error) {
+      this.lastErrors = [...others, `${tableName}: ${errorMessage(error)}`];
+      throw error;
+    } finally {
+      this.running = false;
+      this.onBackupEnd?.(
+        this.lastErrors.length
+          ? { status: false, error: this.lastErrors }
+          : { status: true, summary: {} }
+      );
     }
   }
 

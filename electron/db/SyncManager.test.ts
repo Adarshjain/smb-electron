@@ -93,3 +93,49 @@ describe('SyncManager.pushAll', () => {
     manager.stop();
   });
 });
+
+describe('SyncManager.pushTable', () => {
+  it('refuses to run while another backup is running', async () => {
+    const { client } = fakeSupabase({});
+    const manager = SyncManager.getInstance({
+      supabase: client,
+      tables: ['releases'],
+    });
+    const first = manager.pushTable('releases');
+    await expect(manager.pushTable('releases')).rejects.toThrow(
+      'A backup is running'
+    );
+    await first;
+  });
+
+  it('shows the start/end screen and keeps other tables failures on the banner', async () => {
+    pending.bill_items = [{ serial: 'F', loan_no: 2306, sort_order: 1 }];
+    const failing: Record<string, string> = { bill_items: 'bad quantity' };
+    const { client } = fakeSupabase(failing);
+    const onBackupStart = vi.fn();
+    const onBackupEnd = vi.fn();
+    const manager = SyncManager.getInstance({
+      supabase: client,
+      tables: ['bill_items', 'releases'],
+      onBackupStart,
+      onBackupEnd,
+    });
+    await expect(manager.pushAll()).rejects.toThrow();
+
+    pending.releases = [{ serial: 'F', loan_no: 1 }];
+    await manager.pushTable('releases');
+    expect(onBackupStart).toHaveBeenCalledTimes(2);
+    expect(onBackupEnd).toHaveBeenLastCalledWith({
+      status: false,
+      error: ['bill_items: bad quantity'],
+    });
+
+    delete failing.bill_items;
+    await manager.pushTable('bill_items');
+    expect(onBackupEnd).toHaveBeenLastCalledWith({
+      status: true,
+      summary: {},
+    });
+    manager.stop();
+  });
+});

@@ -325,7 +325,7 @@ ipcMain.handle(
   ): Promise<ElectronToReactResponse<void>> => {
     try {
       console.log({ tableName });
-      return { success: true, data: await syncManager?.pushChanges(tableName) };
+      return { success: true, data: await syncManager?.pushTable(tableName) };
     } catch (error: unknown) {
       return {
         success: false,
