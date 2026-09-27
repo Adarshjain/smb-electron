@@ -79,6 +79,13 @@ declare global {
             description: string | null;
           }[]
         ) => Promise<ElectronToReactResponse<null>>;
+        releaseLoan: (
+          release: Tables['releases']
+        ) => Promise<ElectronToReactResponse<null>>;
+        unreleaseLoan: (
+          serial: string,
+          loan_no: number
+        ) => Promise<ElectronToReactResponse<null>>;
         dedupeDailyEntries: (opts: {
           dryRun?: boolean;
           addUniqueIndex?: boolean;

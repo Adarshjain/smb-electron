@@ -33,12 +33,22 @@ vi.mock('../../tableSchema', () => ({
         'deleted',
       ],
     },
+    bills: {
+      primary: ['serial', 'loan_no', 'deleted'],
+    },
+    releases: {
+      primary: ['serial', 'loan_no', 'deleted'],
+      requiredFields: ['serial', 'loan_no', 'date'],
+    },
   },
 }));
 
 import {
   createDailyEntries,
   markAsSynced,
+  releaseLoan,
+  unreleaseLoan,
+  update,
   type DailyEntryPair,
 } from './localDB';
 
@@ -65,6 +75,23 @@ const SCHEMA = `
   CREATE UNIQUE INDEX daily_entries_live_unique
   ON daily_entries (sort_order, main_code, sub_code)
   WHERE deleted IS NULL;
+  CREATE TABLE bills (
+    serial TEXT NOT NULL,
+    loan_no INTEGER NOT NULL,
+    released INTEGER NOT NULL DEFAULT 0,
+    synced BOOLEAN NOT NULL DEFAULT 0,
+    deleted BOOLEAN,
+    UNIQUE (serial, loan_no, deleted)
+  );
+  CREATE TABLE releases (
+    serial TEXT NOT NULL,
+    loan_no INTEGER NOT NULL,
+    date TEXT NOT NULL,
+    loan_amount REAL,
+    synced BOOLEAN NOT NULL DEFAULT 0,
+    deleted BOOLEAN,
+    UNIQUE (serial, loan_no, deleted)
+  );
 `;
 
 interface Row {
@@ -420,6 +447,73 @@ describe('markAsSynced', () => {
     createDailyEntries('2026-05-09', 'CompanyA', [PAIR()]);
     expect(() => markAsSynced('daily_entries', [])).not.toThrow();
     expect(allRows().every((r) => r.synced === 0)).toBe(true);
+  });
+});
+
+describe('update', () => {
+  it('throws when no row matches the primary key', () => {
+    expect(() =>
+      update('bills', { serial: 'F', loan_no: 8243, released: 1 } as never)
+    ).toThrow('Record not found in table bills');
+  });
+});
+
+describe('releaseLoan / unreleaseLoan', () => {
+  const RELEASE = {
+    serial: 'F',
+    loan_no: 824,
+    date: '2026-02-12',
+    loan_amount: 1040,
+  };
+  const bill = () =>
+    dbHolder
+      .current!.prepare(`SELECT released FROM bills WHERE loan_no = 824`)
+      .get() as { released: number };
+  const releases = () =>
+    dbHolder.current!.prepare(`SELECT serial, loan_no FROM releases`).all();
+
+  beforeEach(() => {
+    dbHolder.current!.exec(
+      `INSERT INTO bills (serial, loan_no) VALUES ('F', 824)`
+    );
+  });
+
+  it('writes the release and marks the bill released', () => {
+    releaseLoan(RELEASE as never);
+    expect(releases()).toEqual([{ serial: 'F', loan_no: 824 }]);
+    expect(bill().released).toBe(1);
+  });
+
+  it('refuses to release a loan that does not exist', () => {
+    expect(() => releaseLoan({ ...RELEASE, loan_no: 8243 } as never)).toThrow(
+      'Loan F8243 does not exist'
+    );
+    expect(releases()).toEqual([]);
+  });
+
+  it('refuses to release a loan twice', () => {
+    releaseLoan(RELEASE as never);
+    expect(() => releaseLoan(RELEASE as never)).toThrow(
+      'Loan F824 is already released'
+    );
+    expect(releases()).toHaveLength(1);
+  });
+
+  it('unrelease removes the release and marks the bill active', () => {
+    releaseLoan(RELEASE as never);
+    unreleaseLoan('F', 824);
+    expect(releases()).toEqual([]);
+    expect(bill().released).toBe(0);
+  });
+
+  it('unrelease rolls back when the bill is missing', () => {
+    dbHolder.current!.exec(
+      `INSERT INTO releases (serial, loan_no, date) VALUES ('F', 8243, '2026-02-12')`
+    );
+    expect(() => unreleaseLoan('F', 8243)).toThrow(
+      'Record not found in table bills'
+    );
+    expect(releases()).toEqual([{ serial: 'F', loan_no: 8243 }]);
   });
 });
 

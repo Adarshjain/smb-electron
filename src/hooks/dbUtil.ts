@@ -38,6 +38,27 @@ export const createDailyEntries = async (
   throw new Error(response.error);
 };
 
+export const releaseLoan = async (
+  release: Tables['releases']
+): Promise<null> => {
+  const response = await window.api.db.releaseLoan(release);
+  if (response.success) {
+    return null;
+  }
+  throw new Error(response.error);
+};
+
+export const unreleaseLoan = async (
+  serial: string,
+  loan_no: number
+): Promise<null> => {
+  const response = await window.api.db.unreleaseLoan(serial, loan_no);
+  if (response.success) {
+    return null;
+  }
+  throw new Error(response.error);
+};
+
 export const read = async <K extends TableName>(
   table: K,
   conditions: Partial<LocalTables<K>>,

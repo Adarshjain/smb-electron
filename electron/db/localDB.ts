@@ -429,7 +429,56 @@ export function update<K extends TableName>(
      WHERE ${whereClauses}`;
 
   const stmt = db.prepare(sql);
-  stmt.run(...updateValues, ...whereValues);
+  const { changes } = stmt.run(...updateValues, ...whereValues);
+  if (changes === 0) {
+    throw new Error(`Record not found in table ${table}`);
+  }
+  return null;
+}
+
+// Writes the release and marks its bill released in one transaction, so a
+// release can never be saved for a loan that doesn't exist.
+export function releaseLoan(release: Tables['releases']): null {
+  if (!db) return null;
+
+  db.transaction(() => {
+    if (!db) return;
+    const bill = db
+      .prepare(
+        `SELECT released FROM bills
+         WHERE serial = ? AND loan_no = ? AND deleted IS NULL`
+      )
+      .get(release.serial, release.loan_no) as { released: 0 | 1 } | undefined;
+    if (!bill) {
+      throw new Error(
+        `Loan ${release.serial}${release.loan_no} does not exist`
+      );
+    }
+    if (bill.released) {
+      throw new Error(
+        `Loan ${release.serial}${release.loan_no} is already released`
+      );
+    }
+    create('releases', release);
+    update('bills', {
+      serial: release.serial,
+      loan_no: release.loan_no,
+      released: 1,
+    });
+  })();
+
+  return null;
+}
+
+// Undoes releaseLoan: removes the release and marks the bill active again.
+export function unreleaseLoan(serial: string, loan_no: number): null {
+  if (!db) return null;
+
+  db.transaction(() => {
+    deleteRecord('releases', { serial, loan_no });
+    update('bills', { serial, loan_no, released: 0 });
+  })();
+
   return null;
 }
 

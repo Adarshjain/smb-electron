@@ -12,7 +12,9 @@ import {
   executeSql,
   migrateSchema,
   read,
+  releaseLoan,
   tables,
+  unreleaseLoan,
   update,
 } from './db/localDB';
 import type { DailyEntryPair } from './db/localDB';
@@ -24,6 +26,7 @@ import {
 import type {
   LocalTables,
   TableName,
+  Tables,
   TablesDelete,
   TablesUpdate,
 } from '../tables';
@@ -512,6 +515,43 @@ ipcMain.handle(
   ): ElectronToReactResponse<null> => {
     try {
       return { success: true, data: createDailyEntries(date, company, pairs) };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+    }
+  }
+);
+
+ipcMain.handle(
+  'db:release-loan',
+  (
+    _event: IpcMainInvokeEvent,
+    release: Tables['releases']
+  ): ElectronToReactResponse<null> => {
+    try {
+      return { success: true, data: releaseLoan(release) };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+    }
+  }
+);
+
+ipcMain.handle(
+  'db:unrelease-loan',
+  (
+    _event: IpcMainInvokeEvent,
+    serial: string,
+    loan_no: number
+  ): ElectronToReactResponse<null> => {
+    try {
+      return { success: true, data: unreleaseLoan(serial, loan_no) };
     } catch (error) {
       return {
         success: false,

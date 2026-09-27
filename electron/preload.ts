@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 import {
   type LocalTables,
   type TableName,
+  type Tables,
   type TablesDelete,
   type TablesUpdate,
 } from '../tables';
@@ -29,6 +30,15 @@ contextBridge.exposeInMainWorld('api', {
       pairs: DailyEntryPair[]
     ): Promise<ElectronToReactResponse<null>> =>
       ipcRenderer.invoke('db:create-daily-entries', date, company, pairs),
+    releaseLoan: (
+      release: Tables['releases']
+    ): Promise<ElectronToReactResponse<null>> =>
+      ipcRenderer.invoke('db:release-loan', release),
+    unreleaseLoan: (
+      serial: string,
+      loan_no: number
+    ): Promise<ElectronToReactResponse<null>> =>
+      ipcRenderer.invoke('db:unrelease-loan', serial, loan_no),
     dedupeDailyEntries: (
       opts: DedupeOptions
     ): Promise<ElectronToReactResponse<DedupeReport>> =>

@@ -14,7 +14,7 @@ import { useCompany } from '@/context/CompanyProvider.tsx';
 import DatePicker from '@/components/DatePicker.tsx';
 import { LoanNumber } from '@/components/LoanForm/LoanNumber.tsx';
 import type { Tables } from '@/../tables';
-import { create, deleteRecord, read, update } from '@/hooks/dbUtil.ts';
+import { read, releaseLoan, unreleaseLoan } from '@/hooks/dbUtil.ts';
 import {
   errorToast,
   getInterest,
@@ -56,13 +56,33 @@ export default function ReleaseLoan() {
       defaultValues,
     });
 
+  const [serialValue, loanNoValue] = useWatch({
+    control,
+    name: ['serial', 'loan_no'],
+  });
+  // Drop the loaded loan as soon as the serial or number is edited, so the
+  // screen never shows (or releases) a loan other than the one typed in.
+  useEffect(() => {
+    if (
+      loadedLoan &&
+      (serialValue !== loadedLoan.serial ||
+        parseInt(loanNoValue) !== loadedLoan.loan_no)
+    ) {
+      setLoadedLoan(null);
+    }
+  }, [loadedLoan, serialValue, loanNoValue]);
+
   const interestAmount = useWatch({ control, name: 'interest_amount' });
   const reDate = useWatch({ control, name: 'date' });
 
   const onSubmit = useCallback(
     async (data: ReleaseLoan) => {
+      if (!loadedLoan) return;
+      // Key the release off the loan on screen, never the loan-number input:
+      // the input can be edited after the loan loads.
+      const { serial, loan_no } = loadedLoan;
       try {
-        if (loadedLoan?.released === 0) {
+        if (loadedLoan.released === 0) {
           const loan_amount = parseFloat(data.loan_amount ?? 0);
           const interest_rate = 1;
           const releaseDate = reDate ?? company?.current_date ?? viewableDate();
@@ -70,9 +90,9 @@ export default function ReleaseLoan() {
           const tax_interest_amount =
             (loan_amount * interest_rate * monthsDiff) / 100;
 
-          await create('releases', {
-            serial: data.serial,
-            loan_no: parseInt(data.loan_no),
+          await releaseLoan({
+            serial,
+            loan_no,
             date: releaseDate,
             loan_amount,
             interest_amount: parseFloat(data.interest_amount ?? 0),
@@ -81,58 +101,29 @@ export default function ReleaseLoan() {
             tax_interest_amount,
             loan_date: loadedLoan.date,
           });
-          await update('bills', {
-            serial: data.serial,
-            loan_no: parseInt(data.loan_no),
-            released: 1,
-          });
-          reset({
-            date: data.date,
-            loan_no: data.loan_no,
-            serial: data.serial,
-            released: 1,
-            loan_amount: data.loan_amount,
-            interest_amount: data.interest_amount,
-            interest_rate: data.interest_rate,
-            total_amount: data.total_amount,
-            total_months: data.total_months,
-            company: data.company,
-          });
         } else {
-          await deleteRecord('releases', {
-            serial: data.serial,
-            loan_no: parseInt(data.loan_no),
-          });
-          await update('bills', {
-            serial: data.serial,
-            loan_no: parseInt(data.loan_no),
-            released: 0,
-          });
-          reset({
-            date: data.date,
-            loan_no: data.loan_no,
-            serial: data.serial,
-            released: 0,
-            loan_amount: data.loan_amount,
-            interest_amount: data.interest_amount,
-            interest_rate: data.interest_rate,
-            total_amount: data.total_amount,
-            total_months: data.total_months,
-            company: data.company,
-          });
+          await unreleaseLoan(serial, loan_no);
         }
+        const released = loadedLoan.released === 0 ? 1 : 0;
+        setLoadedLoan({ ...loadedLoan, released });
+        reset({
+          date: data.date,
+          loan_no: '' + loan_no,
+          serial,
+          released,
+          loan_amount: data.loan_amount,
+          interest_amount: data.interest_amount,
+          interest_rate: data.interest_rate,
+          total_amount: data.total_amount,
+          total_months: data.total_months,
+          company: data.company,
+        });
       } catch (e) {
         errorToast(e);
       }
       nextRef.current?.('loan_no');
     },
-    [
-      loadedLoan?.released,
-      loadedLoan?.date,
-      reDate,
-      company?.current_date,
-      reset,
-    ]
+    [loadedLoan, reDate, company?.current_date, reset]
   );
 
   const handleFormSubmit = useCallback(() => {
