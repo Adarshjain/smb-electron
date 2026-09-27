@@ -195,11 +195,21 @@ export interface DailyEntryPair {
   description: string | null;
 }
 
+// Highest daily_entries sort_order on Supabase, refreshed by the sync. If the
+// local database is ever replaced by an older copy, its MAX falls behind
+// Supabase's, and reusing those numbers leaves the old Supabase rows behind
+// next to the new ones.
+let remoteSortOrderFloor = 0;
+
+export function setRemoteSortOrderFloor(value: number) {
+  remoteSortOrderFloor = value;
+}
+
 // Inserts each input as a main + inverted pair, sharing one sort_order.
 // sort_order is globally unique across the whole table — one sort_order = one
-// pair (2 rows). Computes the next sort_order from the global MAX inside the
-// same transaction as the inserts. better-sqlite3 transactions serialize, so
-// concurrent callers cannot race on the MAX read.
+// pair (2 rows). Computes the next sort_order from the global MAX, local or
+// Supabase's, inside the same transaction as the inserts. better-sqlite3
+// transactions serialize, so concurrent callers cannot race on the MAX read.
 export function createDailyEntries(
   date: string,
   company: string,
@@ -214,11 +224,9 @@ export function createDailyEntries(
   const transaction = db.transaction(() => {
     if (!db) return;
     const row = db
-      .prepare(
-        `SELECT COALESCE(MAX(sort_order), 0) AS max FROM daily_entries`
-      )
+      .prepare(`SELECT COALESCE(MAX(sort_order), 0) AS max FROM daily_entries`)
       .get() as { max: number };
-    let next = row.max + 1;
+    let next = Math.max(row.max, remoteSortOrderFloor) + 1;
 
     const insert = db.prepare(insertSql);
     for (const p of pairs) {

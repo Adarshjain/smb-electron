@@ -49,6 +49,7 @@ import {
   fetchUnsynced,
   markAsSynced,
   releaseLoan,
+  setRemoteSortOrderFloor,
   unreleaseLoan,
   update,
   type DailyEntryPair,
@@ -134,6 +135,7 @@ beforeEach(() => {
 afterEach(() => {
   dbHolder.current?.close();
   dbHolder.current = null;
+  setRemoteSortOrderFloor(0);
 });
 
 describe('createDailyEntries', () => {
@@ -228,6 +230,22 @@ describe('createDailyEntries', () => {
     const tombstones = allRows('deleted = 1');
     expect(tombstones).toHaveLength(2);
     expect(tombstones.every((r) => r.sort_order === 1)).toBe(true);
+  });
+
+  it('starts above the highest sort_order on Supabase when the local table is behind', () => {
+    createDailyEntries('2026-09-02', 'CompanyA', [PAIR()]);
+    setRemoteSortOrderFloor(51958);
+    createDailyEntries('2026-09-02', 'CompanyA', [PAIR(), PAIR()]);
+    expect([...new Set(allRows().map((r) => r.sort_order))]).toEqual([
+      1, 51959, 51960,
+    ]);
+  });
+
+  it('ignores the Supabase floor when the local table is ahead', () => {
+    setRemoteSortOrderFloor(1);
+    createDailyEntries('2026-09-02', 'CompanyA', [PAIR(), PAIR()]);
+    createDailyEntries('2026-09-02', 'CompanyA', [PAIR()]);
+    expect([...new Set(allRows().map((r) => r.sort_order))]).toEqual([2, 3, 4]);
   });
 
   it('is a no-op for an empty pairs array', () => {

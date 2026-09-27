@@ -1,5 +1,10 @@
 import { type SupabaseClient } from '@supabase/supabase-js';
-import { deleteSynced, fetchUnsynced, markAsSynced } from './localDB';
+import {
+  deleteSynced,
+  fetchUnsynced,
+  markAsSynced,
+  setRemoteSortOrderFloor,
+} from './localDB';
 import type { LocalTables, TableName } from '../../tables';
 import { TablesSQliteSchema } from '../../tableSchema';
 
@@ -101,6 +106,7 @@ export class SyncManager {
     const summary: Record<string, number> = {};
 
     try {
+      await this.refreshSortOrderFloor();
       for (const tableName of this.tables) {
         if (tableName === 'daily_entries') {
           continue;
@@ -120,6 +126,18 @@ export class SyncManager {
       this.running = false;
       this.scheduleNextSync();
     }
+  }
+
+  // Tells createDailyEntries the highest sort_order Supabase has, so new
+  // entries never reuse one even if the local database is behind.
+  async refreshSortOrderFloor() {
+    const { data, error } = await this.supabase
+      .from('daily_entries')
+      .select('sort_order')
+      .order('sort_order', { ascending: false })
+      .limit(1);
+    if (error) throw error;
+    setRemoteSortOrderFloor(Number(data[0]?.sort_order ?? 0));
   }
 
   public async pushChanges<K extends TableName>(tableName: K): Promise<void> {

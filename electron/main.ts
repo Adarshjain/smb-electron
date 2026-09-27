@@ -162,6 +162,11 @@ const initSupabase = async () => {
     },
   });
   syncManager.nextSyncTime = new Date(Date.now() + intervalMs);
+  // Right away rather than at the first backup, so entries made in the first
+  // 30 seconds can't reuse a sort_order either.
+  syncManager.refreshSortOrderFloor().catch((error: unknown) => {
+    console.error('Could not read the highest sort_order on Supabase:', error);
+  });
   setTimeout(() => void syncManager?.start(), 30000);
 };
 
