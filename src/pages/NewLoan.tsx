@@ -447,22 +447,11 @@ export default function NewLoan() {
           loan_no: formattedLoan.loan_no,
           serial: formattedLoan.serial,
         });
-        if (record?.[0].synced === 0) {
-          await query(
-            `DELETE from main.bill_items WHERE loan_no = ? AND serial = ?`,
-            [formattedLoan.loan_no, formattedLoan.serial],
-            true
-          );
-        } else {
-          await query(
-            `UPDATE bill_items
-           SET synced  = 0,
-               deleted = 1
-           WHERE loan_no = ?
-             AND serial = ?`,
-            [formattedLoan.loan_no, formattedLoan.serial],
-            true
-          );
+        if (record?.length) {
+          await deleteRecord('bill_items', {
+            loan_no: formattedLoan.loan_no,
+            serial: formattedLoan.serial,
+          });
         }
         for (const item of formatterProduct) {
           await create('bill_items', item);

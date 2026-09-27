@@ -45,6 +45,8 @@ vi.mock('../../tableSchema', () => ({
 
 import {
   createDailyEntries,
+  deleteRecord,
+  fetchUnsynced,
   markAsSynced,
   releaseLoan,
   unreleaseLoan,
@@ -450,6 +452,69 @@ describe('markAsSynced', () => {
   });
 });
 
+describe('deleteRecord', () => {
+  const KEY = { date: '2026-02-06', company: 'SMB', sort_order: 1 };
+  const deletePair = () => {
+    deleteRecord('daily_entries', {
+      ...KEY,
+      main_code: 14,
+      sub_code: 1,
+    } as never);
+    deleteRecord('daily_entries', {
+      ...KEY,
+      main_code: 1,
+      sub_code: 14,
+    } as never);
+  };
+  const pending = () =>
+    fetchUnsynced('daily_entries')!
+      .map((r) => ({ main_code: r.main_code, deleted: r.deleted }))
+      .sort((a, b) => a.main_code - b.main_code);
+
+  it('leaves tombstones for a row never backed up', () => {
+    createDailyEntries(KEY.date, KEY.company, [PAIR()]);
+    deletePair();
+    expect(pending()).toEqual([
+      { main_code: 1, deleted: 1 },
+      { main_code: 14, deleted: 1 },
+    ]);
+  });
+
+  it('leaves tombstones for a backed-up row edited since the last backup', () => {
+    createDailyEntries(KEY.date, KEY.company, [PAIR()]);
+    markAsSynced('daily_entries', allRows() as never);
+    dbHolder.current!.exec(`UPDATE daily_entries SET credit = 5, synced = 0`);
+    deletePair();
+    expect(allRows().map((r) => [r.deleted, r.synced])).toEqual([
+      [1, 0],
+      [1, 0],
+    ]);
+  });
+
+  it('keeps one tombstone per key when a key is deleted, re-created and deleted again', () => {
+    dbHolder.current!.exec(
+      `INSERT INTO bills (serial, loan_no) VALUES ('F', 1)`
+    );
+    deleteRecord('bills', { serial: 'F', loan_no: 1 });
+    dbHolder.current!.exec(
+      `INSERT INTO bills (serial, loan_no) VALUES ('F', 1)`
+    );
+    deleteRecord('bills', { serial: 'F', loan_no: 1 });
+    expect(
+      dbHolder.current!.prepare(`SELECT deleted, synced FROM bills`).all()
+    ).toEqual([{ deleted: 1, synced: 0 }]);
+  });
+
+  it('refuses to delete a key that only has a tombstone', () => {
+    createDailyEntries(KEY.date, KEY.company, [PAIR()]);
+    deletePair();
+    expect(() => deletePair()).toThrow(
+      'Record not found in table daily_entries'
+    );
+    expect(pending()).toHaveLength(2);
+  });
+});
+
 describe('update', () => {
   it('throws when no row matches the primary key', () => {
     expect(() =>
@@ -502,8 +567,24 @@ describe('releaseLoan / unreleaseLoan', () => {
   it('unrelease removes the release and marks the bill active', () => {
     releaseLoan(RELEASE as never);
     unreleaseLoan('F', 824);
-    expect(releases()).toEqual([]);
+    expect(
+      dbHolder.current!.prepare(`SELECT deleted, synced FROM releases`).all()
+    ).toEqual([{ deleted: 1, synced: 0 }]);
     expect(bill().released).toBe(0);
+  });
+
+  it('can release again after an unrelease that has not been backed up', () => {
+    releaseLoan(RELEASE as never);
+    unreleaseLoan('F', 824);
+    releaseLoan(RELEASE as never);
+    expect(
+      dbHolder
+        .current!.prepare(
+          `SELECT deleted FROM releases ORDER BY deleted IS NULL`
+        )
+        .all()
+    ).toEqual([{ deleted: 1 }, { deleted: null }]);
+    expect(bill().released).toBe(1);
   });
 
   it('unrelease rolls back when the bill is missing', () => {

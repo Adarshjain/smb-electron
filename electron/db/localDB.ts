@@ -362,32 +362,48 @@ export function deleteRecord<K extends TableName>(
     (field) => record[field as keyof TablesDelete[K]]
   );
 
+  // A row that was edited since the last backup is also synced = 0, so
+  // synced = 0 can't tell us the row never reached Supabase. Always leave a
+  // tombstone for the next backup to delete; deleting a key Supabase never
+  // had is a no-op there. The one exception is a live row whose key already
+  // has a tombstone (deleted, re-created, deleted again before a backup): the
+  // existing tombstone already covers Supabase, so the row goes outright.
+  const fullKey = TablesSQliteSchema[table].primary.filter(
+    (key) => key !== 'deleted'
+  );
+  const sameKey = fullKey.map((f) => `t.${f} = ${table}.${f}`).join(' AND ');
+
   const transaction = db.transaction(() => {
     if (!db) return null;
 
-    const selectSql = `SELECT synced FROM ${table} WHERE ${whereClause}`;
-    const existing = db.prepare(selectSql).get(...whereValues) as {
-      synced: 0 | 1;
-    } | null;
+    const live = db
+      .prepare(
+        `SELECT 1 FROM ${table} WHERE ${whereClause} AND deleted IS NULL`
+      )
+      .get(...whereValues);
 
-    if (!existing) {
+    if (!live) {
       throw new Error(`Record not found in table ${table}`);
     }
 
-    let sql: string;
+    db.prepare(
+      `DELETE
+       FROM ${table}
+       WHERE ${whereClause}
+         AND deleted IS NULL
+         AND EXISTS (SELECT 1
+                     FROM ${table} AS t
+                     WHERE t.deleted IS NOT NULL
+                       AND ${sameKey})`
+    ).run(...whereValues);
 
-    if (existing.synced === 0) {
-      sql = `DELETE
-             FROM ${table}
-             WHERE ${whereClause}`;
-    } else {
-      sql = `UPDATE ${table}
-             SET synced  = 0,
-                 deleted = 1
-             WHERE ${whereClause}`;
-    }
-
-    db.prepare(sql).run(...whereValues);
+    db.prepare(
+      `UPDATE ${table}
+       SET synced  = 0,
+           deleted = 1
+       WHERE ${whereClause}
+         AND deleted IS NULL`
+    ).run(...whereValues);
   });
 
   transaction();
