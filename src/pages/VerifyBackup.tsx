@@ -5,7 +5,6 @@ import {
   Loader2Icon,
   XCircleIcon,
 } from 'lucide-react';
-import GoHome from '@/components/GoHome.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Badge } from '@/components/ui/badge.tsx';
 import {
@@ -176,12 +175,7 @@ export default function VerifyBackup() {
 
   return (
     <div className="p-6 flex flex-col gap-4">
-      <div className="flex">
-        <GoHome />
-        <div className="text-2xl font-bold tracking-tight ml-4">
-          Verify Backup
-        </div>
-      </div>
+      <div className="text-2xl font-bold tracking-tight">Verify Backup</div>
       <div className="text-sm text-muted-foreground max-w-3xl">
         Backs up any pending changes, then downloads every table from Supabase
         and compares a hash of each row with the local database. Avoid entering

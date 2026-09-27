@@ -17,7 +17,10 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from '@/components/ui/native-select.tsx';
-import { useState } from 'react';
+import { lazy, useState } from 'react';
+import { useTabs } from '@/TabManager.tsx';
+
+const VerifyBackup = lazy(() => import('@/pages/VerifyBackup.tsx'));
 
 interface DedupeReport {
   dryRun: boolean;
@@ -48,6 +51,7 @@ interface DedupeReport {
 
 export default function Settings() {
   const navigate = useNavigate();
+  const { openTab } = useTabs();
   const [selectedTable, setSelectedTable] = useState<TableName>('bills');
   const [backfilling, setBackfilling] = useState(false);
   const [dedupeReport, setDedupeReport] = useState<DedupeReport | null>(null);
@@ -157,7 +161,7 @@ export default function Settings() {
         </Button>
         <Button
           variant="outline"
-          onClick={() => void navigate('/verify-backup')}
+          onClick={() => openTab('Verify Backup', <VerifyBackup />)}
         >
           Verify Backup
         </Button>
